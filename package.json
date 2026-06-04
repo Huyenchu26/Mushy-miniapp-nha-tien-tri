@@ -1,5 +1,5 @@
 {
-  "name": "miniapp-template",
+  "name": "nha-tien-tri-worldcup-2026",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "node src/lib/app/scoring.test.js",
     "dev:setup": "node scripts/setup.js",
     "dev:seed": "node scripts/seed.js",
     "dev:token": "node scripts/refresh-token.js"
