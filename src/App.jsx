@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { DAILY_QUESTIONS, DATA_SOURCE, GROUPS, MATCHES } from './lib/app/worldcup-data.js';
-import { computeStandings, dailyPoints, isFinished, matchBasePoints, matchPoints } from './lib/app/scoring.js';
+import { DAILY_QUESTIONS, DATA_SOURCE, FIFA_RANKING_SOURCE, GROUPS, MATCHES, TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS } from './lib/app/worldcup-data.js';
+import { computeStandings, dailyPoints, isFinished, matchBasePoints, matchScoreBreakdown } from './lib/app/scoring.js';
+import Select from './components/Select.jsx';
 import { getContext } from './lib/context.js';
 import { listMembers } from './lib/members.js';
 import { db } from './lib/supabase.js';
@@ -11,6 +12,7 @@ const TABS = [
   { id: 'matches', label: 'Trận đấu' },
   { id: 'daily', label: 'Câu hỏi' },
   { id: 'leaderboard', label: 'BXH' },
+  { id: 'results', label: 'Kết quả' },
   { id: 'rules', label: 'Luật' },
 ];
 const PRIMARY_GROUP_FILTERS = ['A', 'B', 'C', 'D'];
@@ -22,6 +24,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(DEFAULT_TAB);
   const [predictions, setPredictions] = useState([]);
   const [answers, setAnswers] = useState([]);
+  const [longTermBet, setLongTermBet] = useState(null);
+  const [matchResults, setMatchResults] = useState([]);
   const [members, setMembers] = useState([]);
   const [groupFilter, setGroupFilter] = useState('all');
   const [query, setQuery] = useState('');
@@ -67,34 +71,42 @@ export default function App() {
     () => new Map(answers.filter((a) => a.createdBy === ctx?.userId).map((a) => [a.questionKey, a])),
     [answers, ctx?.userId]
   );
+  const matchesWithResults = useMemo(() => applyMatchResults(MATCHES, matchResults), [matchResults]);
   const standings = useMemo(
-    () => buildStandings({ members, predictions, answers }),
-    [members, predictions, answers]
+    () => buildStandings({ members, predictions, answers, matches: matchesWithResults }),
+    [members, predictions, answers, matchesWithResults]
   );
   const currentStanding = standings.find((row) => row.participantId === ctx?.userId);
   const filteredMatches = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return MATCHES.filter((match) => {
+    return matchesWithResults.filter((match) => {
       const groupOk = groupFilter === 'all' || match.group === groupFilter;
       const queryOk =
         !needle ||
         match.homeTeam.toLowerCase().includes(needle) ||
-        match.awayTeam.toLowerCase().includes(needle);
+        match.awayTeam.toLowerCase().includes(needle) ||
+        displayTeamName(match.homeTeam).toLowerCase().includes(needle) ||
+        displayTeamName(match.awayTeam).toLowerCase().includes(needle);
       return groupOk && queryOk;
     });
-  }, [groupFilter, query]);
+  }, [groupFilter, query, matchesWithResults]);
+  const canManageResults = ['owner', 'admin'].includes(ctx?.role);
 
   async function loadGameData() {
     setLoading(true);
     setError('');
     try {
-      const [predictionRows, answerRows, memberRows] = await Promise.all([
+      const [predictionRows, answerRows, longTermRow, resultRows, memberRows] = await Promise.all([
         fetchPredictions(scope.workspaceId),
         fetchDailyAnswers(scope.workspaceId),
+        fetchLongTermBet(scope.workspaceId, ctx.userId),
+        fetchMatchResults(scope.workspaceId),
         listMembers(scope.workspaceId),
       ]);
       setPredictions(predictionRows);
       setAnswers(answerRows);
+      setLongTermBet(longTermRow);
+      setMatchResults(resultRows);
       setMembers(ensureCurrentMember(memberRows, ctx));
     } catch (err) {
       setError(err.message || 'Không tải được dữ liệu game.');
@@ -176,6 +188,72 @@ export default function App() {
     }
   }
 
+  async function handleSaveLongTermBet(draft) {
+    setNotice('');
+    setError('');
+    try {
+      const champion = String(draft.champion || '').trim();
+      const topScorer = String(draft.topScorer || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+      const shockTeam = String(draft.shockTeam || '').trim();
+      if (!champion || !topScorer || !shockTeam) {
+        throw new Error('Bạn cần chọn đủ vô địch, vua phá lưới và đội gây sốc.');
+      }
+
+      const { error: upsertError } = await db.from('long_term_bets').upsert(
+        {
+          workspace_id: scope.workspaceId,
+          created_by: ctx.userId,
+          champion,
+          top_scorer: topScorer,
+          shock_team: shockTeam,
+        },
+        { onConflict: 'workspace_id,created_by' }
+      );
+      if (upsertError) throw upsertError;
+
+      const nextBet = await fetchLongTermBet(scope.workspaceId, ctx.userId);
+      setLongTermBet(nextBet);
+      setNotice('Đã lưu dự đoán dài hạn.');
+    } catch (err) {
+      setError(err.message || 'Không lưu được dự đoán dài hạn.');
+    }
+  }
+
+  async function handleSaveResult(match, draft) {
+    setNotice('');
+    setError('');
+    try {
+      if (!canManageResults) {
+        throw new Error('Chỉ owner/admin workspace được chốt kết quả trận.');
+      }
+
+      const homeScore = normalizeScore(draft.homeScore);
+      const awayScore = normalizeScore(draft.awayScore);
+      const { error: upsertError } = await db.from('group_match_results').upsert(
+        {
+          workspace_id: scope.workspaceId,
+          created_by: ctx.userId,
+          match_no: match.matchNo,
+          match_day: match.matchDay,
+          home_team: match.homeTeam,
+          away_team: match.awayTeam,
+          home_score: homeScore,
+          away_score: awayScore,
+          status: 'finished',
+          result_source: 'manual',
+        },
+        { onConflict: 'workspace_id,match_no' }
+      );
+      if (upsertError) throw upsertError;
+
+      const nextResults = await fetchMatchResults(scope.workspaceId);
+      setMatchResults(nextResults);
+      setNotice(`Đã chốt trận #${match.matchNo}. BXH đã được tính lại.`);
+    } catch (err) {
+      setError(err.message || 'Không chốt được kết quả trận.');
+    }
+  }
+
   if (ctxError) {
     return <SetupScreen error={ctxError} />;
   }
@@ -230,10 +308,23 @@ export default function App() {
           />
         )}
         {activeTab === 'daily' && (
-          <DailyScreen questions={DAILY_QUESTIONS} answerMap={answerMap} onSave={handleSaveAnswer} />
+          <DailyScreen
+            questions={DAILY_QUESTIONS}
+            answerMap={answerMap}
+            longTermBet={longTermBet}
+            onSave={handleSaveAnswer}
+            onSaveLongTerm={handleSaveLongTermBet}
+          />
         )}
         {activeTab === 'leaderboard' && (
           <LeaderboardScreen standings={standings} currentParticipantId={ctx?.userId} onRefresh={loadGameData} />
+        )}
+        {activeTab === 'results' && (
+          <ResultsScreen
+            matches={matchesWithResults}
+            canManage={canManageResults}
+            onSave={handleSaveResult}
+          />
         )}
         {activeTab === 'rules' && <RulesScreen />}
       </main>
@@ -254,6 +345,8 @@ export default function App() {
       <footer className="app-footer">
         <span>Dữ liệu lịch: {DATA_SOURCE.label}</span>
         <a href={DATA_SOURCE.officialUrl} target="_blank" rel="noreferrer">FIFA</a>
+        <span>BXH FIFA: {FIFA_RANKING_SOURCE.lastOfficialUpdate}</span>
+        <a href={FIFA_RANKING_SOURCE.officialUrl} target="_blank" rel="noreferrer">Ranking</a>
       </footer>
     </div>
   );
@@ -352,7 +445,7 @@ function MatchesScreen({ matches, predictionMap, dailyDoubleDownMap, groupFilter
             </div>
             <div className="match-grid">
               {dayMatches.map((match) => (
-                <MatchCard
+                <MatchCardPrototype
                   key={match.matchNo}
                   match={match}
                   prediction={predictionMap.get(match.matchNo)}
@@ -368,6 +461,127 @@ function MatchesScreen({ matches, predictionMap, dailyDoubleDownMap, groupFilter
   );
 }
 
+function MatchCardPrototype({ match, prediction, dailyDoubleMatchNo, onSave }) {
+  const locked = Date.now() >= new Date(match.kickoffAt).getTime();
+  const finished = isFinished(match);
+  const isTodayMatchDay = match.matchDay === getLocalDateKey();
+  const doubleDownReserved = !!dailyDoubleMatchNo && dailyDoubleMatchNo !== Number(match.matchNo);
+  const [homePred, setHomePred] = useState(prediction?.homePred ?? 0);
+  const [awayPred, setAwayPred] = useState(prediction?.awayPred ?? 0);
+  const [doubleDown, setDoubleDown] = useState(prediction?.doubleDown ?? false);
+  const base = matchBasePoints(prediction, match);
+  const breakdown = matchScoreBreakdown(prediction, match);
+
+  useEffect(() => {
+    setHomePred(prediction?.homePred ?? 0);
+    setAwayPred(prediction?.awayPred ?? 0);
+    setDoubleDown(prediction?.doubleDown ?? false);
+  }, [prediction?.homePred, prediction?.awayPred, prediction?.doubleDown]);
+
+  const homeScore = normalizeDraftScore(homePred);
+  const awayScore = normalizeDraftScore(awayPred);
+  const canUseDoubleDown = !locked && isTodayMatchDay && !doubleDownReserved;
+
+  function bumpScore(side, delta) {
+    if (locked) return;
+    const setter = side === 'home' ? setHomePred : setAwayPred;
+    const current = side === 'home' ? homeScore : awayScore;
+    setter(Math.max(0, Math.min(99, current + delta)));
+  }
+
+  return (
+    <article className="match-card match-card--prototype">
+      <div className="match-card-head">
+        <span className="mstage">#{match.matchNo} · Vòng bảng · {match.group}</span>
+        <span className={finished ? 'mtime done-time' : 'mtime'}>{finished ? 'Đã kết thúc' : formatTime(match.kickoffAt)}</span>
+      </div>
+
+      {finished ? (
+        <>
+          <div className="fixture finished-fixture">
+            <MatchTeam team={match.homeTeam} score={match.homeScore} />
+            <span className="ft-badge">FT</span>
+            <MatchTeam team={match.awayTeam} score={match.awayScore} />
+          </div>
+          <div className="prediction-done">
+            {prediction ? (
+              <>
+                <span>Bạn dự <b>{prediction.homePred}-{prediction.awayPred}</b></span>
+                <strong>
+                  +{breakdown.total}đ{base === 5 ? ' tỉ số chính xác' : ''}{breakdown.upsetBonus ? ` · +${breakdown.upsetBonus} cửa dưới` : ''}
+                </strong>
+              </>
+            ) : (
+              <>
+                <span>Chưa có dự đoán</span>
+                <strong>+0đ</strong>
+              </>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="fixture">
+            <MatchTeam team={match.homeTeam} />
+            <div className="score-stepper" aria-label="Dự đoán tỉ số">
+              <div className="step-group">
+                <button type="button" disabled={locked} onClick={() => bumpScore('home', -1)}>-</button>
+                <span>{homeScore}</span>
+                <button type="button" disabled={locked} onClick={() => bumpScore('home', 1)}>+</button>
+              </div>
+              <span className="score-sep">:</span>
+              <div className="step-group">
+                <button type="button" disabled={locked} onClick={() => bumpScore('away', -1)}>-</button>
+                <span>{awayScore}</span>
+                <button type="button" disabled={locked} onClick={() => bumpScore('away', 1)}>+</button>
+              </div>
+            </div>
+            <MatchTeam team={match.awayTeam} />
+          </div>
+
+          <div className="match-actions compact-actions">
+            <button
+              type="button"
+              className={`double-btn star-btn ${doubleDown ? 'active' : ''}`}
+              disabled={!canUseDoubleDown}
+              onClick={() => setDoubleDown((value) => !value)}
+              title="Kèo tủ x2"
+            >
+              ★
+            </button>
+            <button type="button" className="primary-btn small" disabled={locked} onClick={() => onSave(match, { homePred: homeScore, awayPred: awayScore, doubleDown })}>
+              Lưu dự đoán
+            </button>
+          </div>
+          <p className="double-hint">
+            {locked
+              ? 'Đã khóa dự đoán'
+              : doubleDownReserved
+                ? `Ngày này đã chọn kèo tủ trận #${dailyDoubleMatchNo}.`
+                : isTodayMatchDay
+                  ? 'Mỗi ngày chỉ 1 kèo tủ.'
+                  : 'Kèo tủ chỉ mở đúng ngày thi đấu.'}
+          </p>
+        </>
+      )}
+    </article>
+  );
+}
+
+function MatchTeam({ team, score = null }) {
+  const meta = TEAM_META[team];
+  return (
+    <div className="match-team">
+      <span className="match-flag" aria-label={`Cờ ${team}`}>
+        {meta?.flagUrl ? <img src={meta.flagUrl} alt="" loading="lazy" /> : meta?.flag || team.slice(0, 2).toUpperCase()}
+      </span>
+      <strong>{displayTeamName(team)}</strong>
+      {meta ? <small>FIFA #{meta.fifaRank}</small> : null}
+      {score != null ? <b className="real-score">{score}</b> : null}
+    </div>
+  );
+}
+
 function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
   const locked = Date.now() >= new Date(match.kickoffAt).getTime();
   const isTodayMatchDay = match.matchDay === getLocalDateKey();
@@ -376,7 +590,7 @@ function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
   const [awayPred, setAwayPred] = useState(prediction?.awayPred ?? 0);
   const [doubleDown, setDoubleDown] = useState(prediction?.doubleDown ?? false);
   const base = matchBasePoints(prediction, match);
-  const points = matchPoints(prediction, match);
+  const breakdown = matchScoreBreakdown(prediction, match);
 
   useEffect(() => {
     setHomePred(prediction?.homePred ?? 0);
@@ -399,7 +613,11 @@ function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
       {isFinished(match) ? (
         <div className="result-line">
           <span>Kết quả 90': {match.homeScore} - {match.awayScore}</span>
-          {prediction ? <strong>{points}đ{base === 5 ? ' · exact' : ''}</strong> : <strong>0đ</strong>}
+          {prediction ? (
+            <strong>
+              {breakdown.total}đ{base === 5 ? ' · exact' : ''}{breakdown.upsetBonus ? ` · +${breakdown.upsetBonus} cửa dưới` : ''}
+            </strong>
+          ) : <strong>0đ</strong>}
         </div>
       ) : (
         <div className="lock-line">{locked ? 'Đã khóa dự đoán' : 'Chưa bóng lăn'}</div>
@@ -443,20 +661,29 @@ function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
   );
 }
 
-function DailyScreen({ questions, answerMap, onSave }) {
+function DailyScreen({ questions, answerMap, longTermBet, onSave, onSaveLongTerm }) {
+  const visibleQuestions = useMemo(() => {
+    const today = getLocalDateKey();
+    const tomorrow = getLocalDateKey(new Date(Date.now() + 24 * 60 * 60 * 1000));
+    return questions.filter((question) => question.date === today || question.date === tomorrow);
+  }, [questions]);
+
   return (
     <section className="screen">
       <div className="screen-heading">
         <div>
           <p className="eyebrow">Không cần giỏi bóng đá</p>
-          <h2>Câu hỏi vui mỗi ngày</h2>
+          <h2>Câu hỏi hôm nay và ngày mai</h2>
         </div>
       </div>
       <div className="question-list">
-        {questions.map((question) => (
+        {visibleQuestions.length === 0 ? (
+          <p className="empty-state">Chưa có câu hỏi cho hôm nay hoặc ngày mai.</p>
+        ) : visibleQuestions.map((question) => (
           <QuestionCard key={question.key} question={question} answer={answerMap.get(question.key)} onSave={onSave} />
         ))}
       </div>
+      <LongTermBetCard bet={longTermBet} onSave={onSaveLongTerm} />
     </section>
   );
 }
@@ -499,6 +726,147 @@ function QuestionCard({ question, answer, onSave }) {
   );
 }
 
+function LongTermBetCard({ bet, onSave }) {
+  const [champion, setChampion] = useState(bet?.champion || '');
+  const [topScorer, setTopScorer] = useState(bet?.topScorer || '');
+  const [shockTeam, setShockTeam] = useState(bet?.shockTeam || '');
+  const teamOptions = useMemo(
+    () => TEAM_OPTIONS.map((team) => ({
+      value: team,
+      label: `${displayTeamName(team)} · FIFA #${TEAM_META[team]?.fifaRank ?? '-'}`,
+      icon: TEAM_META[team]?.flag || null,
+    })),
+    []
+  );
+  const scorerOptions = useMemo(() => TOP_SCORER_OPTIONS.map((player) => player.label), []);
+
+  useEffect(() => {
+    setChampion(bet?.champion || '');
+    setTopScorer(bet?.topScorer || '');
+    setShockTeam(bet?.shockTeam || '');
+  }, [bet?.champion, bet?.topScorer, bet?.shockTeam]);
+
+  return (
+    <article className="question-card long-term-card">
+      <div>
+        <span className="date-chip">Dài hạn</span>
+        <h3>Dự đoán dài hạn</h3>
+        <p>Chọn trước giải. Đúng vô địch +20đ, vua phá lưới +10đ, đội gây sốc +10đ.</p>
+      </div>
+
+      <div className="long-term-fields">
+        <label>
+          <span>Vô địch</span>
+          <Select value={champion} onChange={setChampion} options={teamOptions} placeholder="Chọn đội vô địch" />
+        </label>
+        <label>
+          <span>Vua phá lưới</span>
+          <input
+            className="answer-input"
+            list="top-scorer-suggestions"
+            value={topScorer}
+            onChange={(event) => setTopScorer(event.target.value)}
+            placeholder="Nhập hoặc chọn cầu thủ"
+          />
+          <datalist id="top-scorer-suggestions">
+            {scorerOptions.map((label) => <option key={label} value={label} />)}
+          </datalist>
+        </label>
+        <label>
+          <span>Đội gây sốc</span>
+          <small className="field-hint">Đội bị đánh giá thấp nhưng đi sâu hơn kỳ vọng, tạo bất ngờ lớn so với BXH FIFA và tương quan bảng đấu.</small>
+          <Select value={shockTeam} onChange={setShockTeam} options={teamOptions} placeholder="Chọn đội gây sốc" />
+        </label>
+      </div>
+
+      <div className="question-footer">
+        <span>{bet ? 'Đã lưu dự đoán dài hạn' : 'Chưa lưu dự đoán dài hạn'}</span>
+        <button type="button" className="primary-btn small" onClick={() => onSave({ champion, topScorer, shockTeam })}>
+          Lưu
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function ResultsScreen({ matches, canManage, onSave }) {
+  const grouped = useMemo(() => groupByDate(matches), [matches]);
+
+  return (
+    <section className="screen">
+      <div className="screen-heading">
+        <div>
+          <p className="eyebrow">Chốt điểm hằng ngày</p>
+          <h2>Cập nhật kết quả 90 phút</h2>
+        </div>
+      </div>
+      <div className="ops-note">
+        <strong>{canManage ? 'Quy trình sau mỗi ngày thi đấu' : 'Bạn đang xem kết quả đã chốt'}</strong>
+        <span>
+          {canManage
+            ? 'Admin/owner nhập tỉ số các trận đã đá xong rồi bấm Cập nhật. App tự overlay kết quả, tính lại điểm trận, điểm cửa dưới và BXH khi làm mới.'
+            : 'Chỉ admin/owner workspace được cập nhật kết quả. BXH sẽ tự đổi sau khi kết quả được chốt.'}
+        </span>
+      </div>
+      <div className="result-days">
+        {grouped.map(([date, dayMatches]) => (
+          <section className="result-day" key={date}>
+            <div className="date-header">
+              <h3>{formatDate(date)}</h3>
+              <span>{dayMatches.filter(isFinished).length}/{dayMatches.length} đã chốt</span>
+            </div>
+            <div className="result-grid">
+              {dayMatches.map((match) => (
+                <ResultCard key={match.matchNo} match={match} canManage={canManage} onSave={onSave} />
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ResultCard({ match, canManage, onSave }) {
+  const [homeScore, setHomeScore] = useState(match.homeScore ?? 0);
+  const [awayScore, setAwayScore] = useState(match.awayScore ?? 0);
+
+  useEffect(() => {
+    setHomeScore(match.homeScore ?? 0);
+    setAwayScore(match.awayScore ?? 0);
+  }, [match.homeScore, match.awayScore]);
+
+  return (
+    <article className={`result-card ${isFinished(match) ? 'finished' : ''}`}>
+      <div className="match-meta">
+        <span>#{match.matchNo} · Bảng {match.group}</span>
+        <strong>{formatTime(match.kickoffAt)}</strong>
+      </div>
+      <div className="teams compact">
+        <TeamRow team={match.homeTeam} />
+        <TeamRow team={match.awayTeam} />
+      </div>
+      <div className="score-editor result-editor">
+        <label>
+          {shortTeam(match.homeTeam)}
+          <input type="number" min="0" max="99" value={homeScore} disabled={!canManage} onChange={(event) => setHomeScore(event.target.value)} />
+        </label>
+        <span>-</span>
+        <label>
+          {shortTeam(match.awayTeam)}
+          <input type="number" min="0" max="99" value={awayScore} disabled={!canManage} onChange={(event) => setAwayScore(event.target.value)} />
+        </label>
+      </div>
+      <div className="result-actions">
+        <span>{isFinished(match) ? `Đã chốt: ${match.homeScore} - ${match.awayScore}` : 'Chưa chốt'}</span>
+        <button type="button" className="primary-btn small" disabled={!canManage} onClick={() => onSave(match, { homeScore, awayScore })}>
+          {canManage ? 'Cập nhật' : 'Admin'}
+        </button>
+      </div>
+    </article>
+  );
+}
+
 function LeaderboardScreen({ standings, currentParticipantId, onRefresh }) {
   const podium = standings.slice(0, 3);
 
@@ -531,6 +899,7 @@ function LeaderboardScreen({ standings, currentParticipantId, onRefresh }) {
               <span className="rank">#{row.rank}</span>
               <strong>{row.displayName}</strong>
               <span>{row.matchPts} trận</span>
+              <span>{row.upsetPts} cửa dưới</span>
               <span>{row.streakPts} streak</span>
               <span>{row.dailyPts} vui</span>
               <b>{row.total}đ</b>
@@ -549,6 +918,7 @@ function RulesScreen() {
       <h2>Chơi nhẹ, thắng vui, có cớ ăn mừng.</h2>
       <div className="rules-grid">
         <Rule title="Điểm từng trận" body="Đúng tỉ số 5đ. Đúng đội thắng/hòa và đúng hiệu số 3đ. Chỉ đúng kết quả thắng/hòa/thua 2đ. Sai 0đ." />
+        <Rule title="Bonus cửa dưới" body={`Nếu đoán đúng kết quả đội yếu hơn theo BXH FIFA tạo bất ngờ: chênh ${20}+ bậc được +1đ, ${40}+ bậc được +2đ. Hòa trước đội mạnh hơn ${30}+ bậc được +1đ.`} />
         <Rule title="Kèo tủ mỗi ngày" body="Mỗi người chỉ có 1 kèo tủ trong ngày thi đấu, và chỉ chọn được trong lượt trận của ngày đó." />
         <Rule title="Streak" body="Cứ 3 trận liên tiếp đúng tỉ số chính xác sẽ được cộng thêm 5đ." />
         <Rule title="Câu hỏi vui" body="Mỗi câu hỏi ngày thường có 2đ. Đây là phần kéo cả người không mê bóng đá vào chơi." />
@@ -578,10 +948,16 @@ function Stat({ label, value }) {
 }
 
 function TeamRow({ team }) {
+  const meta = TEAM_META[team];
   return (
     <div className="team-row">
-      <span className="team-dot">{team.slice(0, 2).toUpperCase()}</span>
-      <strong>{team}</strong>
+      <span className="team-dot" aria-label={`Cờ ${team}`}>
+        {meta?.flagUrl ? <img src={meta.flagUrl} alt="" loading="lazy" /> : meta?.flag || team.slice(0, 2).toUpperCase()}
+      </span>
+      <span className="team-copy">
+        <strong>{displayTeamName(team)}</strong>
+        {meta ? <small>FIFA #{meta.fifaRank} · {meta.fifaCode}</small> : null}
+      </span>
     </div>
   );
 }
@@ -606,7 +982,31 @@ async function fetchDailyAnswers(workspaceId) {
   return (data || []).map(toDailyAnswer);
 }
 
-function buildStandings({ members, predictions, answers }) {
+async function fetchLongTermBet(workspaceId, userId) {
+  if (!workspaceId || !userId) return null;
+  const { data, error } = await db
+    .from('long_term_bets')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .eq('created_by', userId)
+    .maybeSingle();
+  if (error?.code === '42P01' || /long_term_bets|does not exist/i.test(error?.message || '')) return null;
+  if (error) throw error;
+  return data ? toLongTermBet(data) : null;
+}
+
+async function fetchMatchResults(workspaceId) {
+  const { data, error } = await db
+    .from('group_match_results')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('match_no', { ascending: true });
+  if (error?.code === '42P01' || /group_match_results|does not exist/i.test(error?.message || '')) return [];
+  if (error) throw error;
+  return (data || []).map(toMatchResult);
+}
+
+function buildStandings({ members, predictions, answers, matches }) {
   const memberMap = new Map(members.map((member) => [member.user_id, member]));
   const userIds = new Set([
     ...members.map((member) => member.user_id),
@@ -623,11 +1023,12 @@ function buildStandings({ members, predictions, answers }) {
     participants,
     predictions: predictions.map((prediction) => ({ ...prediction, participantId: prediction.createdBy })),
     dailyAnswers: answers.map((answer) => ({ ...answer, participantId: answer.createdBy })),
+    matches,
   });
 }
 
-function computeStandingsForUsers({ participants, predictions, dailyAnswers }) {
-  return computeStandings({ participants, predictions, dailyAnswers, matches: MATCHES, questions: DAILY_QUESTIONS });
+function computeStandingsForUsers({ participants, predictions, dailyAnswers, matches }) {
+  return computeStandings({ participants, predictions, dailyAnswers, matches, questions: DAILY_QUESTIONS });
 }
 
 function ensureCurrentMember(memberRows, ctx) {
@@ -669,12 +1070,63 @@ function toDailyAnswer(row) {
   };
 }
 
+function toLongTermBet(row) {
+  return {
+    id: row.id,
+    workspaceId: row.workspace_id,
+    createdBy: row.created_by,
+    champion: row.champion || '',
+    topScorer: row.top_scorer || '',
+    shockTeam: row.shock_team || '',
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function toMatchResult(row) {
+  return {
+    id: row.id,
+    workspaceId: row.workspace_id,
+    createdBy: row.created_by,
+    matchNo: row.match_no,
+    matchDay: row.match_day,
+    homeTeam: row.home_team,
+    awayTeam: row.away_team,
+    homeScore: row.home_score,
+    awayScore: row.away_score,
+    status: row.status,
+    resultSource: row.result_source,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function applyMatchResults(matches, results) {
+  const resultByNo = new Map(results.map((result) => [Number(result.matchNo), result]));
+  return matches.map((match) => {
+    const result = resultByNo.get(Number(match.matchNo));
+    if (!result) return match;
+    return {
+      ...match,
+      status: result.status,
+      homeScore: result.homeScore,
+      awayScore: result.awayScore,
+    };
+  });
+}
+
 function normalizeScore(value) {
   const number = Number(value);
   if (!Number.isInteger(number) || number < 0 || number > 99) {
     throw new Error('Tỉ số phải là số từ 0 đến 99.');
   }
   return number;
+}
+
+function normalizeDraftScore(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, Math.min(99, Math.trunc(number)));
 }
 
 function groupByDate(matches) {
@@ -710,5 +1162,10 @@ function getLocalDateKey(date = new Date()) {
 }
 
 function shortTeam(team) {
-  return team.length > 12 ? `${team.slice(0, 12)}...` : team;
+  const name = displayTeamName(team);
+  return name.length > 12 ? `${name.slice(0, 12)}...` : name;
+}
+
+function displayTeamName(team) {
+  return TEAM_META[team]?.viName || team;
 }

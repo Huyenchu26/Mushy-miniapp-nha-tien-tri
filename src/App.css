@@ -405,6 +405,13 @@ main {
   padding: 16px;
 }
 
+.match-card--prototype {
+  min-height: 0;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 2px 10px rgba(15, 15, 18, 0.04);
+}
+
 .match-card:hover,
 .question-card:hover,
 .rule-card:hover {
@@ -431,6 +438,194 @@ main {
   font-weight: 600;
 }
 
+.match-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mstage {
+  overflow: hidden;
+  max-width: 66%;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: rgba(255, 56, 92, 0.08);
+  color: var(--wc-primary);
+  font-size: 11px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mtime {
+  color: var(--wc-muted);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.done-time {
+  color: var(--wc-green);
+}
+
+.fixture {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.match-team {
+  display: grid;
+  flex: 1 1 96px;
+  justify-items: center;
+  min-width: 78px;
+  text-align: center;
+}
+
+.match-flag {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--wc-soft);
+  font-size: 24px;
+}
+
+.match-flag img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.match-team strong {
+  display: -webkit-box;
+  width: min(112px, 100%);
+  margin-top: 6px;
+  color: var(--wc-ink);
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 1.18;
+  overflow-wrap: normal;
+  text-wrap: balance;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.match-team small {
+  margin-top: 2px;
+  color: var(--wc-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.score-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+
+.step-group {
+  display: grid;
+  grid-template-columns: 30px 30px 30px;
+  align-items: center;
+  gap: 5px;
+}
+
+.step-group button {
+  width: 30px;
+  height: 34px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--wc-strong);
+  color: var(--wc-primary);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.step-group button:active {
+  transform: scale(0.92);
+}
+
+.step-group button:disabled {
+  color: var(--wc-muted);
+}
+
+.step-group span,
+.score-sep {
+  color: var(--wc-ink);
+  font-weight: 800;
+}
+
+.step-group span {
+  font-size: 22px;
+  text-align: center;
+}
+
+.score-sep {
+  font-size: 14px;
+}
+
+.compact-actions {
+  grid-template-columns: 46px minmax(0, 1fr);
+}
+
+.star-btn {
+  min-width: 46px;
+  padding: 0;
+  background: var(--wc-strong);
+  color: var(--wc-muted);
+  font-size: 17px;
+}
+
+.star-btn.active {
+  border-color: var(--wc-warn, #ff9500);
+  background: #ff9500;
+  color: white;
+}
+
+.finished-fixture {
+  align-items: start;
+}
+
+.ft-badge {
+  align-self: center;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: var(--wc-soft);
+  color: var(--wc-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.real-score {
+  margin-top: 5px;
+  color: var(--wc-ink);
+  font-size: 24px;
+}
+
+.prediction-done {
+  display: grid;
+  gap: 3px;
+  margin-top: 12px;
+  border-radius: 11px;
+  padding: 10px;
+  background: var(--wc-strong);
+  color: var(--wc-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.prediction-done strong {
+  color: var(--wc-green);
+}
+
 .teams {
   display: grid;
   gap: 8px;
@@ -444,10 +639,25 @@ main {
   gap: 10px;
 }
 
-.team-row strong {
+.team-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.team-copy strong {
   overflow-wrap: anywhere;
   font-size: 17px;
   line-height: 1.2;
+}
+
+.team-copy small {
+  overflow: hidden;
+  color: var(--wc-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .team-dot {
@@ -459,8 +669,15 @@ main {
   border-radius: 50%;
   background: var(--wc-soft);
   color: var(--wc-ink);
-  font-size: 11px;
+  font-size: 20px;
   font-weight: 800;
+  overflow: hidden;
+}
+
+.team-dot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .versus {
@@ -555,6 +772,12 @@ main {
   color: var(--wc-primary);
 }
 
+.star-btn.active {
+  border-color: #ff9500;
+  background: #ff9500;
+  color: white;
+}
+
 .double-hint {
   min-height: 18px;
   margin: 8px 0 0;
@@ -596,6 +819,72 @@ main {
 .question-card,
 .rule-card {
   padding: 18px;
+}
+
+.ops-note {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 18px;
+  border: 1px solid var(--wc-line);
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: white;
+}
+
+.ops-note strong {
+  color: var(--wc-ink);
+}
+
+.ops-note span {
+  color: var(--wc-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.result-days {
+  display: grid;
+  gap: 24px;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.result-card {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--wc-line);
+  border-radius: 14px;
+  padding: 16px;
+  background: white;
+}
+
+.result-card.finished {
+  border-color: rgba(30, 169, 88, 0.32);
+  background: linear-gradient(180deg, rgba(30, 169, 88, 0.06), white 42%);
+}
+
+.teams.compact {
+  margin: 0;
+}
+
+.result-editor {
+  margin-top: 0;
+}
+
+.result-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.result-actions span {
+  color: var(--wc-muted);
+  font-size: 13px;
 }
 
 .question-card h3,
@@ -647,6 +936,37 @@ main {
 
 .answer-input {
   margin-top: 16px;
+}
+
+.long-term-card {
+  margin-top: 16px;
+}
+
+.long-term-fields {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.long-term-fields label {
+  display: grid;
+  gap: 7px;
+}
+
+.long-term-fields label > span {
+  color: var(--wc-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.long-term-fields .answer-input {
+  margin-top: 0;
+}
+
+.field-hint {
+  color: var(--wc-muted);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .question-footer {
@@ -703,7 +1023,7 @@ main {
 
 .leader-row {
   display: grid;
-  grid-template-columns: 64px minmax(150px, 1fr) repeat(3, minmax(72px, auto)) 72px;
+  grid-template-columns: 64px minmax(150px, 1fr) repeat(4, minmax(72px, auto)) 72px;
   align-items: center;
   gap: 12px;
   min-height: 58px;
@@ -849,6 +1169,10 @@ main {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .result-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .question-list,
   .rules-grid,
   .podium {
@@ -888,6 +1212,28 @@ main {
   }
 
   .match-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .match-team {
+    flex-basis: 86px;
+    min-width: 70px;
+  }
+
+  .match-team strong {
+    width: min(104px, 100%);
+  }
+
+  .step-group {
+    grid-template-columns: 28px 28px 28px;
+    gap: 4px;
+  }
+
+  .step-group button {
+    width: 28px;
+  }
+
+  .result-grid {
     grid-template-columns: 1fr;
   }
 

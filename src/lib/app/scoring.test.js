@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { computeStandings, dailyPoints, matchBasePoints, matchPoints, streakBonus } from './scoring.js';
+import { computeStandings, dailyPoints, matchBasePoints, matchPoints, matchUpsetBonus, streakBonus } from './scoring.js';
 import { validateWorldCupData } from './data-validation.js';
 import { DAILY_QUESTIONS, MATCHES } from './worldcup-data.js';
 
@@ -29,6 +29,38 @@ test('draw predictions use exact, draw outcome, and wrong branches', () => {
 test('double-down doubles match points only', () => {
   assert.equal(matchPoints({ homePred: 2, awayPred: 1, doubleDown: true }, finishedMatch), 10);
   assert.equal(matchPoints({ homePred: 4, awayPred: 2, doubleDown: true }, finishedMatch), 4);
+});
+
+test('underdog bonus rewards correct upsets without changing base scoring', () => {
+  const upset = {
+    matchNo: 7,
+    homeTeam: 'Haiti',
+    awayTeam: 'Brazil',
+    status: 'finished',
+    homeScore: 1,
+    awayScore: 0,
+  };
+
+  assert.equal(matchBasePoints({ homePred: 1, awayPred: 0 }, upset), 5);
+  assert.equal(matchUpsetBonus({ homePred: 1, awayPred: 0 }, upset), 2);
+  assert.equal(matchPoints({ homePred: 1, awayPred: 0, doubleDown: false }, upset), 7);
+  assert.equal(matchPoints({ homePred: 1, awayPred: 0, doubleDown: true }, upset), 14);
+  assert.equal(matchUpsetBonus({ homePred: 0, awayPred: 1 }, upset), 0);
+});
+
+test('draw upset bonus rewards correctly predicted draws against much stronger teams', () => {
+  const draw = {
+    matchNo: 29,
+    homeTeam: 'Brazil',
+    awayTeam: 'Haiti',
+    status: 'finished',
+    homeScore: 1,
+    awayScore: 1,
+  };
+
+  assert.equal(matchBasePoints({ homePred: 0, awayPred: 0 }, draw), 3);
+  assert.equal(matchUpsetBonus({ homePred: 0, awayPred: 0 }, draw), 1);
+  assert.equal(matchPoints({ homePred: 0, awayPred: 0, doubleDown: false }, draw), 4);
 });
 
 test('streak bonus adds 5 points for every 3 consecutive exact scores', () => {

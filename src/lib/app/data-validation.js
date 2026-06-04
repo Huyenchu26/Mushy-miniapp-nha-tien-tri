@@ -1,4 +1,4 @@
-import { DAILY_QUESTIONS, GROUPS, MATCHES } from './worldcup-data.js';
+import { DAILY_QUESTIONS, GROUPS, MATCHES, TEAM_META } from './worldcup-data.js';
 
 export function validateWorldCupData({
   matches = MATCHES,
@@ -9,6 +9,7 @@ export function validateWorldCupData({
   const errors = [];
   const warnings = [];
   const expectedTeams = new Set(Object.values(groups).flat());
+  const metaTeams = new Set(Object.keys(TEAM_META));
   const matchNos = new Set();
 
   if (matches.length !== 72) errors.push(`Expected 72 group matches, found ${matches.length}.`);
@@ -22,6 +23,8 @@ export function validateWorldCupData({
     if (!groups[match.group]) errors.push(`${label}: unknown group ${match.group}.`);
     if (!expectedTeams.has(match.homeTeam)) errors.push(`${label}: unknown home team ${match.homeTeam}.`);
     if (!expectedTeams.has(match.awayTeam)) errors.push(`${label}: unknown away team ${match.awayTeam}.`);
+    if (!TEAM_META[match.homeTeam]) errors.push(`${label}: missing TEAM_META for ${match.homeTeam}.`);
+    if (!TEAM_META[match.awayTeam]) errors.push(`${label}: missing TEAM_META for ${match.awayTeam}.`);
     if (match.homeTeam === match.awayTeam) errors.push(`${label}: team cannot play itself.`);
     if (match.stage !== 'group') errors.push(`${label}: stage must be group for v1.`);
     if (!isValidDate(match.kickoffAt)) errors.push(`${label}: invalid kickoffAt.`);
@@ -46,6 +49,12 @@ export function validateWorldCupData({
       const count = groupMatches.filter((match) => match.homeTeam === team || match.awayTeam === team).length;
       if (count !== 3) errors.push(`Group ${group}: ${team} should play 3 matches, found ${count}.`);
     }
+  }
+
+  for (const team of expectedTeams) {
+    if (!metaTeams.has(team)) errors.push(`${team}: missing TEAM_META entry.`);
+    const rank = TEAM_META[team]?.fifaRank;
+    if (!Number.isInteger(rank) || rank < 1) errors.push(`${team}: invalid FIFA rank.`);
   }
 
   for (const question of questions) {

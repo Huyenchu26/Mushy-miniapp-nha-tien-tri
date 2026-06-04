@@ -1,9 +1,15 @@
-import { DAILY_QUESTIONS, MATCHES } from './worldcup-data.js';
+import { DAILY_QUESTIONS, MATCHES, TEAM_META } from './worldcup-data.js';
 
 export const SCORE_RULES = {
   exact: 5,
   diff: 3,
   outcome: 2,
+  upsetGap1: 20,
+  upsetGap2: 40,
+  upsetBonus1: 1,
+  upsetBonus2: 2,
+  drawUpsetGap: 30,
+  drawUpsetBonus: 1,
   streakEvery: 3,
   streakBonus: 5,
 };
@@ -47,7 +53,42 @@ export function matchBasePoints(prediction, match) {
 export function matchPoints(prediction, match) {
   const base = matchBasePoints(prediction, match);
   if (base == null) return 0;
-  return base * (prediction.doubleDown ? 2 : 1);
+  const subtotal = base + matchUpsetBonus(prediction, match, base);
+  return subtotal * (prediction.doubleDown ? 2 : 1);
+}
+
+export function matchScoreBreakdown(prediction, match) {
+  const base = matchBasePoints(prediction, match);
+  const upsetBonus = matchUpsetBonus(prediction, match, base);
+  const multiplier = prediction?.doubleDown ? 2 : 1;
+  return {
+    base: base ?? 0,
+    upsetBonus,
+    multiplier,
+    total: base == null ? 0 : (base + upsetBonus) * multiplier,
+  };
+}
+
+export function matchUpsetBonus(prediction, match, knownBase = undefined) {
+  const base = knownBase === undefined ? matchBasePoints(prediction, match) : knownBase;
+  if (!prediction || !isFinished(match) || !base) return 0;
+
+  const homeRank = TEAM_META[match.homeTeam]?.fifaRank;
+  const awayRank = TEAM_META[match.awayTeam]?.fifaRank;
+  if (!Number.isFinite(homeRank) || !Number.isFinite(awayRank)) return 0;
+
+  const actualOutcome = outcome(Number(match.homeScore), Number(match.awayScore));
+  if (actualOutcome === 0) {
+    const gap = Math.abs(homeRank - awayRank);
+    return gap >= SCORE_RULES.drawUpsetGap ? SCORE_RULES.drawUpsetBonus : 0;
+  }
+
+  const winnerRank = actualOutcome === 1 ? homeRank : awayRank;
+  const loserRank = actualOutcome === 1 ? awayRank : homeRank;
+  const weakerWonGap = winnerRank - loserRank;
+  if (weakerWonGap >= SCORE_RULES.upsetGap2) return SCORE_RULES.upsetBonus2;
+  if (weakerWonGap >= SCORE_RULES.upsetGap1) return SCORE_RULES.upsetBonus1;
+  return 0;
 }
 
 export function streakBonus(predictionsByMatchNo, matches = MATCHES) {
@@ -70,9 +111,8 @@ export function streakBonus(predictionsByMatchNo, matches = MATCHES) {
 
 export function dailyPoints(answer, question) {
   if (!answer || !question?.correctAnswer) return 0;
-  return normalizeAnswer(answer.answer) === normalizeAnswer(question.correctAnswer)
-    ? Number(question.points || 2)
-    : 0;
+  if (normalizeAnswer(answer.answer) !== normalizeAnswer(question.correctAnswer)) return 0;
+  return Number(question.points || 2);
 }
 
 export function computeStandings({
@@ -95,6 +135,7 @@ export function computeStandings({
     );
 
     let matchPts = 0;
+    let upsetPts = 0;
     let exactCount = 0;
     let finishedPredicted = 0;
 
@@ -102,9 +143,11 @@ export function computeStandings({
       const match = matchesByNo.get(Number(prediction.matchNo));
       if (!match || !isFinished(match)) continue;
       const base = matchBasePoints(prediction, match);
+      const breakdown = matchScoreBreakdown(prediction, match);
       if (base != null) finishedPredicted += 1;
       if (base === SCORE_RULES.exact) exactCount += 1;
-      matchPts += matchPoints(prediction, match);
+      matchPts += breakdown.total;
+      upsetPts += breakdown.upsetBonus * breakdown.multiplier;
     }
 
     const streakPts = streakBonus(predictionMap, matches);
@@ -118,6 +161,7 @@ export function computeStandings({
       displayName: participant.displayName,
       total: matchPts + streakPts + dailyPts,
       matchPts,
+      upsetPts,
       streakPts,
       dailyPts,
       predictedCount: participantPredictions.length,

@@ -8,6 +8,14 @@ export const DATA_SOURCE = {
   lastSyncedAt: '2026-06-04T00:00:00Z',
 };
 
+export const FIFA_RANKING_SOURCE = {
+  label: "FIFA/Coca-Cola Men's World Ranking",
+  officialUrl: 'https://inside.fifa.com/fifa-world-ranking/men',
+  lastOfficialUpdate: '2026-04-01',
+  nextOfficialUpdate: '2026-06-11',
+  lastSyncedAt: '2026-06-04T00:00:00Z',
+};
+
 export const GROUPS = {
   A: ['Mexico', 'South Africa', 'Korea Republic', 'Czechia'],
   B: ['Canada', 'Switzerland', 'Qatar', 'Bosnia and Herzegovina'],
@@ -23,7 +31,81 @@ export const GROUPS = {
   L: ['England', 'Croatia', 'Ghana', 'Panama'],
 };
 
+export const TEAM_META = {
+  Mexico: team('🇲🇽', 'MEX', 15, 'Mexico'),
+  'South Africa': team('🇿🇦', 'RSA', 60, 'Nam Phi'),
+  'Korea Republic': team('🇰🇷', 'KOR', 25, 'Hàn Quốc'),
+  Czechia: team('🇨🇿', 'CZE', 41, 'Séc'),
+  Canada: team('🇨🇦', 'CAN', 30, 'Canada'),
+  Switzerland: team('🇨🇭', 'SUI', 19, 'Thụy Sĩ'),
+  Qatar: team('🇶🇦', 'QAT', 55, 'Qatar'),
+  'Bosnia and Herzegovina': team('🇧🇦', 'BIH', 65, 'Bosna và Hercegovina'),
+  Brazil: team('🇧🇷', 'BRA', 6, 'Brasil'),
+  Morocco: team('🇲🇦', 'MAR', 8, 'Maroc'),
+  Haiti: team('🇭🇹', 'HAI', 83, 'Haiti'),
+  Scotland: team('🏴', 'SCO', 43, 'Scotland'),
+  'United States': team('🇺🇸', 'USA', 16, 'Hoa Kỳ'),
+  Paraguay: team('🇵🇾', 'PAR', 40, 'Paraguay'),
+  Australia: team('🇦🇺', 'AUS', 27, 'Úc'),
+  Turkey: team('🇹🇷', 'TUR', 22, 'Thổ Nhĩ Kỳ'),
+  Germany: team('🇩🇪', 'GER', 10, 'Đức'),
+  Curacao: team('🇨🇼', 'CUW', 82, 'Curaçao'),
+  "Cote d'Ivoire": team('🇨🇮', 'CIV', 34, 'Bờ Biển Ngà'),
+  Ecuador: team('🇪🇨', 'ECU', 23, 'Ecuador'),
+  Netherlands: team('🇳🇱', 'NED', 7, 'Hà Lan'),
+  Japan: team('🇯🇵', 'JPN', 18, 'Nhật Bản'),
+  Tunisia: team('🇹🇳', 'TUN', 44, 'Tunisia'),
+  Sweden: team('🇸🇪', 'SWE', 38, 'Thụy Điển'),
+  Belgium: team('🇧🇪', 'BEL', 9, 'Bỉ'),
+  Egypt: team('🇪🇬', 'EGY', 29, 'Ai Cập'),
+  Iran: team('🇮🇷', 'IRN', 21, 'Iran'),
+  'New Zealand': team('🇳🇿', 'NZL', 85, 'New Zealand'),
+  Spain: team('🇪🇸', 'ESP', 2, 'Tây Ban Nha'),
+  'Cabo Verde': team('🇨🇻', 'CPV', 69, 'Cabo Verde'),
+  'Saudi Arabia': team('🇸🇦', 'KSA', 61, 'Ả Rập Xê Út'),
+  Uruguay: team('🇺🇾', 'URU', 17, 'Uruguay'),
+  France: team('🇫🇷', 'FRA', 1, 'Pháp'),
+  Senegal: team('🇸🇳', 'SEN', 14, 'Senegal'),
+  Iraq: team('🇮🇶', 'IRQ', 57, 'Iraq'),
+  Norway: team('🇳🇴', 'NOR', 31, 'Na Uy'),
+  Argentina: team('🇦🇷', 'ARG', 3, 'Argentina'),
+  Algeria: team('🇩🇿', 'ALG', 28, 'Algérie'),
+  Austria: team('🇦🇹', 'AUT', 24, 'Áo'),
+  Jordan: team('🇯🇴', 'JOR', 63, 'Jordan'),
+  Portugal: team('🇵🇹', 'POR', 5, 'Bồ Đào Nha'),
+  'Congo DR': team('🇨🇩', 'COD', 46, 'CHDC Congo'),
+  Uzbekistan: team('🇺🇿', 'UZB', 50, 'Uzbekistan'),
+  Colombia: team('🇨🇴', 'COL', 13, 'Colombia'),
+  England: team('🏴', 'ENG', 4, 'Anh'),
+  Croatia: team('🇭🇷', 'CRO', 11, 'Croatia'),
+  Ghana: team('🇬🇭', 'GHA', 74, 'Ghana'),
+  Panama: team('🇵🇦', 'PAN', 33, 'Panama'),
+};
+
 export const TEAM_OPTIONS = Object.values(GROUPS).flat();
+
+export const TOP_SCORER_OPTIONS = [
+  scorer('Kylian Mbappe', 'Pháp'),
+  scorer('Lionel Messi', 'Argentina'),
+  scorer('Harry Kane', 'Anh'),
+  scorer('Cristiano Ronaldo', 'Bồ Đào Nha'),
+  scorer('Vinicius Junior', 'Brasil'),
+  scorer('Raphinha', 'Brasil'),
+  scorer('Jude Bellingham', 'Anh'),
+  scorer('Lamine Yamal', 'Tây Ban Nha'),
+  scorer('Alvaro Morata', 'Tây Ban Nha'),
+  scorer('Cody Gakpo', 'Hà Lan'),
+  scorer('Memphis Depay', 'Hà Lan'),
+  scorer('Jamal Musiala', 'Đức'),
+  scorer('Florian Wirtz', 'Đức'),
+  scorer('Christian Pulisic', 'Hoa Kỳ'),
+  scorer('Jonathan David', 'Canada'),
+  scorer('Son Heung-min', 'Hàn Quốc'),
+  scorer('Takefusa Kubo', 'Nhật Bản'),
+  scorer('Mehdi Taremi', 'Iran'),
+  scorer('Mohamed Salah', 'Ai Cập'),
+  scorer('Sadio Mane', 'Senegal'),
+];
 
 export const MATCHES = [
   match(1, 'A', 'Mexico', 'South Africa', '2026-06-11T19:00:00Z'),
@@ -145,4 +227,18 @@ function question(date, prompt, options, closesAt) {
     correctAnswer: null,
     points: 2,
   };
+}
+
+function team(flag, fifaCode, fifaRank, viName) {
+  return {
+    flag,
+    fifaCode,
+    fifaRank,
+    viName,
+    flagUrl: `https://api.fifa.com/api/v3/picture/flags-sq-3/${fifaCode}`,
+  };
+}
+
+function scorer(name, nationality) {
+  return { name, nationality, label: `${name} (${nationality})` };
 }
