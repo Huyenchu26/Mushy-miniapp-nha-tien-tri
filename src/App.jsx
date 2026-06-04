@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DAILY_QUESTIONS, DATA_SOURCE, FIFA_RANKING_SOURCE, GROUPS, MATCHES, TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS } from './lib/app/worldcup-data.js';
 import { computeStandings, dailyPoints, isFinished, matchBasePoints, matchScoreBreakdown } from './lib/app/scoring.js';
 import Select from './components/Select.jsx';
@@ -32,6 +32,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const refreshGestureRef = useRef({ startY: 0, scrollY: 0 });
   const scope = useMemo(
     () => (ctx?.workspaceId ? { workspaceId: ctx.workspaceId, label: ctx.workspaceSlug || 'Mushy' } : null),
     [ctx?.workspaceId, ctx?.workspaceSlug]
@@ -258,24 +259,22 @@ export default function App() {
     return <SetupScreen error={ctxError} />;
   }
 
-  return (
-    <div className="wc-app">
-      <header className="topbar">
-        <button className="brand-lockup" type="button" onClick={() => setActiveTab('matches')}>
-          <span className="brand-mark">26</span>
-          <span>
-            <strong>Nhà Tiên Tri</strong>
-            <small>World Cup 2026</small>
-          </span>
-        </button>
-        <div className="player-chip">
-          <span>{ctx?.workspaceSlug || scope?.label || 'Mushy'}</span>
-          <button type="button" onClick={loadGameData} disabled={loading}>
-            Làm mới
-          </button>
-        </div>
-      </header>
+  function handleRefreshTouchStart(event) {
+    refreshGestureRef.current = {
+      startY: event.touches?.[0]?.clientY || 0,
+      scrollY: window.scrollY || document.documentElement.scrollTop || 0,
+    };
+  }
 
+  function handleRefreshTouchEnd(event) {
+    const endY = event.changedTouches?.[0]?.clientY || 0;
+    const distance = refreshGestureRef.current.startY - endY;
+    if (loading || refreshGestureRef.current.scrollY > 12 || distance < 110) return;
+    loadGameData();
+  }
+
+  return (
+    <div className="wc-app" onTouchStart={handleRefreshTouchStart} onTouchEnd={handleRefreshTouchEnd}>
       <main>
         {(notice || error || loading) && (
           <div className={`toast-line ${error ? 'error' : ''}`} role="status">
@@ -313,7 +312,6 @@ export default function App() {
             predictions={predictions.filter((prediction) => prediction.createdBy === ctx?.userId)}
             answers={answers.filter((answer) => answer.createdBy === ctx?.userId)}
             matches={matchesWithResults}
-            onRefresh={loadGameData}
           />
         )}
         {activeTab === 'results' && (
@@ -872,7 +870,6 @@ function LeaderboardScreen({
   predictions,
   answers,
   matches,
-  onRefresh,
 }) {
   const [rankMode, setRankMode] = useState('total');
   const [showHistory, setShowHistory] = useState(false);
@@ -884,26 +881,14 @@ function LeaderboardScreen({
 
   return (
     <section className="screen">
-      <div className="screen-heading">
-        <div>
-          <p className="eyebrow">Vòng bảng · 72 trận · Top 1/2/3 có thưởng</p>
-          <h2>Bảng xếp hạng</h2>
-        </div>
-        <div className="leader-actions">
-          <button className="secondary-btn" type="button" onClick={() => setShowHistory((value) => !value)}>
-            Lịch sử cộng điểm
-          </button>
-          <button className="secondary-btn" type="button" onClick={onRefresh}>Làm mới</button>
-        </div>
-      </div>
-
-      <div className="leader-summary" aria-label="Tóm tắt điểm của bạn">
-        <Stat label="Hạng của bạn" value={currentStanding ? `#${currentStanding.rank}` : '-'} />
-        <Stat label="Điểm" value={currentStanding?.total ?? 0} />
-        <Stat label="Đã dự" value={predictedCount} />
-      </div>
-
-      {showHistory && <ScoreHistoryPanel items={scoreHistory} total={currentStanding?.total ?? 0} />}
+      <ScoreHistoryPanel
+        items={scoreHistory}
+        rank={currentStanding?.rank}
+        total={currentStanding?.total ?? 0}
+        predictedCount={predictedCount}
+        isOpen={showHistory}
+        onToggle={() => setShowHistory((value) => !value)}
+      />
 
       <div className="leader-modes" role="tablist" aria-label="Chế độ bảng xếp hạng">
         {[
@@ -948,32 +933,42 @@ function LeaderboardScreen({
   );
 }
 
-function ScoreHistoryPanel({ items, total }) {
+function ScoreHistoryPanel({ items, rank, total, predictedCount, isOpen, onToggle }) {
   return (
     <section className="score-history-panel" aria-label="Lịch sử cộng điểm">
       <div className="score-history-head">
         <div>
           <p className="section-label">Lịch sử cộng điểm</p>
-          <h3>Tổng đang ghi nhận: {total}đ</h3>
+          <h3>{total}đ</h3>
         </div>
-        <span>{items.length} mục</span>
+        <div className="score-history-metrics" aria-label="Tóm tắt điểm">
+          <span>{rank ? `#${rank}` : '-'}</span>
+          <span>{predictedCount} đã dự</span>
+          <span>{items.length} mục</span>
+        </div>
       </div>
 
-      {items.length === 0 ? (
-        <p className="empty-state compact">Chưa có điểm cộng nào. Khi admin chốt kết quả, lịch sử sẽ hiện tại đây.</p>
-      ) : (
-        <div className="score-history-list">
-          {items.map((item) => (
-            <article key={item.key} className="score-history-row">
-              <span className="score-history-type">{item.type}</span>
-              <span className="score-history-copy">
-                <strong>{item.label}</strong>
-                <small>{item.detail}</small>
-              </span>
-              <b>+{item.points}đ</b>
-            </article>
-          ))}
-        </div>
+      <button className="secondary-btn score-history-toggle" type="button" onClick={onToggle} aria-expanded={isOpen}>
+        {isOpen ? 'Ẩn lịch sử' : 'Xem lịch sử cộng điểm'}
+      </button>
+
+      {isOpen && (
+        items.length === 0 ? (
+          <p className="empty-state compact">Chưa có điểm cộng nào. Khi admin chốt kết quả, lịch sử sẽ hiện tại đây.</p>
+        ) : (
+          <div className="score-history-list">
+            {items.map((item) => (
+              <article key={item.key} className="score-history-row">
+                <span className="score-history-type">{item.type}</span>
+                <span className="score-history-copy">
+                  <strong>{item.label}</strong>
+                  <small>{item.detail}</small>
+                </span>
+                <b>+{item.points}đ</b>
+              </article>
+            ))}
+          </div>
+        )
       )}
     </section>
   );
@@ -1099,15 +1094,6 @@ function Rule({ title, body }) {
       <h3>{title}</h3>
       <p>{body}</p>
     </article>
-  );
-}
-
-function Stat({ label, value }) {
-  return (
-    <div className="stat">
-      <strong>{value}</strong>
-      <span>{label}</span>
-    </div>
   );
 }
 
