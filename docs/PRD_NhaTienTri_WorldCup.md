@@ -1,11 +1,12 @@
-# PRD & Technical Spec — "Nhà Tiên Tri World Cup" 🏆
+# PRD & Technical Spec — "Nhà Tiên Tri" 🏆🔮
 
 > Mini-app dự đoán tỉ số nội bộ công ty cho FIFA World Cup 2026, chạy trên nền tảng **Mushy mini-app** (Vite + React + Supabase).
 > Tài liệu này là **single source of truth** cho cả team khi build. Đọc kèm `CLAUDE.md` (quy tắc kỹ thuật template).
 
 | | |
 |---|---|
-| **Slug / schema** | `worldcup` → `app_worldcup` (prod) / `app_worldcup_dev` (dev) |
+| **Tên app** | Nhà Tiên Tri (game dự đoán World Cup 2026) |
+| **Slug / schema** | `nha-tien-tri` → `app_nha_tien_tri` (prod) / `app_nha_tien_tri_dev` (dev) · _dash trong slug normalize sang underscore ở schema_ |
 | **Nền tảng** | Mushy mini-app template (Vite + React 18 + Supabase) |
 | **Người dùng** | Nhân viên trong 1 workspace công ty (đăng nhập bằng tài khoản Mushy) |
 | **Thời gian giải** | 11/6 → 19/7/2026 · 104 trận · 48 đội |
@@ -98,7 +99,8 @@ Khoá khi `now() >= app_config.opening_kickoff_at`. Ai vào trễ nhưng còn tr
 - **Không bắt buộc đủ 104 trận**: bỏ trận = 0đ trận đó, không phạt.
 
 ### 3.4 Cơ cấu giải thưởng (BTC trao tay — app chỉ hiển thị)
-- **Giải từng chặng**: cao điểm nhất vòng bảng + mỗi vòng knock-out → voucher nhỏ (giữ nhiệt liên tục).
+- **Giải tuần**: cao điểm trận nhất mỗi tuần (BXH Theo tuần) → voucher nhỏ, trao mỗi tuần để giữ nhiệt liên tục.
+- **Giải từng chặng**: cao điểm trận nhất mỗi vòng (BXH Theo vòng): vòng bảng + từng vòng knock-out → voucher nhỏ.
 - **Top 3 chung cuộc**: Quán quân / Á quân / Hạng ba.
 - **Giải vui**: "Thánh phán bừa", "Cú lội ngược dòng", "Thủy chung" (xem mục 5.4).
 
@@ -108,13 +110,13 @@ Khoá khi `now() >= app_config.opening_kickoff_at`. Ai vào trễ nhưng còn tr
 
 ### 4.1 Tổng quan kỹ thuật
 - **Frontend**: Vite + React 18, 1 SPA, điều hướng bằng **tab dưới** (không react-router — state `activeTab`).
-- **Backend/DB**: Supabase schema `app_worldcup`, truy cập qua `db.from(...)` (`src/lib/supabase.js`), RLS workspace-scoped.
+- **Backend/DB**: Supabase schema `app_nha_tien_tri`, truy cập qua `db.from(...)` (`src/lib/supabase.js`), RLS workspace-scoped.
 - **Realtime**: `subscribeToTable()` cho `matches` + `predictions` (+ `long_term_bets`, `daily_answers`) → BXH live.
 - **Định danh & member**: `getContext()` + `listMembers()`.
 - **Design system**: `theme.css` Mushy v3 (gamified) + `useDialog()` thay alert/confirm + `Select` thay `<select>`.
 - **KHÔNG cần** AI proxy, storage, service_role cho v1.
 
-### 4.2 Sáu bảng dữ liệu (đã viết sẵn ở `migrations/002_worldcup_schema.sql`)
+### 4.2 Sáu bảng dữ liệu (đã viết sẵn ở `migrations/002_nha_tien_tri_schema.sql`)
 
 Mọi bảng có `workspace_id` + `created_by` + 4 RLS policy (`can_access_app_data` cho select/insert/update, `is_owner_workspace_member` cho delete) theo convention template.
 
@@ -234,7 +236,12 @@ Scenario: Khoá cược dài hạn khi giải bắt đầu
 ### 5.4 Tab "BXH" (Bảng xếp hạng)
 - **Bảng xếp hạng tổng** realtime: hạng, tên + avatar (`listMembers`), tổng điểm, badge điểm thành phần (trận / streak / dài hạn / câu đố).
 - Highlight dòng của chính mình.
-- **Bộ lọc chặng**: Tổng / Vòng bảng / từng vòng knock-out (điểm chỉ tính trận thuộc chặng đó) → phục vụ "giải từng chặng".
+- **3 chế độ BXH** (tab con, tạo động lực cạnh tranh liên tục):
+  - **Tổng** — toàn bộ điểm (trận + streak + dài hạn + câu đố), xuyên suốt giải.
+  - **Theo tuần** — chọn Tuần 1..6 (mỗi tuần = cửa sổ 7 ngày tính từ trận khai mạc 11/6: T1 11–17/6, T2 18–24/6, …). Chỉ tính **điểm trận có `kickoff_at` trong tuần đó**. Mỗi tuần có nhà vô địch riêng → "giải tuần".
+  - **Theo vòng** — chọn `group / r32 / r16 / qf / sf / third / final`. Chỉ tính **điểm trận thuộc vòng đó** → phục vụ "giải từng chặng".
+  - Mỗi chế độ: top 1 gắn 👑 + huy hiệu; hiển thị "Tuần này/Vòng này còn N trận" để giữ kịch tính.
+  > Lưu ý tính điểm: BXH **Theo tuần / Theo vòng** chỉ cộng **điểm trận** trong tập đó (không gồm streak/dài hạn/câu đố — vốn mang tính toàn giải) để là một "bảng phong độ" sạch. BXH **Tổng** mới cộng đủ mọi nguồn.
 - **Giải vui** (panel riêng):
   - 🎯 **Thủy chung**: người dự nhiều trận nhất (đếm `predictions`).
   - 🃏 **Thánh phán bừa**: trong top hạng nhưng tỉ lệ đúng-tỉ-số-chính-xác thấp.
@@ -273,7 +280,17 @@ longTermPoints(bet, cfg) → {champion(20|0), topScorer(10|0), shock(10|0), tota
 dailyPoints(answer, q)   → q.points nếu đúng (so khớp không phân biệt hoa/thường, trim)
 computeStandings({...})  → [{ userId, total, matchPts, streakPts, longTermPts,
                              dailyPts, predictedCount, exactCount, finishedPredicted }]
-                           sắp xếp giảm dần theo total
+                           sắp xếp giảm dần theo total  (BXH Tổng)
+
+// --- BXH Theo tuần / Theo vòng (chỉ điểm trận của tập con) ---
+tournamentWeeks(openingDate) → [{ week:1, label:"Tuần 1 · 11–17/6", start, end }, ...]
+                               (cửa sổ 7 ngày từ trận khai mạc; ~6 tuần)
+matchesInWeek(matches, week)  → lọc match có kickoff_at ∈ [start, end)
+matchesInStage(matches, stg)  → lọc match.stage === stg
+computeMatchTable(matchSubset, predictions, members)
+                             → [{ userId, points, predictedCount, exactCount }]
+                               points = Σ matchPoints(pred, m) trên matchSubset đã finished;
+                               sắp xếp giảm dần  (dùng cho BXH Tuần & Vòng)
 ```
 
 ### 6.2 Quy tắc edge-case
@@ -303,7 +320,7 @@ RLS template cho phép **mọi member workspace đọc data cùng workspace** (c
 | Confirm/alert | `useDialog()` — `src/components/Dialog.jsx` |
 | Dropdown | `Select` — `src/components/Select.jsx` (KHÔNG dùng `<select>`) |
 | Haptic | `bridge.haptic('success')` — `src/lib/bridge.js` |
-| Push nhắc nhở (BTC) | `mushyApi.push({ title, body, data:{ appSlug:'worldcup', kind:'deadline_reminder' } })` |
+| Push nhắc nhở (BTC) | `mushyApi.push({ title, body, data:{ appSlug:'nha-tien-tri', kind:'deadline_reminder' } })` |
 | Analytics | `track('prediction_saved', {...})`, `trackScreen('matches')` — `src/lib/analytics.js` |
 | Design tokens | `theme.css` classes + `theme.js` JS tokens (gamified v3) |
 
@@ -314,8 +331,8 @@ RLS template cho phép **mọi member workspace đọc data cùng workspace** (c
 ## 8. Cấu trúc file & phân lớp code
 
 ```
-mushy.config.json              slug = "worldcup"            ✅ đã set
-migrations/002_worldcup_schema.sql                          ✅ đã viết
+mushy.config.json              slug = "nha-tien-tri"        ✅ đã set
+migrations/002_nha_tien_tri_schema.sql                          ✅ đã viết
 src/
 ├── App.jsx                    shell + tab nav              ⬜ build
 ├── App.css                    style gamified               ⬜ build
@@ -355,7 +372,7 @@ TIP-001 Migration & seed data ──┬─► TIP-003 Scoring engine ──► T
 | **003** | `scoring.js` thuần + **unit test** mọi case (5/3/2/0, hệ số, double-down, streak, long-term, daily) | Test pass | 001 |
 | **004** | Màn Trận đấu: list nhóm theo ngày, nhập tỉ số, kèo tủ, khoá theo `kickoff_at`, hiện điểm | Acceptance 5.1 | 001,002 |
 | **005** | Cược dài hạn + Câu đố vui (người chơi) | Acceptance 5.2, 5.3 | 001,002 |
-| **006** | BXH realtime + bộ lọc chặng + giải vui | Acceptance 5.4 | 003,004 |
+| **006** | BXH realtime: 3 chế độ (Tổng + Theo tuần + Theo vòng) + giải vui | Acceptance 5.4 | 003,004 |
 | **007** | Màn BTC: nạp lịch, nhập KQ, tạo/chốt câu đố, config + đáp án dài hạn, sửa tên đội KO | Acceptance 5.5 | 001,002 |
 | **008** | VERIFY: QA theo acceptance, smoke test in-shell + browser, build pass | Verify report | tất cả |
 
@@ -363,9 +380,9 @@ TIP-001 Migration & seed data ──┬─► TIP-003 Scoring engine ──► T
 
 ## 10. Quy trình triển khai (BTC/Dev)
 
-1. **Set slug** `worldcup` (✅ trong `mushy.config.json`).
+1. **Set slug** `nha-tien-tri` (✅ trong `mushy.config.json`).
 2. **Đăng ký mini-app** ở Admin Portal (visibility Private trước) — xem `CLAUDE.md` §8.2.
-3. **Submit migration** `002_worldcup_schema.sql` qua Admin Portal Migration Reviewer (KHÔNG chạy SQL Editor tay).
+3. **Submit migration** `002_nha_tien_tri_schema.sql` qua Admin Portal Migration Reviewer (KHÔNG chạy SQL Editor tay).
 4. `npm install` → `npm run dev:setup` → `npm run dev` (test browser mock).
 5. Push 2 branch `main` + `dev` → connect Vercel → tắt Deployment Protection.
 6. BTC: mở app → **Nạp lịch 104 trận** → set `opening_kickoff_at` → mở cược dài hạn.
