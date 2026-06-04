@@ -209,7 +209,6 @@ export default function App() {
               <Stat label="Đã dự" value={predictionMap.size} />
             </div>
           </div>
-          <img className="hero-photo" src="/mushy.png" alt="Linh vật Mushy tiên tri World Cup" />
         </section>
 
         {(notice || error || loading) && (
