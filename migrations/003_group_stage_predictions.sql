@@ -1,9 +1,8 @@
 -- =====================================================================
 -- Nha Tien Tri World Cup 2026 - group-stage-only tables.
 --
--- Slug: nha-tien-tri -> schema app_nha_tien_tri. Do NOT write
--- app_nha_tien_tri_dev here;
--- the Mushy migration reviewer duplicates to the dev schema.
+-- Slug: nha-tien-tri -> schema app_nha_tien_tri.
+-- The Mushy migration reviewer duplicates this migration to the dev schema.
 -- =====================================================================
 
 create or replace function app_nha_tien_tri.set_updated_at() returns trigger as $$

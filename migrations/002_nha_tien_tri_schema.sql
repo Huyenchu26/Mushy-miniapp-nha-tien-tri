@@ -1,8 +1,8 @@
 -- =====================================================================
 -- Mini-app "Nhà Tiên Tri" (dự đoán World Cup 2026) — slug: nha-tien-tri → schema app_nha_tien_tri
 --
--- ⚠️ KHÔNG viết tay `_dev` — Migration Reviewer auto duplicate sang
---    app_nha_tien_tri_dev. File này chỉ ref `app_nha_tien_tri`.
+-- Migration Reviewer tự duplicate sang schema dev. File này chỉ ref
+-- schema production canonical `app_nha_tien_tri`.
 -- ⚠️ Submit qua Admin Portal Migration Reviewer, KHÔNG chạy thẳng SQL Editor.
 --
 -- 6 bảng: matches, predictions, long_term_bets, daily_questions,
