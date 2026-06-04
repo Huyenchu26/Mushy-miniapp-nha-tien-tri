@@ -280,7 +280,6 @@ export default function App() {
         <section className="hero-band">
           <div className="hero-copy">
             <p className="eyebrow">Vòng bảng · 72 trận · Top 1/2/3 có thưởng</p>
-            <h1>Dự tỉ số nhanh, giữ kèo tủ mỗi ngày, leo BXH cùng cả công ty.</h1>
             <div className="hero-stats" aria-label="Tóm tắt điểm">
               <Stat label="Hạng của bạn" value={currentStanding ? `#${currentStanding.rank}` : '-'} />
               <Stat label="Điểm" value={currentStanding?.total ?? 0} />
