@@ -5,11 +5,6 @@
 -- The Mushy migration reviewer duplicates this migration to the dev schema.
 -- =====================================================================
 
-create or replace function app_nha_tien_tri.set_updated_at() returns trigger as $$
-begin new.updated_at = now(); return new; end;
-$$ language plpgsql;
-
--- @realtime
 create table if not exists app_nha_tien_tri.group_predictions (
   id            uuid primary key default gen_random_uuid(),
   workspace_id  uuid not null references public.workspaces(id) on delete cascade,
@@ -49,12 +44,6 @@ drop policy if exists "group_predictions_delete" on app_nha_tien_tri.group_predi
 create policy "group_predictions_delete" on app_nha_tien_tri.group_predictions
 for delete using (public.is_owner_workspace_member(workspace_id));
 
-drop trigger if exists trg_wc_group_predictions_updated on app_nha_tien_tri.group_predictions;
-create trigger trg_wc_group_predictions_updated
-  before update on app_nha_tien_tri.group_predictions
-  for each row execute function app_nha_tien_tri.set_updated_at();
-
--- @realtime
 create table if not exists app_nha_tien_tri.group_daily_answers (
   id            uuid primary key default gen_random_uuid(),
   workspace_id  uuid not null references public.workspaces(id) on delete cascade,
@@ -90,8 +79,3 @@ with check (public.can_access_app_data(workspace_id, 'nha-tien-tri'));
 drop policy if exists "group_daily_answers_delete" on app_nha_tien_tri.group_daily_answers;
 create policy "group_daily_answers_delete" on app_nha_tien_tri.group_daily_answers
 for delete using (public.is_owner_workspace_member(workspace_id));
-
-drop trigger if exists trg_wc_group_daily_answers_updated on app_nha_tien_tri.group_daily_answers;
-create trigger trg_wc_group_daily_answers_updated
-  before update on app_nha_tien_tri.group_daily_answers
-  for each row execute function app_nha_tien_tri.set_updated_at();
