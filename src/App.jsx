@@ -277,17 +277,6 @@ export default function App() {
       </header>
 
       <main>
-        <section className="hero-band">
-          <div className="hero-copy">
-            <p className="eyebrow">Vòng bảng · 72 trận · Top 1/2/3 có thưởng</p>
-            <div className="hero-stats" aria-label="Tóm tắt điểm">
-              <Stat label="Hạng của bạn" value={currentStanding ? `#${currentStanding.rank}` : '-'} />
-              <Stat label="Điểm" value={currentStanding?.total ?? 0} />
-              <Stat label="Đã dự" value={predictionMap.size} />
-            </div>
-          </div>
-        </section>
-
         {(notice || error || loading) && (
           <div className={`toast-line ${error ? 'error' : ''}`} role="status">
             {loading ? 'Đang tải dữ liệu...' : error || notice}
@@ -316,7 +305,16 @@ export default function App() {
           />
         )}
         {activeTab === 'leaderboard' && (
-          <LeaderboardScreen standings={standings} currentParticipantId={ctx?.userId} onRefresh={loadGameData} />
+          <LeaderboardScreen
+            standings={standings}
+            currentParticipantId={ctx?.userId}
+            currentStanding={currentStanding}
+            predictedCount={predictionMap.size}
+            predictions={predictions.filter((prediction) => prediction.createdBy === ctx?.userId)}
+            answers={answers.filter((answer) => answer.createdBy === ctx?.userId)}
+            matches={matchesWithResults}
+            onRefresh={loadGameData}
+          />
         )}
         {activeTab === 'results' && (
           <ResultsScreen
@@ -866,48 +864,215 @@ function ResultCard({ match, canManage, onSave }) {
   );
 }
 
-function LeaderboardScreen({ standings, currentParticipantId, onRefresh }) {
-  const podium = standings.slice(0, 3);
+function LeaderboardScreen({
+  standings,
+  currentParticipantId,
+  currentStanding,
+  predictedCount,
+  predictions,
+  answers,
+  matches,
+  onRefresh,
+}) {
+  const [rankMode, setRankMode] = useState('total');
+  const [showHistory, setShowHistory] = useState(false);
+  const scoreHistory = useMemo(
+    () => buildScoreHistory({ predictions, answers, matches, currentStanding }),
+    [predictions, answers, matches, currentStanding]
+  );
+  const rows = standings;
 
   return (
     <section className="screen">
       <div className="screen-heading">
         <div>
-          <p className="eyebrow">Giải thưởng cuối vòng bảng</p>
+          <p className="eyebrow">Vòng bảng · 72 trận · Top 1/2/3 có thưởng</p>
           <h2>Bảng xếp hạng</h2>
         </div>
-        <button className="secondary-btn" type="button" onClick={onRefresh}>Làm mới</button>
+        <div className="leader-actions">
+          <button className="secondary-btn" type="button" onClick={() => setShowHistory((value) => !value)}>
+            Lịch sử cộng điểm
+          </button>
+          <button className="secondary-btn" type="button" onClick={onRefresh}>Làm mới</button>
+        </div>
       </div>
 
-      <div className="podium">
-        {podium.map((row) => (
-          <article key={row.participantId} className={`podium-card rank-${row.rank}`}>
-            <span>#{row.rank}</span>
-            <h3>{row.displayName}</h3>
-            <strong>{row.total}đ</strong>
+      <div className="leader-summary" aria-label="Tóm tắt điểm của bạn">
+        <Stat label="Hạng của bạn" value={currentStanding ? `#${currentStanding.rank}` : '-'} />
+        <Stat label="Điểm" value={currentStanding?.total ?? 0} />
+        <Stat label="Đã dự" value={predictedCount} />
+      </div>
+
+      {showHistory && <ScoreHistoryPanel items={scoreHistory} total={currentStanding?.total ?? 0} />}
+
+      <div className="leader-modes" role="tablist" aria-label="Chế độ bảng xếp hạng">
+        {[
+          ['total', 'Tổng'],
+          ['week', 'Theo tuần'],
+          ['stage', 'Theo vòng'],
+        ].map(([mode, label]) => (
+          <button
+            key={mode}
+            type="button"
+            className={rankMode === mode ? 'active' : ''}
+            onClick={() => setRankMode(mode)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="leader-list">
+        {rows.length === 0 ? (
+          <p className="empty-state">Chưa có dự đoán nào. Mọi người mở app từ Mushy là chơi được ngay.</p>
+        ) : rows.map((row) => (
+          <article key={row.participantId} className={`lb-row ${row.participantId === currentParticipantId ? 'me' : ''}`}>
+            <span className={`lb-rank ${row.rank <= 3 ? `top-${row.rank}` : ''}`}>{row.rank}</span>
+            <span className="lb-avatar">{initials(row.displayName)}</span>
+            <span className="lb-person">
+              <strong>{row.displayName}</strong>
+              <small>{leaderSubtitle(row)}</small>
+            </span>
+            <b>{row.total}đ</b>
           </article>
         ))}
       </div>
 
-      <div className="leaderboard-table">
-        {standings.length === 0 ? (
-          <p className="empty-state">Chưa có dự đoán nào. Mọi người mở app từ Mushy là chơi được ngay.</p>
-        ) : (
-          standings.map((row) => (
-            <div key={row.participantId} className={`leader-row ${row.participantId === currentParticipantId ? 'me' : ''}`}>
-              <span className="rank">#{row.rank}</span>
-              <strong>{row.displayName}</strong>
-              <span>{row.matchPts} trận</span>
-              <span>{row.upsetPts} cửa dưới</span>
-              <span>{row.streakPts} streak</span>
-              <span>{row.dailyPts} vui</span>
-              <b>{row.total}đ</b>
-            </div>
-          ))
-        )}
+      <p className="section-label fun-awards-label">Giải vui dự kiến</p>
+      <div className="fun-awards">
+        <Award icon="🃏" title="Thánh phán bừa" body="Lên top nhờ những kèo không ai dám nghĩ tới." />
+        <Award icon="🎯" title="Thủy chung" body="Dự đủ mọi trận, không bỏ lịch nào." />
+        <Award icon="🚀" title="Vua nước rút" body="Bùng nổ ở nửa sau vòng bảng." />
       </div>
     </section>
   );
+}
+
+function ScoreHistoryPanel({ items, total }) {
+  return (
+    <section className="score-history-panel" aria-label="Lịch sử cộng điểm">
+      <div className="score-history-head">
+        <div>
+          <p className="section-label">Lịch sử cộng điểm</p>
+          <h3>Tổng đang ghi nhận: {total}đ</h3>
+        </div>
+        <span>{items.length} mục</span>
+      </div>
+
+      {items.length === 0 ? (
+        <p className="empty-state compact">Chưa có điểm cộng nào. Khi admin chốt kết quả, lịch sử sẽ hiện tại đây.</p>
+      ) : (
+        <div className="score-history-list">
+          {items.map((item) => (
+            <article key={item.key} className="score-history-row">
+              <span className="score-history-type">{item.type}</span>
+              <span className="score-history-copy">
+                <strong>{item.label}</strong>
+                <small>{item.detail}</small>
+              </span>
+              <b>+{item.points}đ</b>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Award({ icon, title, body }) {
+  return (
+    <article className="award-row">
+      <span>{icon}</span>
+      <div>
+        <strong>{title}</strong>
+        <small>{body}</small>
+      </div>
+    </article>
+  );
+}
+
+function initials(name) {
+  return String(name || '?')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('') || '?';
+}
+
+function leaderSubtitle(row) {
+  return `${row.matchPts} trận · ${row.upsetPts} cửa dưới · ${row.streakPts} streak · ${row.dailyPts} vui`;
+}
+
+function buildScoreHistory({ predictions = [], answers = [], matches = [], currentStanding = null }) {
+  const matchesByNo = new Map(matches.map((match) => [Number(match.matchNo), match]));
+  const questionsByKey = new Map(DAILY_QUESTIONS.map((question) => [question.key, question]));
+
+  const matchItems = predictions
+    .map((prediction) => {
+      const match = matchesByNo.get(Number(prediction.matchNo));
+      if (!match || !isFinished(match)) return null;
+
+      const breakdown = matchScoreBreakdown(prediction, match);
+      if (breakdown.total <= 0) return null;
+
+      const upsetPoints = breakdown.upsetBonus * breakdown.multiplier;
+      const detailParts = [
+        `Dự ${prediction.homePred}-${prediction.awayPred}`,
+        matchPointReason(breakdown.base),
+        upsetPoints ? `+${upsetPoints}đ cửa dưới` : '',
+        prediction.doubleDown ? 'kèo tủ x2' : '',
+      ].filter(Boolean);
+
+      return {
+        key: `match-${prediction.matchNo}`,
+        sortKey: match.kickoffAt,
+        type: upsetPoints ? 'Cửa dưới' : 'Trận',
+        label: `#${match.matchNo} ${displayTeamName(match.homeTeam)} ${match.homeScore}-${match.awayScore} ${displayTeamName(match.awayTeam)}`,
+        detail: detailParts.join(' · '),
+        points: breakdown.total,
+      };
+    })
+    .filter(Boolean);
+
+  const dailyItems = answers
+    .map((answer) => {
+      const question = questionsByKey.get(answer.questionKey);
+      const points = dailyPoints(answer, question);
+      if (!question || points <= 0) return null;
+
+      return {
+        key: `daily-${answer.questionKey}`,
+        sortKey: question.date,
+        type: 'Câu hỏi',
+        label: question.prompt,
+        detail: `Bạn trả lời: ${answer.answer}`,
+        points,
+      };
+    })
+    .filter(Boolean);
+
+  const items = [...matchItems, ...dailyItems].sort((a, b) => String(b.sortKey).localeCompare(String(a.sortKey)));
+
+  if ((currentStanding?.streakPts || 0) > 0) {
+    items.unshift({
+      key: 'streak-bonus',
+      sortKey: 'streak',
+      type: 'Streak',
+      label: 'Chuỗi đúng tỉ số',
+      detail: 'Cứ 3 trận liên tiếp đúng tỉ số được cộng thêm 5đ.',
+      points: currentStanding.streakPts,
+    });
+  }
+
+  return items;
+}
+
+function matchPointReason(base) {
+  if (base === 5) return 'đúng tỉ số';
+  if (base === 3) return 'đúng hiệu số';
+  if (base === 2) return 'đúng kết quả';
+  return '';
 }
 
 function RulesScreen() {
