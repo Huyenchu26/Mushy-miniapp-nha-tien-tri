@@ -77,7 +77,9 @@ Người chơi = **thành viên workspace công ty**, định danh bằng **tài
 
 ### 3.2 Bốn "gia vị"
 
-**a. Kèo tủ (Double-down) — ×2 điểm.** Mỗi **vòng đấu**, người chơi chọn **1 trận** để x2 điểm trận đó (sau khi đã nhân hệ số vòng). Đổi kèo tủ sang trận khác sẽ **tự gỡ** kèo tủ cũ. Các "vòng" để giới hạn kèo tủ: `group`, `r32`, `r16`, `qf`, `sf`, `final` (gộp `third` vào `final` hoặc cho phép riêng — xem mục mở rộng).
+**a. Kèo tủ (Double-down) — ×2 điểm.** **(ĐÃ CHỐT: 1 kèo/chặng.)** Mỗi **chặng** người chơi chọn **đúng 1 trận** để x2 điểm trận đó (sau khi đã nhân hệ số vòng). Đổi kèo tủ sang trận khác **cùng chặng** sẽ **tự gỡ** kèo tủ cũ. 7 chặng = 7 lượt kèo tủ độc lập: `group`, `r32`, `r16`, `qf`, `sf`, `third`, `final` (mỗi chặng 1 kèo riêng).
+
+> Enforce: khi set `double_down=true` cho 1 dự đoán, tìm mọi dự đoán khác của user thuộc trận **cùng `stage`** → set `double_down=false`. (Thực thi client-side; trận đã khoá theo `kickoff_at` thì không đổi được nữa.)
 
 **b. Cược dài hạn — khoá từ đầu giải.** Trước **trận khai mạc**, mỗi người điền:
 - **Vô địch** → đúng **+20đ**
@@ -236,7 +238,7 @@ Scenario: Khoá cược dài hạn khi giải bắt đầu
 - **Giải vui** (panel riêng):
   - 🎯 **Thủy chung**: người dự nhiều trận nhất (đếm `predictions`).
   - 🃏 **Thánh phán bừa**: trong top hạng nhưng tỉ lệ đúng-tỉ-số-chính-xác thấp.
-  - 🚀 **Cú lội ngược dòng**: tăng hạng mạnh nhất nửa sau giải *(cần snapshot theo ngày — xem mục 8, v1 có thể để placeholder hoặc tính từ mốc do BTC chốt)*.
+  - 🚀 **Vua nửa sau giải** (thay cho "Cú lội ngược dòng"): người ghi **nhiều điểm nhất ở các vòng knock-out** (`r32`→`final`). Tính trực tiếp từ data hiện có, **không cần snapshot lịch sử** — đã bỏ cron snapshot (xem mục 11/R3).
 - Cập nhật khi `matches`/`predictions` đổi (realtime) → re-tính `computeStandings()`.
 
 ### 5.5 Tab "BTC" (chỉ owner/admin)
@@ -378,8 +380,8 @@ TIP-001 Migration & seed data ──┬─► TIP-003 Scoring engine ──► T
 | # | Vấn đề | Quyết định v1 | Cần xác nhận |
 |---|---|---|---|
 | R1 | Đọc trộm pick người khác qua API | Ẩn ở UI + tin tưởng nội bộ | OK với BTC? |
-| R2 | "Vòng" của kèo tủ định nghĩa thế nào | 1 kèo/chặng (group, r32, r16, qf, sf, final) | Có muốn 1 kèo/ngày? |
-| R3 | "Cú lội ngược dòng" cần lịch sử hạng | Cần snapshot ngày (cron) — v1 để placeholder/tính từ mốc BTC | Có làm cron snapshot? |
+| R2 | "Vòng" của kèo tủ định nghĩa thế nào | ✅ **ĐÃ CHỐT: 1 kèo/chặng** (group, r32, r16, qf, sf, third, final — 7 lượt) | Đã chốt |
+| R3 | "Cú lội ngược dòng" cần lịch sử hạng | ✅ **ĐÃ CHỐT: bỏ cron snapshot.** Thay bằng "Vua nửa sau giải" = nhiều điểm nhất ở vòng knock-out (không cần lịch sử) | Đã chốt |
 | R4 | Tên đội knock-out | Placeholder "Chờ xác định", BTC sửa sau vòng bảng | OK |
 | R5 | Vua phá lưới nhập tự do dễ lệch chính tả | So khớp lower/trim; BTC chốt 1 chuỗi chuẩn | OK |
 | R6 | Đội gây sốc do BTC định nghĩa chủ quan | BTC chốt cuối giải, truyền thông tiêu chí trước | OK |
