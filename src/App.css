@@ -44,6 +44,7 @@ input:disabled {
 
 .wc-app {
   min-height: 100vh;
+  padding-bottom: 104px;
   background: var(--wc-canvas);
 }
 
@@ -52,7 +53,7 @@ input:disabled {
   top: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto minmax(170px, 1fr);
+  grid-template-columns: minmax(180px, 1fr) auto;
   align-items: center;
   gap: 24px;
   min-height: 78px;
@@ -129,6 +130,20 @@ input:disabled {
 .tab-nav button.active {
   background: var(--wc-ink);
   color: white;
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 50;
+  width: min(430px, calc(100% - 24px));
+  transform: translateX(-50%);
+}
+
+.bottom-nav button {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .player-chip {
@@ -304,12 +319,22 @@ main {
   background: transparent;
 }
 
+.group-filter-wrap {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 18px;
+}
+
 .chip-row {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding: 2px 0 18px;
+  padding: 2px 0;
   scrollbar-width: none;
+}
+
+.extra-groups {
+  padding-top: 0;
 }
 
 .chip-row button {
@@ -529,6 +554,14 @@ main {
   border-color: var(--wc-primary);
   background: rgba(255, 56, 92, 0.1);
   color: var(--wc-primary);
+}
+
+.double-hint {
+  min-height: 18px;
+  margin: 8px 0 0;
+  color: var(--wc-muted);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .primary-btn {
@@ -794,7 +827,6 @@ main {
     padding: 14px 20px;
   }
 
-  .tab-nav,
   .player-chip {
     justify-self: stretch;
     justify-content: center;
@@ -843,9 +875,8 @@ main {
     position: static;
   }
 
-  .tab-nav {
-    overflow-x: auto;
-    justify-content: flex-start;
+  .bottom-nav {
+    justify-content: space-between;
   }
 
   .screen-heading {

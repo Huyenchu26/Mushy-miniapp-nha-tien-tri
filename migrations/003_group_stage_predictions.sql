@@ -23,6 +23,9 @@ create index if not exists idx_wc_group_predictions_workspace
   on app_nha_tien_tri.group_predictions (workspace_id);
 create index if not exists idx_wc_group_predictions_user_day
   on app_nha_tien_tri.group_predictions (workspace_id, created_by, match_day);
+create unique index if not exists idx_wc_group_predictions_one_double_day
+  on app_nha_tien_tri.group_predictions (workspace_id, created_by, match_day)
+  where double_down = true;
 
 grant select, insert, update, delete on app_nha_tien_tri.group_predictions to authenticated;
 alter table app_nha_tien_tri.group_predictions enable row level security;

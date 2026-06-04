@@ -13,7 +13,8 @@ const TABS = [
   { id: 'leaderboard', label: 'BXH' },
   { id: 'rules', label: 'Luật' },
 ];
-const GROUP_FILTERS = ['all', ...Object.keys(GROUPS)];
+const PRIMARY_GROUP_FILTERS = ['A', 'B', 'C', 'D'];
+const EXTRA_GROUP_FILTERS = Object.keys(GROUPS).filter((group) => !PRIMARY_GROUP_FILTERS.includes(group));
 
 export default function App() {
   const [ctx, setCtx] = useState(null);
@@ -55,6 +56,13 @@ export default function App() {
     () => new Map(predictions.filter((p) => p.createdBy === ctx?.userId).map((p) => [Number(p.matchNo), p])),
     [predictions, ctx?.userId]
   );
+  const dailyDoubleDownMap = useMemo(() => {
+    const map = new Map();
+    predictions
+      .filter((p) => p.createdBy === ctx?.userId && p.doubleDown)
+      .forEach((prediction) => map.set(prediction.matchDay, Number(prediction.matchNo)));
+    return map;
+  }, [predictions, ctx?.userId]);
   const answerMap = useMemo(
     () => new Map(answers.filter((a) => a.createdBy === ctx?.userId).map((a) => [a.questionKey, a])),
     [answers, ctx?.userId]
@@ -104,13 +112,19 @@ export default function App() {
       }
 
       if (draft.doubleDown) {
-        const { error: clearError } = await db
-          .from('group_predictions')
-          .update({ double_down: false })
-          .eq('workspace_id', scope.workspaceId)
-          .eq('created_by', ctx.userId)
-          .eq('match_day', match.matchDay);
-        if (clearError) throw clearError;
+        if (match.matchDay !== getLocalDateKey()) {
+          throw new Error('Kèo tủ chỉ mở trong ngày thi đấu của trận đó.');
+        }
+        const existingDailyDouble = predictions.find(
+          (prediction) =>
+            prediction.createdBy === ctx.userId &&
+            prediction.doubleDown &&
+            prediction.matchDay === match.matchDay &&
+            Number(prediction.matchNo) !== Number(match.matchNo)
+        );
+        if (existingDailyDouble) {
+          throw new Error(`Ngày ${formatDate(match.matchDay)} đã có kèo tủ ở trận #${existingDailyDouble.matchNo}.`);
+        }
       }
 
       const { error: upsertError } = await db.from('group_predictions').upsert(
@@ -176,18 +190,6 @@ export default function App() {
             <small>World Cup 2026</small>
           </span>
         </button>
-        <nav className="tab-nav" aria-label="Điều hướng">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              className={activeTab === tab.id ? 'active' : ''}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
         <div className="player-chip">
           <span>{ctx?.workspaceSlug || scope?.label || 'Mushy'}</span>
           <button type="button" onClick={loadGameData} disabled={loading}>
@@ -220,6 +222,7 @@ export default function App() {
           <MatchesScreen
             matches={filteredMatches}
             predictionMap={predictionMap}
+            dailyDoubleDownMap={dailyDoubleDownMap}
             groupFilter={groupFilter}
             query={query}
             onGroupFilter={setGroupFilter}
@@ -235,6 +238,19 @@ export default function App() {
         )}
         {activeTab === 'rules' && <RulesScreen />}
       </main>
+
+      <nav className="tab-nav bottom-nav" aria-label="Điều hướng">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className={activeTab === tab.id ? 'active' : ''}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
 
       <footer className="app-footer">
         <span>Dữ liệu lịch: {DATA_SOURCE.label}</span>
@@ -267,8 +283,10 @@ function SetupScreen({ error }) {
   );
 }
 
-function MatchesScreen({ matches, predictionMap, groupFilter, query, onGroupFilter, onQuery, onSave }) {
+function MatchesScreen({ matches, predictionMap, dailyDoubleDownMap, groupFilter, query, onGroupFilter, onQuery, onSave }) {
   const grouped = useMemo(() => groupByDate(matches), [matches]);
+  const [showExtraGroups, setShowExtraGroups] = useState(false);
+  const extraActive = EXTRA_GROUP_FILTERS.includes(groupFilter);
 
   return (
     <section className="screen">
@@ -283,17 +301,47 @@ function MatchesScreen({ matches, predictionMap, groupFilter, query, onGroupFilt
         </div>
       </div>
 
-      <div className="chip-row" aria-label="Lọc bảng">
-        {GROUP_FILTERS.map((group) => (
+      <div className="group-filter-wrap" role="group" aria-label="Lọc bảng">
+        <div className="chip-row">
           <button
-            key={group}
             type="button"
-            className={groupFilter === group ? 'active' : ''}
-            onClick={() => onGroupFilter(group)}
+            className={groupFilter === 'all' ? 'active' : ''}
+            onClick={() => onGroupFilter('all')}
           >
-            {group === 'all' ? 'Tất cả' : `Bảng ${group}`}
+            Tất cả
           </button>
-        ))}
+          {PRIMARY_GROUP_FILTERS.map((group) => (
+            <button
+              key={group}
+              type="button"
+              className={groupFilter === group ? 'active' : ''}
+              onClick={() => onGroupFilter(group)}
+            >
+              Bảng {group}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={showExtraGroups || extraActive ? 'active' : ''}
+            onClick={() => setShowExtraGroups((value) => !value)}
+          >
+            {extraActive ? `+ Bảng ${groupFilter}` : '+ thêm'}
+          </button>
+        </div>
+        {(showExtraGroups || extraActive) && (
+          <div className="chip-row extra-groups">
+            {EXTRA_GROUP_FILTERS.map((group) => (
+              <button
+                key={group}
+                type="button"
+                className={groupFilter === group ? 'active' : ''}
+                onClick={() => onGroupFilter(group)}
+              >
+                Bảng {group}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="match-days">
@@ -309,6 +357,7 @@ function MatchesScreen({ matches, predictionMap, groupFilter, query, onGroupFilt
                   key={match.matchNo}
                   match={match}
                   prediction={predictionMap.get(match.matchNo)}
+                  dailyDoubleMatchNo={dailyDoubleDownMap.get(match.matchDay)}
                   onSave={onSave}
                 />
               ))}
@@ -320,8 +369,10 @@ function MatchesScreen({ matches, predictionMap, groupFilter, query, onGroupFilt
   );
 }
 
-function MatchCard({ match, prediction, onSave }) {
+function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
   const locked = Date.now() >= new Date(match.kickoffAt).getTime();
+  const isTodayMatchDay = match.matchDay === getLocalDateKey();
+  const doubleDownReserved = !!dailyDoubleMatchNo && dailyDoubleMatchNo !== Number(match.matchNo);
   const [homePred, setHomePred] = useState(prediction?.homePred ?? 0);
   const [awayPred, setAwayPred] = useState(prediction?.awayPred ?? 0);
   const [doubleDown, setDoubleDown] = useState(prediction?.doubleDown ?? false);
@@ -368,13 +419,27 @@ function MatchCard({ match, prediction, onSave }) {
       </div>
 
       <div className="match-actions">
-        <button type="button" className={`double-btn ${doubleDown ? 'active' : ''}`} disabled={locked} onClick={() => setDoubleDown((value) => !value)}>
+        <button
+          type="button"
+          className={`double-btn ${doubleDown ? 'active' : ''}`}
+          disabled={locked || !isTodayMatchDay || doubleDownReserved}
+          onClick={() => setDoubleDown((value) => !value)}
+        >
           Kèo tủ x2
         </button>
         <button type="button" className="primary-btn small" disabled={locked} onClick={() => onSave(match, { homePred, awayPred, doubleDown })}>
           Lưu
         </button>
       </div>
+      {!locked && (
+        <p className="double-hint">
+          {doubleDownReserved
+            ? `Ngày này đã chọn kèo tủ trận #${dailyDoubleMatchNo}.`
+            : isTodayMatchDay
+              ? 'Mỗi ngày chỉ 1 kèo tủ.'
+              : 'Kèo tủ chỉ mở đúng ngày thi đấu.'}
+        </p>
+      )}
     </article>
   );
 }
@@ -485,7 +550,7 @@ function RulesScreen() {
       <h2>Chơi nhẹ, thắng vui, có cớ ăn mừng.</h2>
       <div className="rules-grid">
         <Rule title="Điểm từng trận" body="Đúng tỉ số 5đ. Đúng đội thắng/hòa và đúng hiệu số 3đ. Chỉ đúng kết quả thắng/hòa/thua 2đ. Sai 0đ." />
-        <Rule title="Kèo tủ mỗi ngày" body="Mỗi ngày thi đấu được chọn 1 trận x2 điểm. Đổi kèo tủ trong cùng ngày sẽ tự gỡ kèo cũ." />
+        <Rule title="Kèo tủ mỗi ngày" body="Mỗi người chỉ có 1 kèo tủ trong ngày thi đấu, và chỉ chọn được trong lượt trận của ngày đó." />
         <Rule title="Streak" body="Cứ 3 trận liên tiếp đúng tỉ số chính xác sẽ được cộng thêm 5đ." />
         <Rule title="Câu hỏi vui" body="Mỗi câu hỏi ngày thường có 2đ. Đây là phần kéo cả người không mê bóng đá vào chơi." />
         <Rule title="Chốt sổ" body="Dự đoán phải lưu trước giờ bóng lăn. Trễ trận nào thì trận đó 0đ, không phạt thêm." />
@@ -638,6 +703,11 @@ function formatTime(value) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value));
+}
+
+function getLocalDateKey(date = new Date()) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
 }
 
 function shortTeam(team) {
