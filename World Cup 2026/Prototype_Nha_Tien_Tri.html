@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nhà Tiên Tri — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --brand:#E63946; --brand-pressed:#C92A39; --brand-soft:#FFE4E7; --brand-wash:rgba(230,57,70,.07);
+    --bg:#FFF7F8; --surface:#fff; --surface-muted:#FBEEF0;
+    --ink:#0F0F12; --text:#1A1A1F; --fg2:#3C3C43; --muted:#8E8E93;
+    --hair:rgba(15,15,18,.08); --ok:#34C759; --warn:#FF9500; --info:#007AFF;
+    --font:'Be Vietnam Pro',system-ui,-apple-system,sans-serif;
+    --display:'Plus Jakarta Sans','Be Vietnam Pro',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);background:linear-gradient(135deg,#2a0a0e 0%,#4a1118 50%,#2a0a0e 100%);color:var(--text);min-height:100vh;padding:28px 16px}
+  .wrap{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:1.05fr .95fr;gap:32px;align-items:start}
+  @media(max-width:860px){.wrap{grid-template-columns:1fr;gap:24px}}
+
+  /* ===== Pitch panel ===== */
+  .pitch{color:#fff;padding:8px 4px}
+  .pitch .eyebrow{font:700 12px var(--font);letter-spacing:1.5px;text-transform:uppercase;color:#FFB3C1}
+  .pitch h1{font:800 34px/1.1 var(--display);margin:8px 0 6px}
+  .pitch .lead{font-size:15px;line-height:1.6;color:#FFE4E7;opacity:.95;max-width:46ch}
+  .pcards{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+  .pcard{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 16px;backdrop-filter:blur(6px)}
+  .pcard h3{font:700 14px var(--font);color:#fff;display:flex;gap:8px;align-items:center}
+  .pcard p{font-size:13px;line-height:1.55;color:#FFD8DE;margin-top:4px}
+  .budget{background:#fff;color:var(--ink);border-radius:18px;padding:18px;margin-top:18px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+  .budget .bt{font:800 13px var(--display);letter-spacing:.5px;text-transform:uppercase;color:var(--brand)}
+  .brow{display:flex;justify-content:space-between;font-size:13.5px;padding:7px 0;border-bottom:1px dashed var(--hair)}
+  .brow span:last-child{font-weight:700}
+  .btotal{display:flex;justify-content:space-between;align-items:center;margin-top:10px;background:var(--brand-wash);border:1px solid var(--brand-soft);border-radius:12px;padding:12px 14px}
+  .btotal b{font:800 22px var(--display);color:var(--brand)}
+  .ask{margin-top:14px;font-size:12.5px;color:var(--fg2);line-height:1.5}
+  .ask b{color:var(--brand)}
+
+  /* ===== Phone ===== */
+  .phone-col{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .phone{width:380px;max-width:100%;height:760px;background:var(--bg);border-radius:42px;border:12px solid #1a1a1f;box-shadow:0 30px 80px rgba(0,0,0,.45);overflow:hidden;position:relative;display:flex;flex-direction:column}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:26px;background:#1a1a1f;border-radius:0 0 16px 16px;z-index:30}
+  .app-header{background:linear-gradient(135deg,var(--brand),#FF6B81);color:#fff;padding:34px 18px 16px;flex-shrink:0}
+  .app-header .row{display:flex;align-items:center;gap:10px}
+  .logo{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:22px}
+  .app-header h2{font:800 19px var(--display)}
+  .app-header .sub{font-size:11.5px;opacity:.9;margin-top:1px}
+  .pill{margin-left:auto;background:rgba(255,255,255,.2);border-radius:999px;padding:5px 10px;font-size:11px;font-weight:600}
+
+  .screen{flex:1;overflow-y:auto;padding:14px 14px 84px;scroll-behavior:smooth}
+  .screen::-webkit-scrollbar{width:0}
+  .scr{display:none;animation:fade .25s ease}
+  .scr.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .seclabel{font:700 11px var(--font);letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:6px 2px 8px}
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:16px;padding:14px;margin-bottom:11px;box-shadow:0 2px 10px rgba(15,15,18,.04)}
+
+  /* match card */
+  .mhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .mstage{font-size:10.5px;font-weight:700;color:var(--brand);background:var(--brand-wash);padding:3px 8px;border-radius:999px}
+  .mtime{font-size:11px;color:var(--muted)}
+  .mx2{font-size:10px;font-weight:800;color:#fff;background:var(--warn);padding:3px 7px;border-radius:999px}
+  .teams{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .team{flex:1;text-align:center}
+  .flag{font-size:30px}
+  .tname{font-size:12.5px;font-weight:600;margin-top:2px}
+  .score-in{display:flex;align-items:center;gap:6px;justify-content:center}
+  .step{width:30px;height:34px;border:none;background:var(--surface-muted);border-radius:9px;font-size:18px;font-weight:700;color:var(--brand);cursor:pointer;transition:.12s}
+  .step:active{transform:scale(.9)}
+  .sval{width:30px;text-align:center;font:800 22px var(--display)}
+  .vs{font-size:12px;color:var(--muted);font-weight:700;padding:0 4px}
+  .mfoot{display:flex;gap:8px;margin-top:12px}
+  .btn{flex:1;border:none;border-radius:13px;padding:11px;font:700 13px var(--font);cursor:pointer;transition:.15s}
+  .btn-primary{background:var(--brand);color:#fff}
+  .btn-primary:active{background:var(--brand-pressed);transform:scale(.98)}
+  .btn-star{flex:0 0 auto;width:46px;background:var(--surface-muted);color:var(--muted);font-size:16px}
+  .btn-star.on{background:var(--warn);color:#fff}
+  .done{background:var(--surface-muted);border-radius:11px;padding:9px;text-align:center;margin-top:10px;font-size:12px}
+  .pts{font-weight:800;color:var(--ok)}
+  .real{font:800 18px var(--display)}
+
+  /* leaderboard */
+  .modes{display:flex;gap:6px;margin-bottom:12px}
+  .mode{flex:1;padding:8px;border:1px solid var(--hair);background:var(--surface);border-radius:11px;font-size:12px;font-weight:600;color:var(--fg2);cursor:pointer;text-align:center}
+  .mode.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .lbrow{display:flex;align-items:center;gap:11px;padding:11px 12px;background:var(--surface);border:1px solid var(--hair);border-radius:14px;margin-bottom:7px}
+  .lbrow.me{border-color:var(--brand);background:var(--brand-wash)}
+  .rank{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font:800 13px var(--display);background:var(--surface-muted);color:var(--fg2);flex-shrink:0}
+  .rank.g1{background:#FFD700;color:#7a5c00}.rank.g2{background:#C0C0C0;color:#444}.rank.g3{background:#CD7F32;color:#fff}
+  .av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--brand),#FF6B81);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex-shrink:0}
+  .lbname{flex:1;font-size:13px;font-weight:600}
+  .lbname small{display:block;color:var(--muted);font-weight:400;font-size:10.5px}
+  .lbpts{font:800 16px var(--display);color:var(--brand)}
+
+  .award{display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px;background:var(--surface-muted);margin-bottom:8px}
+  .award .ic{font-size:22px}
+  .award b{font-size:12.5px}.award small{display:block;color:var(--muted);font-size:11px}
+
+  /* select-ish */
+  .field{margin-bottom:12px}
+  .lbl{font-size:12px;font-weight:600;color:var(--fg2);margin-bottom:5px;display:block}
+  .sel{width:100%;padding:11px 12px;border:1px solid var(--hair);border-radius:12px;background:var(--surface);font:600 13px var(--font);color:var(--text);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238E8E93'%3E%3Cpath d='M6 9L1 4h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+  .opts{display:flex;gap:8px}
+  .opt{flex:1;padding:14px;border:2px solid var(--hair);border-radius:13px;text-align:center;font-weight:700;cursor:pointer;font-size:14px}
+  .opt.on{border-color:var(--brand);background:var(--brand-wash);color:var(--brand)}
+  .countdown{background:#1a1a1f;color:#fff;border-radius:14px;padding:13px;text-align:center;margin-bottom:13px}
+  .countdown b{font:800 20px var(--display);color:#FF6B81}
+  .countdown small{display:block;font-size:11px;opacity:.7;margin-top:2px}
+
+  /* admin queue */
+  .qrow{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--hair);border-radius:13px;padding:11px;margin-bottom:8px}
+  .qrow .qt{flex:1;font-size:12px;font-weight:600}
+  .qrow .qt small{display:block;color:var(--muted);font-weight:400}
+  .qin{width:26px;text-align:center;border:1px solid var(--hair);border-radius:8px;padding:6px 0;font-weight:700;font-size:14px}
+  .qsave{background:var(--ok);color:#fff;border:none;border-radius:9px;padding:7px 9px;font-size:11px;font-weight:700;cursor:pointer}
+
+  /* tabbar */
+  .tabbar{position:absolute;bottom:0;left:0;right:0;height:64px;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--hair);display:flex;z-index:20}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:var(--muted);font-size:9.5px;font-weight:600}
+  .tab .ti{font-size:19px;filter:grayscale(1);opacity:.7}
+  .tab.on{color:var(--brand)}
+  .tab.on .ti{filter:none;opacity:1}
+
+  /* toast */
+  .toast{position:absolute;bottom:78px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1f;color:#fff;padding:10px 18px;border-radius:999px;font-size:12.5px;font-weight:600;opacity:0;transition:.3s;z-index:40;pointer-events:none;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .caption{color:#FFD8DE;font-size:11.5px;text-align:center;max-width:340px;line-height:1.5}
+  .badge-demo{display:inline-block;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:4px 12px;font-size:11px;font-weight:600;margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ PITCH ============ -->
+  <section class="pitch">
+    <div class="badge-demo">🔮 Bản prototype · dữ liệu mẫu</div>
+    <div class="eyebrow">Mini app nội bộ trên Mushy</div>
+    <h1>Nhà Tiên Tri ⚽</h1>
+    <p class="lead">Giải dự đoán tỉ số World Cup 2026 cho toàn công ty — tăng gắn kết, tạo không khí "khẩu chiến cà khịa" mỗi sáng suốt 39 ngày giải đấu.</p>
+
+    <div class="pcards">
+      <div class="pcard"><h3>🎯 Rào cản thấp, ai cũng chơi được</h3><p>Dự trận nào hay trận đó, bỏ trận không bị phạt. Có câu đố vui mỗi ngày cho cả người không rành bóng đá.</p></div>
+      <div class="pcard"><h3>🔥 Giữ nhiệt cả mùa giải</h3><p>Kèo tủ ×2, cược dài hạn, thưởng streak, bảng xếp hạng realtime + giải theo tuần &amp; theo vòng — luôn có lý do quay lại.</p></div>
+      <div class="pcard"><h3>📊 Vận hành nhẹ, minh bạch</h3><p>Hệ thống tự chấm điểm &amp; xếp hạng. BTC chỉ nhập kết quả trận. Không tốn nhân sự tổng hợp thủ công.</p></div>
+    </div>
+
+    <div class="budget">
+      <div class="bt">💰 Đề xuất ngân sách giải thưởng</div>
+      <div style="margin-top:10px">
+        <div class="brow"><span>🥇 Quán quân</span><span>2.000.000 ₫</span></div>
+        <div class="brow"><span>🥈 Á quân</span><span>1.000.000 ₫</span></div>
+        <div class="brow"><span>🥉 Hạng ba</span><span>500.000 ₫</span></div>
+        <div class="brow"><span>🃏 Thánh phán bừa (giải vui)</span><span>200.000 ₫</span></div>
+        <div class="brow"><span>🎯 Thủy chung (giải vui)</span><span>200.000 ₫</span></div>
+      </div>
+      <div class="btotal"><span style="font-weight:700">TỔNG CỘNG</span><b>3.900.000 ₫</b></div>
+      <p class="ask">Chi phí <b>một lần</b> cho hoạt động gắn kết kéo dài <b>39 ngày</b>, phủ tới toàn bộ nhân viên. Mức <b>"vừa phải"</b> — có thể co giãn 3,2–7 triệu tùy số người đăng ký (khảo sát đang chạy). Phần mềm <b>tự xây nội bộ, 0đ bản quyền</b>.</p>
+    </div>
+  </section>
+
+  <!-- ============ PHONE ============ -->
+  <div class="phone-col">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="app-header">
+        <div class="row">
+          <div class="logo">🔮</div>
+          <div><h2>Nhà Tiên Tri</h2><div class="sub">World Cup 2026 · Mushy</div></div>
+          <span class="pill" id="ptsPill">Bạn: 47đ</span>
+        </div>
+      </div>
+
+      <div class="screen">
+        <!-- TRẬN ĐẤU -->
+        <div class="scr active" id="s-match">
+          <div class="seclabel">Hôm nay · 14/06</div>
+          <!-- upcoming 1 -->
+          <div class="card">
+            <div class="mhead"><span class="mstage">Vòng bảng · B</span><span class="mtime">⏰ 23:00 · còn 2g</span></div>
+            <div class="teams">
+              <div class="team"><div class="flag">🇨🇦</div><div class="tname">Canada</div></div>
+              <div class="score-in">
+                <button class="step" onclick="bump('m1h',-1)">–</button>
+                <div class="sval" id="m1h">1</div>
+                <button class="step" onclick="bump('m1h',1)">+</button>
+                <span class="vs">:</span>
+                <button class="step" onclick="bump('m1a',-1)">–</button>
+                <div class="sval" id="m1a">1</div>
+                <button class="step" onclick="bump('m1a',1)">+</button>
+              </div>
+              <div class="team"><div class="flag">🇨🇭</div><div class="tname">Thụy Sĩ</div></div>
+            </div>
+            <div class="mfoot">
+              <button class="btn btn-star" id="star1" onclick="star('star1')" title="Kèo tủ ×2">★</button>
+              <button class="btn btn-primary" onclick="save()">Lưu dự đoán</button>
+            </div>
+          </div>
+          <!-- upcoming 2 (double-down on) -->
+          <div class="card">
+            <div class="mhead"><span class="mstage">Vòng bảng · J</span><span class="mtime">⏰ 02:00 · còn 5g</span></div>
+            <div class="teams">
+              <div class="team"><div class="flag">🇦🇷</div><div class="tname">Argentina</div></div>
+              <div class="score-in">
+                <button class="step" onclick="bump('m2h',-1)">–</button>
+                <div class="sval" id="m2h">2</div>
+                <button class="step" onclick="bump('m2h',1)">+</button>
+                <span class="vs">:</span>
+                <button class="step" onclick="bump('m2a',-1)">–</button>
+                <div class="sval" id="m2a">0</div>
+                <button class="step" onclick="bump('m2a',1)">+</button>
+              </div>
+              <div class="team"><div class="flag">🇩🇿</div><div class="tname">Algeria</div></div>
+            </div>
+            <div class="mfoot">
+              <button class="btn btn-star on" id="star2" onclick="star('star2')" title="Kèo tủ ×2">★</button>
+              <button class="btn btn-primary" onclick="save()">Lưu dự đoán</button>
+            </div>
+          </div>
+
+          <div class="seclabel">Đã kết thúc · 13/06</div>
+          <!-- finished -->
+          <div class="card">
+            <div class="mhead"><span class="mstage">Vòng bảng · A</span><span class="mtime">✅ Kết thúc</span></div>
+            <div class="teams">
+              <div class="team"><div class="flag">🇲🇽</div><div class="tname">Mexico</div><div class="real">2</div></div>
+              <div class="vs">FT</div>
+              <div class="team"><div class="flag">🇿🇦</div><div class="tname">Nam Phi</div><div class="real">1</div></div>
+            </div>
+            <div class="done">Bạn dự <b>2-1</b> · <span class="pts">+5đ tỉ số chính xác! 🎯</span></div>
+          </div>
+          <div class="card">
+            <div class="mhead"><span class="mstage">Vòng bảng · C</span><span class="mtime">✅ Kết thúc</span></div>
+            <div class="teams">
+              <div class="team"><div class="flag">🇧🇷</div><div class="tname">Brazil</div><div class="real">3</div></div>
+              <div class="vs">FT</div>
+              <div class="team"><div class="flag">🇲🇦</div><div class="tname">Maroc</div><div class="real">1</div></div>
+            </div>
+            <div class="done">Bạn dự <b>2-0</b> · <span class="pts" style="color:var(--warn)">+2đ đúng kết quả</span></div>
+          </div>
+        </div>
+
+        <!-- CƯỢC DÀI HẠN -->
+        <div class="scr" id="s-bet">
+          <div class="countdown">🔒 Khoá cược trước trận khai mạc<br><b>còn 6 ngày 11:24:07</b><small>Điền trước 11/06 — sau đó không sửa</small></div>
+          <div class="seclabel">Cược dài hạn (khoá từ đầu giải)</div>
+          <div class="card">
+            <div class="field"><label class="lbl">🏆 Vô địch (đúng +20đ)</label>
+              <select class="sel"><option>Argentina</option><option>Brazil</option><option>Pháp</option><option selected>Tây Ban Nha</option><option>Anh</option><option>Đức</option></select></div>
+            <div class="field"><label class="lbl">👟 Vua phá lưới (đúng +10đ)</label>
+              <select class="sel"><option selected>Mbappé</option><option>Haaland</option><option>Kane</option><option>Vinícius Jr</option><option>Lamine Yamal</option></select></div>
+            <div class="field"><label class="lbl">😱 Đội gây sốc (đúng +10đ)</label>
+              <select class="sel"><option>Nhật Bản</option><option selected>Maroc</option><option>Cabo Verde</option><option>Curaçao</option><option>Uzbekistan</option></select></div>
+            <button class="btn btn-primary" style="width:100%" onclick="save()">Lưu cược dài hạn</button>
+          </div>
+        </div>
+
+        <!-- CÂU ĐỐ -->
+        <div class="scr" id="s-quiz">
+          <div class="seclabel">Câu đố vui hôm nay · 2đ</div>
+          <div class="card">
+            <p style="font-size:14px;font-weight:600;margin-bottom:12px">⚽ Tổng số bàn thắng của TẤT CẢ các trận hôm nay là chẵn hay lẻ?</p>
+            <div class="opts">
+              <div class="opt on" onclick="pick(this)">Chẵn</div>
+              <div class="opt" onclick="pick(this)">Lẻ</div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="save()">Chốt đáp án</button>
+            <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">⏰ Hết hạn trả lời lúc 22:30 hôm nay</p>
+          </div>
+          <div class="seclabel">Đã có đáp án · hôm qua</div>
+          <div class="card">
+            <p style="font-size:13.5px;font-weight:600;margin-bottom:8px">Trận nào nhiều bàn nhất hôm qua?</p>
+            <div class="done">Đáp án đúng: <b>Brazil 3-1 Maroc</b> · Bạn chọn đúng <span class="pts">+2đ</span></div>
+          </div>
+        </div>
+
+        <!-- BXH -->
+        <div class="scr" id="s-rank">
+          <div class="modes">
+            <div class="mode on" onclick="rankMode(this,'total')">Tổng</div>
+            <div class="mode" onclick="rankMode(this,'week')">Theo tuần</div>
+            <div class="mode" onclick="rankMode(this,'stage')">Theo vòng</div>
+          </div>
+          <div id="lbList"></div>
+          <div class="seclabel" style="margin-top:14px">🎉 Giải vui (dự kiến)</div>
+          <div class="award"><span class="ic">🃏</span><div><b>Thánh phán bừa</b><small>Lên top nhờ… hên</small></div></div>
+          <div class="award"><span class="ic">🎯</span><div><b>Thủy chung</b><small>Dự đủ mọi trận, không bỏ trận nào</small></div></div>
+          <div class="award"><span class="ic">🚀</span><div><b>Vua nửa sau giải</b><small>Bùng nổ ở vòng knock-out</small></div></div>
+        </div>
+
+        <!-- BTC -->
+        <div class="scr" id="s-admin">
+          <div class="seclabel">🛠 Khu vực BTC · cần nhập kết quả (2)</div>
+          <div class="qrow">
+            <div class="qt">🇪🇨 Ecuador vs Đức 🇩🇪<small>Vòng bảng E · đã đá xong</small></div>
+            <input class="qin" value="1"><span class="vs">:</span><input class="qin" value="2">
+            <button class="qsave" onclick="save()">Lưu</button>
+          </div>
+          <div class="qrow">
+            <div class="qt">🏴 Anh vs Croatia 🇭🇷<small>Vòng bảng L · đã đá xong</small></div>
+            <input class="qin" value="2"><span class="vs">:</span><input class="qin" value="0">
+            <button class="qsave" onclick="save()">Lưu</button>
+          </div>
+          <div class="seclabel" style="margin-top:14px">Công cụ nhanh</div>
+          <div class="card" style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-primary" onclick="save()">📅 Nạp lịch 104 trận World Cup</button>
+            <button class="btn" style="background:var(--surface-muted);color:var(--fg2)" onclick="save()">❓ Tạo câu đố vui hôm nay</button>
+            <button class="btn" style="background:var(--surface-muted);color:var(--fg2)" onclick="save()">🔔 Gửi nhắc "sắp khoá dự đoán"</button>
+          </div>
+          <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px">Chỉ owner/admin của workspace thấy tab này.</p>
+        </div>
+      </div>
+
+      <div class="toast" id="toast">Đã lưu ⚽</div>
+
+      <div class="tabbar">
+        <div class="tab on" onclick="go(this,'s-match')"><span class="ti">⚽</span>Trận đấu</div>
+        <div class="tab" onclick="go(this,'s-bet')"><span class="ti">🏆</span>Cược</div>
+        <div class="tab" onclick="go(this,'s-quiz')"><span class="ti">❓</span>Câu đố</div>
+        <div class="tab" onclick="go(this,'s-rank')"><span class="ti">📊</span>BXH</div>
+        <div class="tab" onclick="go(this,'s-admin')"><span class="ti">🛠</span>BTC</div>
+      </div>
+    </div>
+    <p class="caption">Bấm thử: nhập tỉ số, gắn ⭐ kèo tủ, đổi tab, đổi chế độ BXH. Dữ liệu là mẫu minh hoạ — bản thật chạy trong app Mushy với tài khoản công ty.</p>
+  </div>
+</div>
+
+<script>
+  const LB = {
+    total:[['MT','Minh Trần','Phòng KD',128,'g1'],['NH','Ngọc Hà','Marketing',119,'g2'],['Huyền (bạn)','','',null,null],['TL','Tuấn Lê','Kỹ thuật',96,''],['PL','Phương Linh','Nhân sự',91,''],['QD','Quốc Đạt','Kỹ thuật',88,''],['HA','Hồng Anh','Kế toán',77,'']],
+  };
+  // We'll render with "me" highlighted at a mode-dependent rank.
+  const DATA = {
+    total:[
+      ['MT','Minh Trần','Phòng KD',128,'g1',false],
+      ['NH','Ngọc Hà','Marketing',119,'g2',false],
+      ['HY','Huyền','Bạn · Sản phẩm',112,'g3',true],
+      ['TL','Tuấn Lê','Kỹ thuật',96,'',false],
+      ['PL','Phương Linh','Nhân sự',91,'',false],
+      ['QD','Quốc Đạt','Kỹ thuật',88,'',false],
+      ['HA','Hồng Anh','Kế toán',77,'',false],
+    ],
+    week:[
+      ['NH','Ngọc Hà','Marketing',34,'g1',false],
+      ['HY','Huyền','Bạn · Sản phẩm',31,'g2',true],
+      ['QD','Quốc Đạt','Kỹ thuật',29,'g3',false],
+      ['MT','Minh Trần','Phòng KD',26,'',false],
+      ['PL','Phương Linh','Nhân sự',22,'',false],
+      ['TL','Tuấn Lê','Kỹ thuật',18,'',false],
+    ],
+    stage:[
+      ['HY','Huyền','Bạn · Sản phẩm',18,'g1',true],
+      ['MT','Minh Trần','Phòng KD',15,'g2',false],
+      ['TL','Tuấn Lê','Kỹ thuật',14,'g3',false],
+      ['NH','Ngọc Hà','Marketing',12,'',false],
+      ['HA','Hồng Anh','Kế toán',9,'',false],
+    ],
+  };
+  function renderLB(mode){
+    const el=document.getElementById('lbList');
+    el.innerHTML=DATA[mode].map((r,i)=>{
+      const rk=i+1, g=r[4]?('g'+ (i+1)) : '';
+      const gc = i===0?'g1':i===1?'g2':i===2?'g3':'';
+      return `<div class="lbrow ${r[5]?'me':''}">
+        <div class="rank ${gc}">${rk}</div>
+        <div class="av">${r[0].slice(0,2)}</div>
+        <div class="lbname">${r[1]}<small>${r[2]}</small></div>
+        <div class="lbpts">${r[3]}đ</div></div>`;
+    }).join('');
+  }
+  function rankMode(node,mode){document.querySelectorAll('.mode').forEach(m=>m.classList.remove('on'));node.classList.add('on');renderLB(mode);}
+  renderLB('total');
+
+  function go(node,id){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+    node.classList.add('on');
+    document.querySelectorAll('.scr').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelector('.screen').scrollTop=0;
+  }
+  function bump(id,d){const e=document.getElementById(id);let v=Math.max(0,parseInt(e.textContent)+d);e.textContent=v;}
+  function star(id){
+    const me=document.getElementById(id);
+    // 1 kèo tủ / vòng: tắt cái còn lại (demo cùng "vòng bảng")
+    ['star1','star2'].forEach(s=>{if(s!==id)document.getElementById(s).classList.remove('on')});
+    me.classList.toggle('on');
+    if(me.classList.contains('on'))toast('⭐ Đã đặt kèo tủ ×2 cho vòng này');
+  }
+  function pick(node){node.parentNode.querySelectorAll('.opt').forEach(o=>o.classList.remove('on'));node.classList.add('on');}
+  let T;
+  function toast(msg){const t=document.getElementById('toast');t.textContent=msg||'Đã lưu ⚽';t.classList.add('show');clearTimeout(T);T=setTimeout(()=>t.classList.remove('show'),1600);}
+  function save(){toast('Đã lưu ⚽ +điểm sẽ tự tính');}
+</script>
+</body>
+</html>
