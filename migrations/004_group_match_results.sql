@@ -34,53 +34,45 @@ create index if not exists idx_wc_group_match_results_day
 grant select, insert, update, delete on app_nha_tien_tri.group_match_results to authenticated;
 alter table app_nha_tien_tri.group_match_results enable row level security;
 
+create or replace function app_nha_tien_tri.can_manage_group_results(p_workspace_id uuid)
+returns boolean
+language sql
+stable
+as $$
+  select exists (
+    select 1
+    from public.workspace_members wm
+    where wm.workspace_id = p_workspace_id
+      and wm.user_id = auth.uid()
+      and wm.role in ('owner', 'admin')
+  );
+$$;
+
+create or replace function app_nha_tien_tri.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
 drop policy if exists "group_match_results_select" on app_nha_tien_tri.group_match_results;
 create policy "group_match_results_select" on app_nha_tien_tri.group_match_results
 for select using (public.can_access_app_data(workspace_id, 'nha-tien-tri'));
 
 drop policy if exists "group_match_results_insert" on app_nha_tien_tri.group_match_results;
 create policy "group_match_results_insert" on app_nha_tien_tri.group_match_results
-for insert with check (
-  exists (
-    select 1
-    from public.workspace_members wm
-    where wm.workspace_id = group_match_results.workspace_id
-      and wm.user_id = auth.uid()
-      and wm.role in ('owner', 'admin')
-  )
-);
+for insert with check (app_nha_tien_tri.can_manage_group_results(workspace_id));
 
 drop policy if exists "group_match_results_update" on app_nha_tien_tri.group_match_results;
 create policy "group_match_results_update" on app_nha_tien_tri.group_match_results
-for update using (
-  exists (
-    select 1
-    from public.workspace_members wm
-    where wm.workspace_id = group_match_results.workspace_id
-      and wm.user_id = auth.uid()
-      and wm.role in ('owner', 'admin')
-  )
-) with check (
-  exists (
-    select 1
-    from public.workspace_members wm
-    where wm.workspace_id = group_match_results.workspace_id
-      and wm.user_id = auth.uid()
-      and wm.role in ('owner', 'admin')
-  )
-);
+for update using (app_nha_tien_tri.can_manage_group_results(workspace_id));
 
 drop policy if exists "group_match_results_delete" on app_nha_tien_tri.group_match_results;
 create policy "group_match_results_delete" on app_nha_tien_tri.group_match_results
-for delete using (
-  exists (
-    select 1
-    from public.workspace_members wm
-    where wm.workspace_id = group_match_results.workspace_id
-      and wm.user_id = auth.uid()
-      and wm.role in ('owner', 'admin')
-  )
-);
+for delete using (app_nha_tien_tri.can_manage_group_results(workspace_id));
 
 drop trigger if exists trg_wc_group_match_results_updated on app_nha_tien_tri.group_match_results;
 create trigger trg_wc_group_match_results_updated before update on app_nha_tien_tri.group_match_results
