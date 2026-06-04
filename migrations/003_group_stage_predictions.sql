@@ -1,16 +1,17 @@
 -- =====================================================================
 -- Nha Tien Tri World Cup 2026 - group-stage-only tables.
 --
--- Slug: worldcup -> schema app_worldcup. Do NOT write app_worldcup_dev here;
+-- Slug: nha-tien-tri -> schema app_nha_tien_tri. Do NOT write
+-- app_nha_tien_tri_dev here;
 -- the Mushy migration reviewer duplicates to the dev schema.
 -- =====================================================================
 
-create or replace function app_worldcup.set_updated_at() returns trigger as $$
+create or replace function app_nha_tien_tri.set_updated_at() returns trigger as $$
 begin new.updated_at = now(); return new; end;
 $$ language plpgsql;
 
 -- @realtime
-create table if not exists app_worldcup.group_predictions (
+create table if not exists app_nha_tien_tri.group_predictions (
   id            uuid primary key default gen_random_uuid(),
   workspace_id  uuid not null references public.workspaces(id) on delete cascade,
   created_by    uuid not null references auth.users(id),
@@ -25,37 +26,37 @@ create table if not exists app_worldcup.group_predictions (
 );
 
 create index if not exists idx_wc_group_predictions_workspace
-  on app_worldcup.group_predictions (workspace_id);
+  on app_nha_tien_tri.group_predictions (workspace_id);
 create index if not exists idx_wc_group_predictions_user_day
-  on app_worldcup.group_predictions (workspace_id, created_by, match_day);
+  on app_nha_tien_tri.group_predictions (workspace_id, created_by, match_day);
 
-grant select, insert, update, delete on app_worldcup.group_predictions to authenticated;
-alter table app_worldcup.group_predictions enable row level security;
+grant select, insert, update, delete on app_nha_tien_tri.group_predictions to authenticated;
+alter table app_nha_tien_tri.group_predictions enable row level security;
 
-drop policy if exists "group_predictions_select" on app_worldcup.group_predictions;
-create policy "group_predictions_select" on app_worldcup.group_predictions
-for select using (public.can_access_app_data(workspace_id, 'worldcup'));
+drop policy if exists "group_predictions_select" on app_nha_tien_tri.group_predictions;
+create policy "group_predictions_select" on app_nha_tien_tri.group_predictions
+for select using (public.can_access_app_data(workspace_id, 'nha-tien-tri'));
 
-drop policy if exists "group_predictions_insert" on app_worldcup.group_predictions;
-create policy "group_predictions_insert" on app_worldcup.group_predictions
-for insert with check (public.can_access_app_data(workspace_id, 'worldcup'));
+drop policy if exists "group_predictions_insert" on app_nha_tien_tri.group_predictions;
+create policy "group_predictions_insert" on app_nha_tien_tri.group_predictions
+for insert with check (public.can_access_app_data(workspace_id, 'nha-tien-tri'));
 
-drop policy if exists "group_predictions_update" on app_worldcup.group_predictions;
-create policy "group_predictions_update" on app_worldcup.group_predictions
-for update using (public.can_access_app_data(workspace_id, 'worldcup'))
-with check (public.can_access_app_data(workspace_id, 'worldcup'));
+drop policy if exists "group_predictions_update" on app_nha_tien_tri.group_predictions;
+create policy "group_predictions_update" on app_nha_tien_tri.group_predictions
+for update using (public.can_access_app_data(workspace_id, 'nha-tien-tri'))
+with check (public.can_access_app_data(workspace_id, 'nha-tien-tri'));
 
-drop policy if exists "group_predictions_delete" on app_worldcup.group_predictions;
-create policy "group_predictions_delete" on app_worldcup.group_predictions
+drop policy if exists "group_predictions_delete" on app_nha_tien_tri.group_predictions;
+create policy "group_predictions_delete" on app_nha_tien_tri.group_predictions
 for delete using (public.is_owner_workspace_member(workspace_id));
 
-drop trigger if exists trg_wc_group_predictions_updated on app_worldcup.group_predictions;
+drop trigger if exists trg_wc_group_predictions_updated on app_nha_tien_tri.group_predictions;
 create trigger trg_wc_group_predictions_updated
-  before update on app_worldcup.group_predictions
-  for each row execute function app_worldcup.set_updated_at();
+  before update on app_nha_tien_tri.group_predictions
+  for each row execute function app_nha_tien_tri.set_updated_at();
 
 -- @realtime
-create table if not exists app_worldcup.group_daily_answers (
+create table if not exists app_nha_tien_tri.group_daily_answers (
   id            uuid primary key default gen_random_uuid(),
   workspace_id  uuid not null references public.workspaces(id) on delete cascade,
   created_by    uuid not null references auth.users(id),
@@ -67,31 +68,31 @@ create table if not exists app_worldcup.group_daily_answers (
 );
 
 create index if not exists idx_wc_group_daily_answers_workspace
-  on app_worldcup.group_daily_answers (workspace_id);
+  on app_nha_tien_tri.group_daily_answers (workspace_id);
 create index if not exists idx_wc_group_daily_answers_user
-  on app_worldcup.group_daily_answers (workspace_id, created_by);
+  on app_nha_tien_tri.group_daily_answers (workspace_id, created_by);
 
-grant select, insert, update, delete on app_worldcup.group_daily_answers to authenticated;
-alter table app_worldcup.group_daily_answers enable row level security;
+grant select, insert, update, delete on app_nha_tien_tri.group_daily_answers to authenticated;
+alter table app_nha_tien_tri.group_daily_answers enable row level security;
 
-drop policy if exists "group_daily_answers_select" on app_worldcup.group_daily_answers;
-create policy "group_daily_answers_select" on app_worldcup.group_daily_answers
-for select using (public.can_access_app_data(workspace_id, 'worldcup'));
+drop policy if exists "group_daily_answers_select" on app_nha_tien_tri.group_daily_answers;
+create policy "group_daily_answers_select" on app_nha_tien_tri.group_daily_answers
+for select using (public.can_access_app_data(workspace_id, 'nha-tien-tri'));
 
-drop policy if exists "group_daily_answers_insert" on app_worldcup.group_daily_answers;
-create policy "group_daily_answers_insert" on app_worldcup.group_daily_answers
-for insert with check (public.can_access_app_data(workspace_id, 'worldcup'));
+drop policy if exists "group_daily_answers_insert" on app_nha_tien_tri.group_daily_answers;
+create policy "group_daily_answers_insert" on app_nha_tien_tri.group_daily_answers
+for insert with check (public.can_access_app_data(workspace_id, 'nha-tien-tri'));
 
-drop policy if exists "group_daily_answers_update" on app_worldcup.group_daily_answers;
-create policy "group_daily_answers_update" on app_worldcup.group_daily_answers
-for update using (public.can_access_app_data(workspace_id, 'worldcup'))
-with check (public.can_access_app_data(workspace_id, 'worldcup'));
+drop policy if exists "group_daily_answers_update" on app_nha_tien_tri.group_daily_answers;
+create policy "group_daily_answers_update" on app_nha_tien_tri.group_daily_answers
+for update using (public.can_access_app_data(workspace_id, 'nha-tien-tri'))
+with check (public.can_access_app_data(workspace_id, 'nha-tien-tri'));
 
-drop policy if exists "group_daily_answers_delete" on app_worldcup.group_daily_answers;
-create policy "group_daily_answers_delete" on app_worldcup.group_daily_answers
+drop policy if exists "group_daily_answers_delete" on app_nha_tien_tri.group_daily_answers;
+create policy "group_daily_answers_delete" on app_nha_tien_tri.group_daily_answers
 for delete using (public.is_owner_workspace_member(workspace_id));
 
-drop trigger if exists trg_wc_group_daily_answers_updated on app_worldcup.group_daily_answers;
+drop trigger if exists trg_wc_group_daily_answers_updated on app_nha_tien_tri.group_daily_answers;
 create trigger trg_wc_group_daily_answers_updated
-  before update on app_worldcup.group_daily_answers
-  for each row execute function app_worldcup.set_updated_at();
+  before update on app_nha_tien_tri.group_daily_answers
+  for each row execute function app_nha_tien_tri.set_updated_at();
