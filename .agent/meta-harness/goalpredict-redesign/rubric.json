@@ -1,0 +1,24 @@
+{
+  "locked": true,
+  "target": 7,
+  "target_min": 6,
+  "criteria": [
+    {
+      "name": "reference_similarity",
+      "description": "Mobile UI clearly resembles the supplied GoalPredict reference: header, pink hero, quick nav cards, match cards, ranking teaser, reward banner, bottom nav."
+    },
+    {
+      "name": "branding",
+      "description": "GoalPredict is replaced by Nhà Tiên Tri in visible app branding."
+    },
+    {
+      "name": "functional_preservation",
+      "description": "Existing tab screens and prediction logic remain reachable."
+    },
+    {
+      "name": "runtime_quality",
+      "description": "App builds and renders without obvious layout breakage on mobile."
+    }
+  ],
+  "orchestration_mode": "Local controller"
+}

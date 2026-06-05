@@ -19,11 +19,11 @@ import './App.css';
 const DEFAULT_TAB = 'matches';
 const LIVE_SCORE_POLL_MS = 120000;
 const TABS = [
-  { id: 'matches', label: 'Trận đấu', shortLabel: 'Trận', icon: '⚽' },
-  { id: 'daily', label: 'Câu hỏi', shortLabel: 'Hỏi', icon: '?' },
-  { id: 'leaderboard', label: 'Bảng xếp hạng', shortLabel: 'BXH', icon: '#' },
-  { id: 'results', label: 'Kết quả', shortLabel: 'KQ', icon: '✓' },
-  { id: 'rules', label: 'Luật', shortLabel: 'Luật', icon: 'i' },
+  { id: 'matches', label: 'Trang chủ', shortLabel: 'Trang chủ', icon: '⌂' },
+  { id: 'results', label: 'Trận đấu', shortLabel: 'Trận đấu', icon: '⚽' },
+  { id: 'daily', label: 'Dự đoán', shortLabel: 'Dự đoán', icon: '●' },
+  { id: 'leaderboard', label: 'Bảng xếp hạng', shortLabel: 'BXH', icon: '♕' },
+  { id: 'rules', label: 'Lịch sử', shortLabel: 'Lịch sử', icon: '↺' },
 ];
 const PRIMARY_GROUP_FILTERS = ['A', 'B', 'C', 'D'];
 const EXTRA_GROUP_FILTERS = Object.keys(GROUPS).filter((group) => !PRIMARY_GROUP_FILTERS.includes(group));
@@ -358,19 +358,18 @@ export default function App() {
     loadGameData();
   }
 
+  const visibleNotice = notice && !notice.startsWith('DEV mock') ? notice : '';
+
   return (
     <div className="wc-app" onTouchStart={handleRefreshTouchStart} onTouchEnd={handleRefreshTouchEnd}>
+      <AppHeader />
       <main>
-        {(notice || error || loading) && (
-          <div className={`toast-line ${error ? 'error' : ''}`} role="status">
-            {loading ? 'Đang tải dữ liệu...' : error || notice}
-          </div>
-        )}
+        <PromoHero onStart={() => setActiveTab('daily')} />
+        <QuickActionTabs activeTab={activeTab} onTab={setActiveTab} />
 
-        <LiveScorePanel liveScores={liveScores} liveSync={liveSync} />
-        {localSimulation && (
-          <div className="dev-sim-line" role="status">
-            DEV mock: 6 tran dau gia lap, BXH tinh lai moi {MOCK_SCORE_STEP_MS / 1000}s. Them ?mock=0 de tat.
+        {(visibleNotice || error || loading) && (
+          <div className={`toast-line ${error ? 'error' : ''}`} role="status">
+            {loading ? 'Đang tải dữ liệu...' : error || visibleNotice}
           </div>
         )}
 
@@ -386,6 +385,12 @@ export default function App() {
             onSave={handleSavePrediction}
             liveSync={liveSync}
           />
+        )}
+        {activeTab === 'matches' && (
+          <>
+            <TopPredictors standings={standings} />
+            <RewardBanner onOpenRules={() => setActiveTab('rules')} />
+          </>
         )}
         {activeTab === 'daily' && (
           <DailyScreen
@@ -442,6 +447,113 @@ export default function App() {
   );
 }
 
+function AppHeader() {
+  return (
+    <header className="app-header" aria-label="Nhà Tiên Tri">
+      <div className="brand-lockup">
+        <div className="brand-ball" aria-hidden="true">⚽</div>
+        <div>
+          <h1><span>Nhà</span> Tiên Tri</h1>
+          <p>Dự đoán - Nhận quà - Leo top</p>
+        </div>
+      </div>
+      <button className="notify-btn" type="button" aria-label="Thông báo">
+        🔔
+        <span aria-hidden="true" />
+      </button>
+    </header>
+  );
+}
+
+function PromoHero({ onStart }) {
+  return (
+    <section className="promo-hero" aria-label="Dự đoán nhận quà">
+      <div className="confetti-layer" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+        <i />
+        <i />
+      </div>
+      <div className="promo-copy">
+        <h2>Dự đoán cực hay</h2>
+        <strong>Rinh quà mỗi ngày!</strong>
+        <button type="button" onClick={onStart}>Tham gia ngay <span>→</span></button>
+      </div>
+      <div className="goal-scene" aria-hidden="true">
+        <div className="goal-net" />
+        <div className="hero-ball">⚽</div>
+      </div>
+    </section>
+  );
+}
+
+function QuickActionTabs({ activeTab, onTab }) {
+  const items = [
+    { id: 'matches', label: 'Trận đấu', icon: '⚽' },
+    { id: 'leaderboard', label: 'Bảng xếp hạng', icon: '♕' },
+    { id: 'rules', label: 'Lịch sử', icon: '↺' },
+    { id: 'daily', label: 'Cá nhân', icon: '♙' },
+  ];
+
+  return (
+    <section className="quick-tabs" aria-label="Lối tắt">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          className={activeTab === item.id ? 'active' : ''}
+          onClick={() => onTab(item.id)}
+        >
+          <span>{item.icon}</span>
+          {item.label}
+        </button>
+      ))}
+    </section>
+  );
+}
+
+function TopPredictors({ standings }) {
+  const fallback = [
+    { participantId: 'sample-1', displayName: 'Minh Anh', total: 1250, rank: 1 },
+    { participantId: 'sample-2', displayName: 'Hoàng Nam', total: 1120, rank: 2 },
+    { participantId: 'sample-3', displayName: 'Phương Linh', total: 980, rank: 3 },
+  ];
+  const rows = (standings || []).slice(0, 3);
+  const podium = rows.length >= 3 ? rows : fallback;
+
+  return (
+    <section className="top-predictors" aria-label="Top dự đoán">
+      <div className="top-predictors-head">
+        <h2>Top dự đoán hôm nay</h2>
+        <span aria-hidden="true">🏆</span>
+      </div>
+      <div className="top-predictors-row">
+        {podium.map((row, index) => (
+          <article key={row.participantId || row.id || index} className={`predictor-chip rank-${index + 1}`}>
+            <b>{index + 1}</b>
+            <span className="predictor-avatar" aria-hidden="true">{index === 0 ? '🍄' : index === 1 ? '👦' : '👧'}</span>
+            <div>
+              <strong>{row.displayName || row.name || `Người chơi ${index + 1}`}</strong>
+              <small>{Number(row.total || row.points || 0).toLocaleString('vi-VN')} điểm</small>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RewardBanner({ onOpenRules }) {
+  return (
+    <section className="reward-banner">
+      <span aria-hidden="true">🎁</span>
+      <strong>Dự đoán đúng - Nhận quà khủng!</strong>
+      <button type="button" onClick={onOpenRules}>Xem thể lệ →</button>
+    </section>
+  );
+}
+
 function SetupScreen({ error }) {
   return (
     <main className="join-layout">
@@ -485,7 +597,7 @@ function MatchesScreen({
       <div className="screen-heading">
         <div>
           <p className="eyebrow">Dự đoán tỉ số</p>
-          <h2>72 trận vòng bảng</h2>
+          <h2>Trận đấu sắp tới</h2>
           <LiveSyncStatus liveSync={liveSync} />
         </div>
         <div className="search-pill">
