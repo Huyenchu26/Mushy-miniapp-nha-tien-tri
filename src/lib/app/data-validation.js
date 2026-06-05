@@ -11,8 +11,12 @@ export function validateWorldCupData({
   const expectedTeams = new Set(Object.values(groups).flat());
   const metaTeams = new Set(Object.keys(TEAM_META));
   const matchNos = new Set();
+  const allowedStages = new Set(['group', 'round32', 'round16', 'quarter', 'semi', 'third', 'final']);
+  const expectedMatchCount = 104;
 
-  if (matches.length !== 72) errors.push(`Expected 72 group matches, found ${matches.length}.`);
+  if (matches.length !== expectedMatchCount) {
+    errors.push(`Expected ${expectedMatchCount} World Cup matches, found ${matches.length}.`);
+  }
 
   for (const match of matches) {
     const label = `Match ${match.matchNo || '?'}`;
@@ -20,13 +24,28 @@ export function validateWorldCupData({
     if (matchNos.has(match.matchNo)) errors.push(`${label}: duplicate matchNo.`);
     matchNos.add(match.matchNo);
 
-    if (!groups[match.group]) errors.push(`${label}: unknown group ${match.group}.`);
-    if (!expectedTeams.has(match.homeTeam)) errors.push(`${label}: unknown home team ${match.homeTeam}.`);
-    if (!expectedTeams.has(match.awayTeam)) errors.push(`${label}: unknown away team ${match.awayTeam}.`);
+    if (!allowedStages.has(match.stage)) errors.push(`${label}: unknown stage ${match.stage}.`);
+    if (match.stage === 'group' && !groups[match.group]) errors.push(`${label}: unknown group ${match.group}.`);
+    if (match.stage === 'group' && !expectedTeams.has(match.homeTeam)) {
+      errors.push(`${label}: unknown home team ${match.homeTeam}.`);
+    }
+    if (match.stage === 'group' && !expectedTeams.has(match.awayTeam)) {
+      errors.push(`${label}: unknown away team ${match.awayTeam}.`);
+    }
     if (!TEAM_META[match.homeTeam]) errors.push(`${label}: missing TEAM_META for ${match.homeTeam}.`);
     if (!TEAM_META[match.awayTeam]) errors.push(`${label}: missing TEAM_META for ${match.awayTeam}.`);
-    if (match.homeTeam === match.awayTeam) errors.push(`${label}: team cannot play itself.`);
-    if (match.stage !== 'group') errors.push(`${label}: stage must be group for v1.`);
+    if (match.homeTeam === match.awayTeam && match.homeTeam !== 'Unknown') {
+      errors.push(`${label}: team cannot play itself.`);
+    }
+    if (match.stage !== 'group') {
+      if (!match.stageLabel) errors.push(`${label}: knockout match missing stageLabel.`);
+      if (match.homeTeam !== 'Unknown' && !expectedTeams.has(match.homeTeam)) {
+        errors.push(`${label}: unknown knockout home team ${match.homeTeam}.`);
+      }
+      if (match.awayTeam !== 'Unknown' && !expectedTeams.has(match.awayTeam)) {
+        errors.push(`${label}: unknown knockout away team ${match.awayTeam}.`);
+      }
+    }
     if (!isValidDate(match.kickoffAt)) errors.push(`${label}: invalid kickoffAt.`);
 
     if (match.status === 'finished') {
@@ -38,7 +57,7 @@ export function validateWorldCupData({
     }
   }
 
-  for (let no = 1; no <= 72; no += 1) {
+  for (let no = 1; no <= expectedMatchCount; no += 1) {
     if (!matchNos.has(no)) errors.push(`Missing matchNo ${no}.`);
   }
 

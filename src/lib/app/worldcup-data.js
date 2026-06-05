@@ -1,4 +1,4 @@
-export const DATA_VERSION = '2026-group-stage-v1';
+export const DATA_VERSION = '2026-full-schedule-v2';
 
 export const DATA_SOURCE = {
   label: 'FIFA match schedule, crawlable mirror via MatchTimes',
@@ -32,6 +32,13 @@ export const GROUPS = {
 };
 
 export const TEAM_META = {
+  Unknown: {
+    flag: '?',
+    fifaCode: 'UNK',
+    fifaRank: null,
+    viName: 'Unknown',
+    flagUrl: '',
+  },
   Mexico: team('🇲🇽', 'MEX', 15, 'Mexico'),
   'South Africa': team('🇿🇦', 'RSA', 60, 'Nam Phi'),
   'Korea Republic': team('🇰🇷', 'KOR', 25, 'Hàn Quốc'),
@@ -180,6 +187,38 @@ export const MATCHES = [
   match(70, 'J', 'Jordan', 'Argentina', '2026-06-28T02:00:00Z'),
   match(71, 'K', 'Colombia', 'Portugal', '2026-06-27T23:30:00Z'),
   match(72, 'K', 'Congo DR', 'Uzbekistan', '2026-06-27T23:30:00Z'),
+  knockoutMatch(73, 'round32', 'V\u00f2ng 1/16', '2026-06-28T20:00:00Z'),
+  knockoutMatch(74, 'round32', 'V\u00f2ng 1/16', '2026-06-29T17:00:00Z'),
+  knockoutMatch(75, 'round32', 'V\u00f2ng 1/16', '2026-06-29T20:00:00Z'),
+  knockoutMatch(76, 'round32', 'V\u00f2ng 1/16', '2026-06-29T23:00:00Z'),
+  knockoutMatch(77, 'round32', 'V\u00f2ng 1/16', '2026-06-30T17:00:00Z'),
+  knockoutMatch(78, 'round32', 'V\u00f2ng 1/16', '2026-06-30T20:00:00Z'),
+  knockoutMatch(79, 'round32', 'V\u00f2ng 1/16', '2026-06-30T23:00:00Z'),
+  knockoutMatch(80, 'round32', 'V\u00f2ng 1/16', '2026-07-01T17:00:00Z'),
+  knockoutMatch(81, 'round32', 'V\u00f2ng 1/16', '2026-07-01T20:00:00Z'),
+  knockoutMatch(82, 'round32', 'V\u00f2ng 1/16', '2026-07-01T23:00:00Z'),
+  knockoutMatch(83, 'round32', 'V\u00f2ng 1/16', '2026-07-02T17:00:00Z'),
+  knockoutMatch(84, 'round32', 'V\u00f2ng 1/16', '2026-07-02T20:00:00Z'),
+  knockoutMatch(85, 'round32', 'V\u00f2ng 1/16', '2026-07-02T23:00:00Z'),
+  knockoutMatch(86, 'round32', 'V\u00f2ng 1/16', '2026-07-03T17:00:00Z'),
+  knockoutMatch(87, 'round32', 'V\u00f2ng 1/16', '2026-07-03T20:00:00Z'),
+  knockoutMatch(88, 'round32', 'V\u00f2ng 1/16', '2026-07-03T23:00:00Z'),
+  knockoutMatch(89, 'round16', 'V\u00f2ng 1/8', '2026-07-04T20:00:00Z'),
+  knockoutMatch(90, 'round16', 'V\u00f2ng 1/8', '2026-07-04T23:00:00Z'),
+  knockoutMatch(91, 'round16', 'V\u00f2ng 1/8', '2026-07-05T20:00:00Z'),
+  knockoutMatch(92, 'round16', 'V\u00f2ng 1/8', '2026-07-05T23:00:00Z'),
+  knockoutMatch(93, 'round16', 'V\u00f2ng 1/8', '2026-07-06T20:00:00Z'),
+  knockoutMatch(94, 'round16', 'V\u00f2ng 1/8', '2026-07-06T23:00:00Z'),
+  knockoutMatch(95, 'round16', 'V\u00f2ng 1/8', '2026-07-07T20:00:00Z'),
+  knockoutMatch(96, 'round16', 'V\u00f2ng 1/8', '2026-07-07T23:00:00Z'),
+  knockoutMatch(97, 'quarter', 'T\u1ee9 k\u1ebft', '2026-07-09T20:00:00Z'),
+  knockoutMatch(98, 'quarter', 'T\u1ee9 k\u1ebft', '2026-07-10T20:00:00Z'),
+  knockoutMatch(99, 'quarter', 'T\u1ee9 k\u1ebft', '2026-07-11T17:00:00Z'),
+  knockoutMatch(100, 'quarter', 'T\u1ee9 k\u1ebft', '2026-07-11T20:00:00Z'),
+  knockoutMatch(101, 'semi', 'B\u00e1n k\u1ebft', '2026-07-14T20:00:00Z'),
+  knockoutMatch(102, 'semi', 'B\u00e1n k\u1ebft', '2026-07-15T20:00:00Z'),
+  knockoutMatch(103, 'third', 'H\u1ea1ng ba', '2026-07-18T20:00:00Z'),
+  knockoutMatch(104, 'final', 'Chung k\u1ebft', '2026-07-19T20:00:00Z'),
 ];
 
 export const DAILY_QUESTIONS = [
@@ -209,6 +248,22 @@ function match(matchNo, group, homeTeam, awayTeam, kickoffAt) {
     group,
     homeTeam,
     awayTeam,
+    kickoffAt,
+    matchDay: kickoffAt.slice(0, 10),
+    status: 'scheduled',
+    homeScore: null,
+    awayScore: null,
+  };
+}
+
+function knockoutMatch(matchNo, stage, stageLabel, kickoffAt) {
+  return {
+    matchNo,
+    stage,
+    stageLabel,
+    group: stage,
+    homeTeam: 'Unknown',
+    awayTeam: 'Unknown',
     kickoffAt,
     matchDay: kickoffAt.slice(0, 10),
     status: 'scheduled',

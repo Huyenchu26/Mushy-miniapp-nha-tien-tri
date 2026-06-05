@@ -129,6 +129,13 @@ function normalizeWorldCup26Game(game) {
   const homeTeam = normalizeTeamName(game.home_team_name_en || game.home_team_label);
   const awayTeam = normalizeTeamName(game.away_team_name_en || game.away_team_label);
   if (!homeTeam || !awayTeam) return null;
+  const statusText = [
+    game.status,
+    game.status_label,
+    game.match_status,
+    game.time_elapsed,
+    game.type,
+  ].filter(Boolean).join(' ');
 
   return {
     externalId: String(game.id || game._id || ''),
@@ -140,6 +147,8 @@ function normalizeWorldCup26Game(game) {
     homeScore,
     awayScore,
     status: normalizeWorldCup26Status(game),
+    finishType: normalizeFinishType(statusText),
+    statusDetail: statusText || null,
     minute: normalizeMinute(game.time_elapsed),
     rawClock: normalizeRawClock(game.time_elapsed),
   };
@@ -159,9 +168,18 @@ function hasUsefulLiveScores(matches) {
 }
 
 function normalizeWorldCup26Status(game) {
-  if (String(game.finished).toUpperCase() === 'TRUE') return 'finished';
   const elapsed = String(game.time_elapsed || '').toLowerCase();
+  const statusText = [
+    game.status,
+    game.status_label,
+    game.match_status,
+    game.time_elapsed,
+    game.type,
+  ].filter(Boolean).join(' ').toLowerCase();
+  if (String(game.finished).toUpperCase() === 'TRUE') return 'finished';
   if (!elapsed || elapsed === 'notstarted') return 'scheduled';
+  if (isPenaltyText(statusText)) return 'penalties';
+  if (isExtraTimeText(statusText)) return 'extra_time';
   return 'in_progress';
 }
 
@@ -175,6 +193,11 @@ function normalizeEspnEvent(event) {
   if (!homeTeam || !awayTeam) return null;
 
   const status = competition?.status || event?.status;
+  const statusDetail = [
+    status?.type?.shortDetail,
+    status?.type?.detail,
+    status?.displayClock,
+  ].filter(Boolean).join(' ');
   return {
     externalId: String(event.id || competition?.id || ''),
     matchNo: null,
@@ -185,6 +208,9 @@ function normalizeEspnEvent(event) {
     homeScore: parseScore(home?.score),
     awayScore: parseScore(away?.score),
     status: normalizeEspnStatus(status),
+    finishType: normalizeFinishType(statusDetail),
+    statusDetail: statusDetail || null,
+    period: status?.period || null,
     minute: normalizeMinute(status?.displayClock),
     rawClock: status?.displayClock || status?.type?.shortDetail || null,
   };
@@ -193,9 +219,31 @@ function normalizeEspnEvent(event) {
 function normalizeEspnStatus(status) {
   const state = status?.type?.state;
   const completed = status?.type?.completed === true;
+  const statusText = [
+    status?.type?.shortDetail,
+    status?.type?.detail,
+    status?.displayClock,
+  ].filter(Boolean).join(' ').toLowerCase();
   if (completed || state === 'post') return 'finished';
+  if (state === 'in' && isPenaltyText(statusText)) return 'penalties';
+  if (state === 'in' && isExtraTimeText(statusText)) return 'extra_time';
   if (state === 'in') return 'in_progress';
   return 'scheduled';
+}
+
+function normalizeFinishType(value) {
+  const text = String(value || '').toLowerCase();
+  if (isPenaltyText(text)) return 'penalties';
+  if (isExtraTimeText(text)) return 'aet';
+  return null;
+}
+
+function isPenaltyText(text) {
+  return /\b(pen|pens|penalties|penalty|shootout|shoot-out)\b/i.test(String(text || ''));
+}
+
+function isExtraTimeText(text) {
+  return /\b(aet|after extra|extra time|hi[eệ]p ph[uụ]|et)\b/i.test(String(text || ''));
 }
 
 function normalizeTeamName(value) {
