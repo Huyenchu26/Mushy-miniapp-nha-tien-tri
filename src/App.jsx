@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DAILY_QUESTIONS, DATA_SOURCE, FIFA_RANKING_SOURCE, GROUPS, MATCHES, TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS } from './lib/app/worldcup-data.js';
-import { computeStandings, dailyPoints, isFinished, matchBasePoints, matchScoreBreakdown } from './lib/app/scoring.js';
+import { computeStandings, dailyPoints, isFinished, matchBasePoints, matchScoreBreakdown, outcome } from './lib/app/scoring.js';
 import Select from './components/Select.jsx';
 import { getContext } from './lib/context.js';
 import { listMembers } from './lib/members.js';
@@ -8,6 +8,7 @@ import { db } from './lib/supabase.js';
 import './App.css';
 
 const DEFAULT_TAB = 'matches';
+const LIVE_SCORE_POLL_MS = 120000;
 const TABS = [
   { id: 'matches', label: 'Trận đấu' },
   { id: 'daily', label: 'Câu hỏi' },
@@ -25,7 +26,8 @@ export default function App() {
   const [predictions, setPredictions] = useState([]);
   const [answers, setAnswers] = useState([]);
   const [longTermBet, setLongTermBet] = useState(null);
-  const [matchResults, setMatchResults] = useState([]);
+  const [liveScores, setLiveScores] = useState([]);
+  const [liveSync, setLiveSync] = useState({ source: '', fetchedAt: '', error: '' });
   const [members, setMembers] = useState([]);
   const [groupFilter, setGroupFilter] = useState('all');
   const [query, setQuery] = useState('');
@@ -57,6 +59,41 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx?.userId, scope?.workspaceId]);
 
+  useEffect(() => {
+    if (!ctx?.token || !scope?.workspaceId) return undefined;
+
+    let cancelled = false;
+    async function syncLiveScores() {
+      try {
+        const payload = await fetchLiveScores(ctx.token, scope.workspaceId);
+        if (cancelled) return;
+        setLiveScores(payload.matches || []);
+        setLiveSync({
+          source: payload.source || '',
+          fetchedAt: payload.fetchedAt || '',
+          fallbackReason: payload.fallbackReason || '',
+          error: '',
+        });
+      } catch (err) {
+        if (cancelled) return;
+        setLiveSync((current) => ({
+          ...current,
+          error: err.message || 'Không đồng bộ được tỉ số live.',
+        }));
+      }
+    }
+
+    syncLiveScores();
+    const interval = window.setInterval(() => {
+      if (document.visibilityState !== 'hidden') syncLiveScores();
+    }, LIVE_SCORE_POLL_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [ctx?.token, scope?.workspaceId]);
+
   const predictionMap = useMemo(
     () => new Map(predictions.filter((p) => p.createdBy === ctx?.userId).map((p) => [Number(p.matchNo), p])),
     [predictions, ctx?.userId]
@@ -72,15 +109,22 @@ export default function App() {
     () => new Map(answers.filter((a) => a.createdBy === ctx?.userId).map((a) => [a.questionKey, a])),
     [answers, ctx?.userId]
   );
-  const matchesWithResults = useMemo(() => applyMatchResults(MATCHES, matchResults), [matchResults]);
+  const matchesWithOfficialScores = useMemo(
+    () => applyAutomaticScores(MATCHES, liveScores),
+    [liveScores]
+  );
+  const matchesWithLiveScores = useMemo(
+    () => applyLiveScores(matchesWithOfficialScores, liveScores),
+    [matchesWithOfficialScores, liveScores]
+  );
   const standings = useMemo(
-    () => buildStandings({ members, predictions, answers, matches: matchesWithResults }),
-    [members, predictions, answers, matchesWithResults]
+    () => buildStandings({ members, predictions, answers, matches: matchesWithOfficialScores }),
+    [members, predictions, answers, matchesWithOfficialScores]
   );
   const currentStanding = standings.find((row) => row.participantId === ctx?.userId);
   const filteredMatches = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return matchesWithResults.filter((match) => {
+    return matchesWithLiveScores.filter((match) => {
       const groupOk = groupFilter === 'all' || match.group === groupFilter;
       const queryOk =
         !needle ||
@@ -90,24 +134,21 @@ export default function App() {
         displayTeamName(match.awayTeam).toLowerCase().includes(needle);
       return groupOk && queryOk;
     });
-  }, [groupFilter, query, matchesWithResults]);
-  const canManageResults = ['owner', 'admin'].includes(ctx?.role);
+  }, [groupFilter, query, matchesWithLiveScores]);
 
   async function loadGameData() {
     setLoading(true);
     setError('');
     try {
-      const [predictionRows, answerRows, longTermRow, resultRows, memberRows] = await Promise.all([
+      const [predictionRows, answerRows, longTermRow, memberRows] = await Promise.all([
         fetchPredictions(scope.workspaceId),
         fetchDailyAnswers(scope.workspaceId),
         fetchLongTermBet(scope.workspaceId, ctx.userId),
-        fetchMatchResults(scope.workspaceId),
         listMembers(scope.workspaceId),
       ]);
       setPredictions(predictionRows);
       setAnswers(answerRows);
       setLongTermBet(longTermRow);
-      setMatchResults(resultRows);
       setMembers(ensureCurrentMember(memberRows, ctx));
     } catch (err) {
       setError(err.message || 'Không tải được dữ liệu game.');
@@ -220,41 +261,6 @@ export default function App() {
     }
   }
 
-  async function handleSaveResult(match, draft) {
-    setNotice('');
-    setError('');
-    try {
-      if (!canManageResults) {
-        throw new Error('Chỉ owner/admin workspace được chốt kết quả trận.');
-      }
-
-      const homeScore = normalizeScore(draft.homeScore);
-      const awayScore = normalizeScore(draft.awayScore);
-      const { error: upsertError } = await db.from('group_match_results').upsert(
-        {
-          workspace_id: scope.workspaceId,
-          created_by: ctx.userId,
-          match_no: match.matchNo,
-          match_day: match.matchDay,
-          home_team: match.homeTeam,
-          away_team: match.awayTeam,
-          home_score: homeScore,
-          away_score: awayScore,
-          status: 'finished',
-          result_source: 'manual',
-        },
-        { onConflict: 'workspace_id,match_no' }
-      );
-      if (upsertError) throw upsertError;
-
-      const nextResults = await fetchMatchResults(scope.workspaceId);
-      setMatchResults(nextResults);
-      setNotice(`Đã chốt trận #${match.matchNo}. BXH đã được tính lại.`);
-    } catch (err) {
-      setError(err.message || 'Không chốt được kết quả trận.');
-    }
-  }
-
   if (ctxError) {
     return <SetupScreen error={ctxError} />;
   }
@@ -282,6 +288,8 @@ export default function App() {
           </div>
         )}
 
+        <LiveScorePanel liveScores={liveScores} liveSync={liveSync} />
+
         {activeTab === 'matches' && (
           <MatchesScreen
             matches={filteredMatches}
@@ -292,6 +300,7 @@ export default function App() {
             onGroupFilter={setGroupFilter}
             onQuery={setQuery}
             onSave={handleSavePrediction}
+            liveSync={liveSync}
           />
         )}
         {activeTab === 'daily' && (
@@ -311,14 +320,13 @@ export default function App() {
             predictedCount={predictionMap.size}
             predictions={predictions.filter((prediction) => prediction.createdBy === ctx?.userId)}
             answers={answers.filter((answer) => answer.createdBy === ctx?.userId)}
-            matches={matchesWithResults}
+            matches={matchesWithOfficialScores}
           />
         )}
         {activeTab === 'results' && (
           <ResultsScreen
-            matches={matchesWithResults}
-            canManage={canManageResults}
-            onSave={handleSaveResult}
+            matches={matchesWithLiveScores}
+            liveSync={liveSync}
           />
         )}
         {activeTab === 'rules' && <RulesScreen />}
@@ -370,7 +378,17 @@ function SetupScreen({ error }) {
   );
 }
 
-function MatchesScreen({ matches, predictionMap, dailyDoubleDownMap, groupFilter, query, onGroupFilter, onQuery, onSave }) {
+function MatchesScreen({
+  matches,
+  predictionMap,
+  dailyDoubleDownMap,
+  groupFilter,
+  query,
+  onGroupFilter,
+  onQuery,
+  onSave,
+  liveSync,
+}) {
   const grouped = useMemo(() => groupByDate(matches), [matches]);
   const [showExtraGroups, setShowExtraGroups] = useState(false);
   const extraActive = EXTRA_GROUP_FILTERS.includes(groupFilter);
@@ -381,6 +399,7 @@ function MatchesScreen({ matches, predictionMap, dailyDoubleDownMap, groupFilter
         <div>
           <p className="eyebrow">Dự đoán tỉ số</p>
           <h2>72 trận vòng bảng</h2>
+          <LiveSyncStatus liveSync={liveSync} />
         </div>
         <div className="search-pill">
           <span>Tìm</span>
@@ -456,9 +475,67 @@ function MatchesScreen({ matches, predictionMap, dailyDoubleDownMap, groupFilter
   );
 }
 
+function LiveSyncStatus({ liveSync }) {
+  if (!liveSync?.source && !liveSync?.error) {
+    return <p className="live-sync muted">Live score sẽ tự đồng bộ mỗi 2 phút.</p>;
+  }
+
+  if (liveSync.error) {
+    return <p className="live-sync error">Live score tạm chưa kết nối.</p>;
+  }
+
+  const fetchedLabel = liveSync.fetchedAt ? formatRelativeSyncTime(liveSync.fetchedAt) : 'vừa xong';
+  return (
+    <p className="live-sync">
+      Live score: {sourceLabel(liveSync.source)} · {fetchedLabel}
+      {liveSync.fallbackReason ? ' · fallback' : ''}
+    </p>
+  );
+}
+
+function LiveScorePanel({ liveScores, liveSync }) {
+  const scores = Array.isArray(liveScores) ? liveScores : [];
+  const activeCount = scores.filter((score) => score.status === 'in_progress').length;
+  const finishedCount = scores.filter((score) => score.status === 'finished').length;
+  const fetchedLabel = liveSync?.fetchedAt ? formatRelativeSyncTime(liveSync.fetchedAt) : 'đang kết nối';
+  const source = liveSync?.source ? sourceLabel(liveSync.source) : 'WorldCup26';
+  const statusClass = liveSync?.error ? 'error' : activeCount > 0 ? 'active' : scores.length > 0 ? 'ready' : 'muted';
+  const headline = liveSync?.error
+    ? 'Chưa kết nối được nguồn tỉ số'
+    : activeCount > 0
+      ? `${activeCount} trận đang live`
+      : scores.length > 0
+        ? `${scores.length} trận đã đồng bộ`
+        : 'Đang chờ dữ liệu trận';
+
+  return (
+    <section className={`live-score-panel ${statusClass}`} aria-label="Trạng thái live score">
+      <div className="live-score-main">
+        <span className="live-score-dot" aria-hidden="true" />
+        <div>
+          <p className="eyebrow">Live score</p>
+          <h2>{headline}</h2>
+          <p>
+            Nguồn miễn phí: {source}
+            {liveSync?.fallbackReason ? ' · ESPN fallback' : ''} · {fetchedLabel}
+          </p>
+        </div>
+      </div>
+      <div className="live-score-metrics" aria-label="Thống kê live score">
+        <span><strong>{activeCount}</strong> live</span>
+        <span><strong>{finishedCount}</strong> FT API</span>
+        <span><strong>{scores.length}</strong> trận</span>
+      </div>
+    </section>
+  );
+}
+
 function MatchCardPrototype({ match, prediction, dailyDoubleMatchNo, onSave }) {
   const locked = Date.now() >= new Date(match.kickoffAt).getTime();
   const finished = isFinished(match);
+  const liveScore = shouldShowLiveScore(match) ? match.liveScore : null;
+  const liveInProgress = liveScore?.status === 'in_progress';
+  const liveFinished = liveScore?.status === 'finished';
   const isTodayMatchDay = match.matchDay === getLocalDateKey();
   const doubleDownReserved = !!dailyDoubleMatchNo && dailyDoubleMatchNo !== Number(match.matchNo);
   const [homePred, setHomePred] = useState(prediction?.homePred ?? 0);
@@ -466,6 +543,8 @@ function MatchCardPrototype({ match, prediction, dailyDoubleMatchNo, onSave }) {
   const [doubleDown, setDoubleDown] = useState(prediction?.doubleDown ?? false);
   const base = matchBasePoints(prediction, match);
   const breakdown = matchScoreBreakdown(prediction, match);
+  const displayHomeScore = finished ? match.homeScore : liveScore?.homeScore;
+  const displayAwayScore = finished ? match.awayScore : liveScore?.awayScore;
 
   useEffect(() => {
     setHomePred(prediction?.homePred ?? 0);
@@ -488,28 +567,39 @@ function MatchCardPrototype({ match, prediction, dailyDoubleMatchNo, onSave }) {
     <article className="match-card match-card--prototype">
       <div className="match-card-head">
         <span className="mstage">#{match.matchNo} · Vòng bảng · {match.group}</span>
-        <span className={finished ? 'mtime done-time' : 'mtime'}>{finished ? 'Đã kết thúc' : formatTime(match.kickoffAt)}</span>
+        <span className={finished ? 'mtime done-time' : liveInProgress ? 'mtime live-time' : 'mtime'}>
+          {finished ? 'Đã kết thúc' : liveInProgress ? liveLabel(liveScore) : formatTime(match.kickoffAt)}
+        </span>
       </div>
 
-      {finished ? (
+      {finished || liveScore ? (
         <>
           <div className="fixture finished-fixture">
-            <MatchTeam team={match.homeTeam} score={match.homeScore} />
-            <span className="ft-badge">FT</span>
-            <MatchTeam team={match.awayTeam} score={match.awayScore} />
+            <MatchTeam team={match.homeTeam} score={displayHomeScore} />
+            <span className={liveInProgress ? 'ft-badge live-badge' : liveFinished ? 'ft-badge api-ft-badge' : 'ft-badge'}>
+              {finished ? 'FT' : liveLabel(liveScore)}
+            </span>
+            <MatchTeam team={match.awayTeam} score={displayAwayScore} />
           </div>
           <div className="prediction-done">
-            {prediction ? (
+            {finished && prediction ? (
               <>
                 <span>Bạn dự <b>{prediction.homePred}-{prediction.awayPred}</b></span>
                 <strong>
                   +{breakdown.total}đ{base === 5 ? ' tỉ số chính xác' : ''}{breakdown.upsetBonus ? ` · +${breakdown.upsetBonus} cửa dưới` : ''}
                 </strong>
               </>
-            ) : (
+            ) : finished ? (
               <>
                 <span>Chưa có dự đoán</span>
                 <strong>+0đ</strong>
+              </>
+            ) : (
+              <>
+                <span>
+                  {prediction ? <>Bạn dự <b>{prediction.homePred}-{prediction.awayPred}</b></> : 'Trận đang có tỉ số live tạm'}
+                </span>
+                <strong className="pending-score">Chưa chấm điểm đến khi nguồn tỉ số báo FT</strong>
               </>
             )}
           </div>
@@ -784,81 +874,148 @@ function LongTermBetCard({ bet, onSave }) {
   );
 }
 
-function ResultsScreen({ matches, canManage, onSave }) {
-  const grouped = useMemo(() => groupByDate(matches), [matches]);
+function ResultsScreen({ matches, liveSync }) {
+  const groupTables = useMemo(() => buildFootballGroupTables(matches), [matches]);
+  const [selectedGroup, setSelectedGroup] = useState('A');
+  const activeGroup = groupTables.find((group) => group.group === selectedGroup) || groupTables[0];
+  const activeScoreStates = activeGroup.matches.map(getMatchScoreState);
+  const liveCount = activeScoreStates.filter((state) => state.kind === 'live').length;
+  const scoredCount = activeScoreStates.filter((state) => state.hasScore).length;
 
   return (
-    <section className="screen">
+    <section className="screen results-screen">
       <div className="screen-heading">
         <div>
-          <p className="eyebrow">Chốt điểm hằng ngày</p>
-          <h2>Cập nhật kết quả 90 phút</h2>
+          <p className="eyebrow">Bảng đấu</p>
+          <h2>Bảng xếp hạng bóng đá</h2>
+          <LiveSyncStatus liveSync={liveSync} />
         </div>
       </div>
-      <div className="ops-note">
-        <strong>{canManage ? 'Quy trình sau mỗi ngày thi đấu' : 'Bạn đang xem kết quả đã chốt'}</strong>
-        <span>
-          {canManage
-            ? 'Admin/owner nhập tỉ số các trận đã đá xong rồi bấm Cập nhật. App tự overlay kết quả, tính lại điểm trận, điểm cửa dưới và BXH khi làm mới.'
-            : 'Chỉ admin/owner workspace được cập nhật kết quả. BXH sẽ tự đổi sau khi kết quả được chốt.'}
-        </span>
-      </div>
-      <div className="result-days">
-        {grouped.map(([date, dayMatches]) => (
-          <section className="result-day" key={date}>
-            <div className="date-header">
-              <h3>{formatDate(date)}</h3>
-              <span>{dayMatches.filter(isFinished).length}/{dayMatches.length} đã chốt</span>
-            </div>
-            <div className="result-grid">
-              {dayMatches.map((match) => (
-                <ResultCard key={match.matchNo} match={match} canManage={canManage} onSave={onSave} />
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
+
+      <section className="football-board">
+        <div className="football-board-top">
+          <div>
+            <p className="section-label">Bảng {activeGroup.group}</p>
+            <h3>Cục diện bảng {activeGroup.group}</h3>
+            <p>{activeGroup.finishedCount}/{activeGroup.matches.length} trận FT · {liveCount} live · {scoredCount} có tỉ số</p>
+          </div>
+          <div className="football-leaders" aria-label="Hai vị trí dẫn đầu">
+            {activeGroup.rows.slice(0, 2).map((row) => (
+              <span key={row.team}>
+                <b>{row.rank}</b>
+                {displayTeamName(row.team)}
+                <strong>{row.points}đ</strong>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="group-picker" role="tablist" aria-label="Chọn bảng đấu">
+          {groupTables.map((group) => (
+            <button
+              key={group.group}
+              type="button"
+              className={group.group === activeGroup.group ? 'active' : ''}
+              role="tab"
+              aria-selected={group.group === activeGroup.group}
+              onClick={() => setSelectedGroup(group.group)}
+            >
+              {group.group}
+            </button>
+          ))}
+        </div>
+
+        <FootballStandingTable rows={activeGroup.rows} />
+
+        <div className="fixtures-panel">
+          <div className="fixtures-panel-head">
+            <h4>Lịch & tỉ số bảng {activeGroup.group}</h4>
+            <span>{activeGroup.matches.length} trận</span>
+          </div>
+          <div className="group-match-list">
+            {activeGroup.matches.map((match) => (
+              <FootballMatchRow key={match.matchNo} match={match} />
+            ))}
+          </div>
+        </div>
+      </section>
     </section>
   );
 }
 
-function ResultCard({ match, canManage, onSave }) {
-  const [homeScore, setHomeScore] = useState(match.homeScore ?? 0);
-  const [awayScore, setAwayScore] = useState(match.awayScore ?? 0);
+function FootballStandingTable({ rows }) {
+  return (
+    <div className="football-table-wrap">
+      <table className="football-table">
+        <thead>
+          <tr>
+            <th>Đội</th>
+            <th>Tr</th>
+            <th>T</th>
+            <th>H</th>
+            <th>B</th>
+            <th>HS</th>
+            <th>Đ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={row.team} className={index < 2 ? 'qualify-row' : ''}>
+              <td>
+                <span className="table-team">
+                  <span className="table-rank">{row.rank}</span>
+                  <span className="team-dot small" aria-hidden="true">
+                    {TEAM_META[row.team]?.flagUrl ? <img src={TEAM_META[row.team].flagUrl} alt="" loading="lazy" /> : TEAM_META[row.team]?.flag || row.team.slice(0, 2).toUpperCase()}
+                  </span>
+                  <span>
+                    <strong>{displayTeamName(row.team)}</strong>
+                    <small>{row.won}T {row.drawn}H {row.lost}B{row.liveMatches > 0 ? ' · LIVE tạm' : ''}</small>
+                  </span>
+                </span>
+              </td>
+              <td>{row.played}</td>
+              <td>{row.won}</td>
+              <td>{row.drawn}</td>
+              <td>{row.lost}</td>
+              <td>{formatGoalDifference(row.goalDifference)}</td>
+              <td><strong>{row.points}</strong></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
-  useEffect(() => {
-    setHomeScore(match.homeScore ?? 0);
-    setAwayScore(match.awayScore ?? 0);
-  }, [match.homeScore, match.awayScore]);
+function FootballMatchRow({ match }) {
+  const scoreState = getMatchScoreState(match);
+  return (
+    <article className={`football-match-row ${scoreState.kind}`}>
+      <span className="football-match-time">#{match.matchNo} · {formatTime(match.kickoffAt)}</span>
+      <FootballFixtureTeam team={match.homeTeam} side="home" />
+      <span className="football-match-score">
+        {scoreState.hasScore ? `${scoreState.homeScore} - ${scoreState.awayScore}` : '-'}
+      </span>
+      <FootballFixtureTeam team={match.awayTeam} side="away" />
+      <span className="football-match-status">{scoreState.label}</span>
+    </article>
+  );
+}
+
+function FootballFixtureTeam({ team, side }) {
+  const meta = TEAM_META[team];
+  const flag = (
+    <span className="team-dot fixture-flag" aria-hidden="true">
+      {meta?.flagUrl ? <img src={meta.flagUrl} alt="" loading="lazy" /> : meta?.flag || team.slice(0, 2).toUpperCase()}
+    </span>
+  );
 
   return (
-    <article className={`result-card ${isFinished(match) ? 'finished' : ''}`}>
-      <div className="match-meta">
-        <span>#{match.matchNo} · Bảng {match.group}</span>
-        <strong>{formatTime(match.kickoffAt)}</strong>
-      </div>
-      <div className="teams compact">
-        <TeamRow team={match.homeTeam} />
-        <TeamRow team={match.awayTeam} />
-      </div>
-      <div className="score-editor result-editor">
-        <label>
-          {shortTeam(match.homeTeam)}
-          <input type="number" min="0" max="99" value={homeScore} disabled={!canManage} onChange={(event) => setHomeScore(event.target.value)} />
-        </label>
-        <span>-</span>
-        <label>
-          {shortTeam(match.awayTeam)}
-          <input type="number" min="0" max="99" value={awayScore} disabled={!canManage} onChange={(event) => setAwayScore(event.target.value)} />
-        </label>
-      </div>
-      <div className="result-actions">
-        <span>{isFinished(match) ? `Đã chốt: ${match.homeScore} - ${match.awayScore}` : 'Chưa chốt'}</span>
-        <button type="button" className="primary-btn small" disabled={!canManage} onClick={() => onSave(match, { homeScore, awayScore })}>
-          {canManage ? 'Cập nhật' : 'Admin'}
-        </button>
-      </div>
-    </article>
+    <span className={`football-match-team fixture-team ${side}`}>
+      {side === 'home' ? null : flag}
+      <span className="fixture-team-name">{displayTeamName(team)}</span>
+      {side === 'home' ? flag : null}
+    </span>
   );
 }
 
@@ -1112,6 +1269,33 @@ function TeamRow({ team }) {
   );
 }
 
+async function fetchLiveScores(token, workspaceId) {
+  const response = await fetch('/api/live-scores', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'X-Workspace-Id': workspaceId,
+    },
+  });
+  const contentType = response.headers.get('content-type') || '';
+  if (!response.ok) {
+    const detail = contentType.includes('application/json') ? await response.json().catch(() => null) : null;
+    throw new Error(detail?.error || 'Không tải được live score.');
+  }
+  if (!contentType.includes('application/json')) {
+    throw new Error('Endpoint live score chưa sẵn sàng trong môi trường dev này.');
+  }
+
+  const payload = await response.json();
+  return {
+    ...payload,
+    matches: (payload.matches || []).map((match) => ({
+      ...match,
+      source: payload.source,
+      fetchedAt: payload.fetchedAt,
+    })),
+  };
+}
+
 async function fetchPredictions(workspaceId) {
   const { data, error } = await db
     .from('group_predictions')
@@ -1143,17 +1327,6 @@ async function fetchLongTermBet(workspaceId, userId) {
   if (error?.code === '42P01' || /long_term_bets|does not exist/i.test(error?.message || '')) return null;
   if (error) throw error;
   return data ? toLongTermBet(data) : null;
-}
-
-async function fetchMatchResults(workspaceId) {
-  const { data, error } = await db
-    .from('group_match_results')
-    .select('*')
-    .eq('workspace_id', workspaceId)
-    .order('match_no', { ascending: true });
-  if (error?.code === '42P01' || /group_match_results|does not exist/i.test(error?.message || '')) return [];
-  if (error) throw error;
-  return (data || []).map(toMatchResult);
 }
 
 function buildStandings({ members, predictions, answers, matches }) {
@@ -1233,36 +1406,203 @@ function toLongTermBet(row) {
   };
 }
 
-function toMatchResult(row) {
+function applyAutomaticScores(matches, liveScores) {
+  const liveByPair = buildLiveScorePairMap(liveScores);
+  return matches.map((match) => {
+    const liveScore = findLiveScoreForMatch(match, liveByPair);
+    if (!liveScore || liveScore.status !== 'finished') return match;
+    return {
+      ...match,
+      status: 'finished',
+      homeScore: normalizeLiveScoreValue(liveScore.homeScore),
+      awayScore: normalizeLiveScoreValue(liveScore.awayScore),
+      resultSource: liveScore.source || 'api',
+      resultFetchedAt: liveScore.fetchedAt || '',
+    };
+  });
+}
+
+function applyLiveScores(matches, liveScores) {
+  const liveByPair = buildLiveScorePairMap(liveScores);
+  return matches.map((match) => {
+    if (isFinished(match)) return { ...match, liveScore: null };
+    const liveScore = findLiveScoreForMatch(match, liveByPair);
+    return { ...match, liveScore };
+  });
+}
+
+function buildLiveScorePairMap(liveScores) {
+  const liveByPair = new Map();
+  for (const liveScore of liveScores || []) {
+    if (!isUsefulLiveScore(liveScore)) continue;
+    liveByPair.set(matchPairKey(liveScore.homeTeam, liveScore.awayTeam), liveScore);
+  }
+  return liveByPair;
+}
+
+function findLiveScoreForMatch(match, liveByPair) {
+  const direct = liveByPair.get(matchPairKey(match.homeTeam, match.awayTeam));
+  if (direct) return direct;
+
+  const reverse = liveByPair.get(matchPairKey(match.awayTeam, match.homeTeam));
+  if (!reverse) return null;
   return {
-    id: row.id,
-    workspaceId: row.workspace_id,
-    createdBy: row.created_by,
-    matchNo: row.match_no,
-    matchDay: row.match_day,
-    homeTeam: row.home_team,
-    awayTeam: row.away_team,
-    homeScore: row.home_score,
-    awayScore: row.away_score,
-    status: row.status,
-    resultSource: row.result_source,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    ...reverse,
+    homeTeam: match.homeTeam,
+    awayTeam: match.awayTeam,
+    homeScore: reverse.awayScore,
+    awayScore: reverse.homeScore,
+    reversed: true,
   };
 }
 
-function applyMatchResults(matches, results) {
-  const resultByNo = new Map(results.map((result) => [Number(result.matchNo), result]));
-  return matches.map((match) => {
-    const result = resultByNo.get(Number(match.matchNo));
-    if (!result) return match;
+function buildFootballGroupTables(matches) {
+  return Object.entries(GROUPS).map(([group, teams]) => {
+    const rowsByTeam = new Map(teams.map((team) => [team, createFootballRow(team)]));
+    const groupMatches = matches
+      .filter((match) => match.group === group)
+      .slice()
+      .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime());
+
+    for (const match of groupMatches) {
+      const scoreState = getMatchScoreState(match);
+      if (!scoreState.countsInTable) continue;
+
+      const home = rowsByTeam.get(match.homeTeam);
+      const away = rowsByTeam.get(match.awayTeam);
+      if (!home || !away) continue;
+
+      applyFootballResult(home, away, scoreState.homeScore, scoreState.awayScore, scoreState.kind === 'live');
+    }
+
+    const rows = [...rowsByTeam.values()]
+      .sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+        if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+        return displayTeamName(a.team).localeCompare(displayTeamName(b.team), 'vi');
+      })
+      .map((row, index) => ({ ...row, rank: index + 1 }));
+
     return {
-      ...match,
-      status: result.status,
-      homeScore: result.homeScore,
-      awayScore: result.awayScore,
+      group,
+      rows,
+      matches: groupMatches,
+      finishedCount: groupMatches.filter(isFinished).length,
     };
   });
+}
+
+function createFootballRow(team) {
+  return {
+    team,
+    played: 0,
+    won: 0,
+    drawn: 0,
+    lost: 0,
+    goalsFor: 0,
+    goalsAgainst: 0,
+    goalDifference: 0,
+    points: 0,
+    liveMatches: 0,
+  };
+}
+
+function applyFootballResult(home, away, homeScore, awayScore, isLive) {
+  home.played += 1;
+  away.played += 1;
+  home.goalsFor += homeScore;
+  home.goalsAgainst += awayScore;
+  away.goalsFor += awayScore;
+  away.goalsAgainst += homeScore;
+  home.goalDifference = home.goalsFor - home.goalsAgainst;
+  away.goalDifference = away.goalsFor - away.goalsAgainst;
+  if (isLive) {
+    home.liveMatches += 1;
+    away.liveMatches += 1;
+  }
+
+  const result = outcome(homeScore, awayScore);
+  if (result === 1) {
+    home.won += 1;
+    away.lost += 1;
+    home.points += 3;
+  } else if (result === -1) {
+    away.won += 1;
+    home.lost += 1;
+    away.points += 3;
+  } else {
+    home.drawn += 1;
+    away.drawn += 1;
+    home.points += 1;
+    away.points += 1;
+  }
+}
+
+function getMatchScoreState(match) {
+  if (isFinished(match)) {
+    return {
+      kind: 'final',
+      hasScore: true,
+      countsInTable: true,
+      homeScore: normalizeLiveScoreValue(match.homeScore),
+      awayScore: normalizeLiveScoreValue(match.awayScore),
+      label: match.resultSource === 'worldcup26.ir' || match.resultSource === 'espn' || match.resultSource === 'api'
+        ? 'FT API'
+        : 'FT',
+    };
+  }
+
+  const liveScore = shouldShowLiveScore(match) ? match.liveScore : null;
+  if (liveScore) {
+    const kind = liveScore.status === 'finished' ? 'final' : 'live';
+    return {
+      kind,
+      hasScore: true,
+      countsInTable: kind === 'final' || kind === 'live',
+      homeScore: normalizeLiveScoreValue(liveScore.homeScore),
+      awayScore: normalizeLiveScoreValue(liveScore.awayScore),
+      label: liveLabel(liveScore),
+    };
+  }
+
+  return {
+    kind: 'scheduled',
+    hasScore: false,
+    countsInTable: false,
+    homeScore: null,
+    awayScore: null,
+    label: formatTime(match.kickoffAt),
+  };
+}
+
+function normalizeLiveScoreValue(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.trunc(number)) : 0;
+}
+
+function isUsefulLiveScore(liveScore) {
+  if (!liveScore) return false;
+  const homeScore = Number(liveScore.homeScore || 0);
+  const awayScore = Number(liveScore.awayScore || 0);
+  return liveScore.status !== 'scheduled' || homeScore > 0 || awayScore > 0;
+}
+
+function shouldShowLiveScore(match) {
+  return !!match?.liveScore && !isFinished(match) && isUsefulLiveScore(match.liveScore);
+}
+
+function matchPairKey(homeTeam, awayTeam) {
+  return `${canonicalTeamName(homeTeam)}::${canonicalTeamName(awayTeam)}`;
+}
+
+function canonicalTeamName(team) {
+  return String(team || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/gi, ' ')
+    .trim()
+    .toLowerCase();
 }
 
 function normalizeScore(value) {
@@ -1306,6 +1646,19 @@ function formatTime(value) {
   }).format(new Date(value));
 }
 
+function formatRelativeSyncTime(value) {
+  return new Intl.DateTimeFormat('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
+}
+
+function formatGoalDifference(value) {
+  const number = Number(value || 0);
+  if (number > 0) return `+${number}`;
+  return String(number);
+}
+
 function getLocalDateKey(date = new Date()) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   return local.toISOString().slice(0, 10);
@@ -1318,4 +1671,17 @@ function shortTeam(team) {
 
 function displayTeamName(team) {
   return TEAM_META[team]?.viName || team;
+}
+
+function liveLabel(liveScore) {
+  if (!liveScore) return 'LIVE';
+  if (liveScore.status === 'finished') return 'FT API';
+  if (liveScore.status === 'in_progress') return liveScore.rawClock ? `LIVE ${liveScore.rawClock}` : 'LIVE';
+  return 'LIVE';
+}
+
+function sourceLabel(source) {
+  if (source === 'worldcup26.ir') return 'WorldCup26';
+  if (source === 'espn') return 'ESPN';
+  return source || 'live';
 }
