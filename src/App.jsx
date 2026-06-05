@@ -19,11 +19,11 @@ import './App.css';
 const DEFAULT_TAB = 'matches';
 const LIVE_SCORE_POLL_MS = 120000;
 const TABS = [
-  { id: 'matches', label: 'Trận đấu' },
-  { id: 'daily', label: 'Câu hỏi' },
-  { id: 'leaderboard', label: 'BXH' },
-  { id: 'results', label: 'Kết quả' },
-  { id: 'rules', label: 'Luật' },
+  { id: 'matches', label: 'Trận đấu', shortLabel: 'Trận', icon: '⚽' },
+  { id: 'daily', label: 'Câu hỏi', shortLabel: 'Hỏi', icon: '?' },
+  { id: 'leaderboard', label: 'Bảng xếp hạng', shortLabel: 'BXH', icon: '#' },
+  { id: 'results', label: 'Kết quả', shortLabel: 'KQ', icon: '✓' },
+  { id: 'rules', label: 'Luật', shortLabel: 'Luật', icon: 'i' },
 ];
 const PRIMARY_GROUP_FILTERS = ['A', 'B', 'C', 'D'];
 const EXTRA_GROUP_FILTERS = Object.keys(GROUPS).filter((group) => !PRIMARY_GROUP_FILTERS.includes(group));
@@ -173,7 +173,7 @@ export default function App() {
       const [predictionRows, answerRows, longTermRow, memberRows] = await Promise.all([
         fetchPredictions(scope.workspaceId),
         fetchDailyAnswers(scope.workspaceId),
-        fetchLongTermBet(scope.workspaceId, ctx.userId),
+        localSimulation ? Promise.resolve(null) : fetchLongTermBet(scope.workspaceId, ctx.userId),
         listMembers(scope.workspaceId),
       ]);
       setPredictions(localSimulation ? mergeMockPredictions(predictionRows, ctx, scope.workspaceId) : predictionRows);
@@ -423,8 +423,11 @@ export default function App() {
             type="button"
             className={activeTab === tab.id ? 'active' : ''}
             onClick={() => setActiveTab(tab.id)}
+            aria-label={tab.label}
+            aria-current={activeTab === tab.id ? 'page' : undefined}
           >
-            {tab.label}
+            <span className="tab-icon" aria-hidden="true">{tab.icon}</span>
+            <span className="tab-label">{tab.shortLabel}</span>
           </button>
         ))}
       </nav>

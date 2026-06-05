@@ -1,0 +1,285 @@
+[
+  {
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "isMobile": false
+    },
+    "logs": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting..."
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected."
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "info",
+        "text": "Images loaded lazily and replaced with placeholders. Load events are deferred. See https://go.microsoft.com/fwlink/?linkid=2048113"
+      },
+      {
+        "type": "warning",
+        "text": "GoTrueClient@sb-dftgyqxhegjamllsblsw-auth-token:1 (2.105.4) 2026-06-05T07:51:06.750Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key."
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      }
+    ],
+    "badResponses": [],
+    "tabResults": [
+      {
+        "tab": "matches",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "matches",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      },
+      {
+        "tab": "daily",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "daily",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      },
+      {
+        "tab": "leaderboard",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "leaderboard",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      },
+      {
+        "tab": "results",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "results",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      },
+      {
+        "tab": "rules",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "rules",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024,
+      "isMobile": false
+    },
+    "logs": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting..."
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "info",
+        "text": "Images loaded lazily and replaced with placeholders. Load events are deferred. See https://go.microsoft.com/fwlink/?linkid=2048113"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected."
+      },
+      {
+        "type": "warning",
+        "text": "GoTrueClient@sb-dftgyqxhegjamllsblsw-auth-token:1 (2.105.4) 2026-06-05T07:51:14.255Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key."
+      }
+    ],
+    "badResponses": [],
+    "tabResults": [
+      {
+        "tab": "matches",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "matches",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      },
+      {
+        "tab": "daily",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "daily",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      },
+      {
+        "tab": "leaderboard",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "leaderboard",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      },
+      {
+        "tab": "results",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "results",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      },
+      {
+        "tab": "rules",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "rules",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "isMobile": true
+    },
+    "logs": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting..."
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "info",
+        "text": "Images loaded lazily and replaced with placeholders. Load events are deferred. See https://go.microsoft.com/fwlink/?linkid=2048113"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected."
+      },
+      {
+        "type": "warning",
+        "text": "GoTrueClient@sb-dftgyqxhegjamllsblsw-auth-token:1 (2.105.4) 2026-06-05T07:51:21.415Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key."
+      }
+    ],
+    "badResponses": [],
+    "tabResults": [
+      {
+        "tab": "matches",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "matches",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      },
+      {
+        "tab": "daily",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "daily",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      },
+      {
+        "tab": "leaderboard",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "leaderboard",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      },
+      {
+        "tab": "results",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "results",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      },
+      {
+        "tab": "rules",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "rules",
+          "navPosition": "static",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [],
+          "clippedText": []
+        }
+      }
+    ]
+  }
+]

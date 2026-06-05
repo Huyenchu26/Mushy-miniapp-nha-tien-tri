@@ -1,0 +1,24 @@
+{
+  "locked": true,
+  "target": 7,
+  "target_min": 6,
+  "criteria": [
+    {
+      "name": "layout_clearance",
+      "description": "Fixed bottom navigation does not occlude primary content or footer across tested viewports."
+    },
+    {
+      "name": "mobile_ergonomics",
+      "description": "Interactive controls in the reported areas have touch-friendly dimensions and visible scroll affordance."
+    },
+    {
+      "name": "content_readability",
+      "description": "Long team labels remain readable without unintended clipping in match cards."
+    },
+    {
+      "name": "runtime_cleanliness",
+      "description": "Mock local run avoids the reported long_term_bets 404 and builds successfully."
+    }
+  ],
+  "orchestration_mode": "Local controller"
+}

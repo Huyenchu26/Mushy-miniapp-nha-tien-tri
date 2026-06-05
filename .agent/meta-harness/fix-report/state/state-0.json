@@ -1,0 +1,11 @@
+{
+  "phase": "initial",
+  "agent_split": "Local only",
+  "reason": "Reported issues are compact CSS/runtime edits with shared verification.",
+  "targeted_criteria": [
+    "layout_clearance",
+    "mobile_ergonomics",
+    "content_readability",
+    "runtime_cleanliness"
+  ]
+}

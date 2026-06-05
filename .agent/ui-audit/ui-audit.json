@@ -1,0 +1,1437 @@
+[
+  {
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "isMobile": false
+    },
+    "logs": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting..."
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected."
+      },
+      {
+        "type": "warning",
+        "text": "GoTrueClient@sb-dftgyqxhegjamllsblsw-auth-token:1 (2.105.4) 2026-06-05T07:30:44.808Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key."
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 ()"
+      }
+    ],
+    "tabResults": [
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\desktop-matches.png",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "matches",
+          "pageWidth": 1440,
+          "viewportWidth": 1440,
+          "bodyScrollWidth": 1440,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "section.screen > div.screen-heading > div.search-pill > input",
+              "text": "Đội bóng...",
+              "width": 289,
+              "height": 25
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [],
+          "footerOccludedByNav": false,
+          "bottomNav": {
+            "top": 932,
+            "bottom": 986,
+            "width": 430
+          }
+        }
+      },
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\desktop-daily.png",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "daily",
+          "pageWidth": 1440,
+          "viewportWidth": 1440,
+          "bodyScrollWidth": 1440,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 26,
+              "height": 20
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [],
+          "footerOccludedByNav": true,
+          "bottomNav": {
+            "top": 932,
+            "bottom": 986,
+            "width": 430
+          }
+        }
+      },
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\desktop-leaderboard.png",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "leaderboard",
+          "pageWidth": 1440,
+          "viewportWidth": 1440,
+          "bodyScrollWidth": 1440,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 26,
+              "height": 20
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [],
+          "footerOccludedByNav": false,
+          "bottomNav": {
+            "top": 932,
+            "bottom": 986,
+            "width": 430
+          }
+        }
+      },
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\desktop-results.png",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "results",
+          "pageWidth": 1440,
+          "viewportWidth": 1440,
+          "bodyScrollWidth": 1440,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 26,
+              "height": 20
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [],
+          "footerOccludedByNav": false,
+          "bottomNav": {
+            "top": 932,
+            "bottom": 986,
+            "width": 430
+          }
+        }
+      },
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\desktop-rules.png",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "rules",
+          "pageWidth": 1440,
+          "viewportWidth": 1440,
+          "bodyScrollWidth": 1440,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 26,
+              "height": 20
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [],
+          "footerOccludedByNav": false,
+          "bottomNav": {
+            "top": 932,
+            "bottom": 986,
+            "width": 430
+          }
+        }
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024,
+      "isMobile": false
+    },
+    "logs": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting..."
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected."
+      },
+      {
+        "type": "warning",
+        "text": "GoTrueClient@sb-dftgyqxhegjamllsblsw-auth-token:1 (2.105.4) 2026-06-05T07:30:50.058Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key."
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 ()"
+      }
+    ],
+    "tabResults": [
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\tablet-matches.png",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "matches",
+          "pageWidth": 768,
+          "viewportWidth": 768,
+          "bodyScrollWidth": 768,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "section.screen > div.screen-heading > div.search-pill > input",
+              "text": "Đội bóng...",
+              "width": 289,
+              "height": 25
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 26,
+              "height": 32
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 26,
+              "height": 32
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [
+            {
+              "selector": "article.match-card.match-card--prototype > div.fixture > div.match-team > strong",
+              "text": "Uzbekistan",
+              "scrollWidth": 65,
+              "clientWidth": 60,
+              "scrollHeight": 15,
+              "clientHeight": 15
+            },
+            {
+              "selector": "article.match-card.match-card--prototype > div.fixture > div.match-team > strong",
+              "text": "Bosna và Hercegovina",
+              "scrollWidth": 74,
+              "clientWidth": 60,
+              "scrollHeight": 30,
+              "clientHeight": 30
+            },
+            {
+              "selector": "article.match-card.match-card--prototype > div.fixture > div.match-team > strong",
+              "text": "Uzbekistan",
+              "scrollWidth": 65,
+              "clientWidth": 60,
+              "scrollHeight": 15,
+              "clientHeight": 15
+            },
+            {
+              "selector": "article.match-card.match-card--prototype > div.fixture > div.match-team > strong",
+              "text": "Bosna và Hercegovina",
+              "scrollWidth": 74,
+              "clientWidth": 60,
+              "scrollHeight": 30,
+              "clientHeight": 30
+            },
+            {
+              "selector": "article.match-card.match-card--prototype > div.fixture > div.match-team > strong",
+              "text": "Uzbekistan",
+              "scrollWidth": 65,
+              "clientWidth": 60,
+              "scrollHeight": 15,
+              "clientHeight": 15
+            }
+          ],
+          "footerOccludedByNav": false,
+          "bottomNav": {
+            "top": 956,
+            "bottom": 1010,
+            "width": 430
+          }
+        }
+      },
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\tablet-daily.png",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "daily",
+          "pageWidth": 768,
+          "viewportWidth": 768,
+          "bodyScrollWidth": 768,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 26,
+              "height": 20
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [],
+          "footerOccludedByNav": true,
+          "bottomNav": {
+            "top": 956,
+            "bottom": 1010,
+            "width": 430
+          }
+        }
+      },
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\tablet-leaderboard.png",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "leaderboard",
+          "pageWidth": 768,
+          "viewportWidth": 768,
+          "bodyScrollWidth": 768,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 26,
+              "height": 20
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [],
+          "footerOccludedByNav": false,
+          "bottomNav": {
+            "top": 956,
+            "bottom": 1010,
+            "width": 430
+          }
+        }
+      },
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\tablet-results.png",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "results",
+          "pageWidth": 768,
+          "viewportWidth": 768,
+          "bodyScrollWidth": 768,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 26,
+              "height": 20
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [],
+          "footerOccludedByNav": false,
+          "bottomNav": {
+            "top": 956,
+            "bottom": 1010,
+            "width": 430
+          }
+        }
+      },
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\tablet-rules.png",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "rules",
+          "pageWidth": 768,
+          "viewportWidth": 768,
+          "bodyScrollWidth": 768,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 26,
+              "height": 20
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [],
+          "footerOccludedByNav": false,
+          "bottomNav": {
+            "top": 956,
+            "bottom": 1010,
+            "width": 430
+          }
+        }
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "isMobile": true
+    },
+    "logs": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting..."
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected."
+      },
+      {
+        "type": "warning",
+        "text": "GoTrueClient@sb-dftgyqxhegjamllsblsw-auth-token:1 (2.105.4) 2026-06-05T07:30:55.925Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key."
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 ()"
+      }
+    ],
+    "tabResults": [
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\mobile-matches.png",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "matches",
+          "pageWidth": 390,
+          "viewportWidth": 390,
+          "bodyScrollWidth": 390,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [
+            {
+              "selector": "section.screen > div.group-filter-wrap > div.chip-row > button",
+              "text": "Bảng D",
+              "left": 335,
+              "right": 411,
+              "width": 76
+            },
+            {
+              "selector": "section.screen > div.group-filter-wrap > div.chip-row > button",
+              "text": "+ thêm",
+              "left": 419,
+              "right": 496,
+              "width": 77
+            }
+          ],
+          "tinyTargets": [
+            {
+              "selector": "section.screen > div.screen-heading > div.search-pill > input",
+              "text": "Đội bóng...",
+              "width": 299,
+              "height": 25
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "+",
+              "width": 24,
+              "height": 30
+            },
+            {
+              "selector": "div.fixture > div.score-stepper > div.step-group > button",
+              "text": "-",
+              "width": 24,
+              "height": 30
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [
+            {
+              "selector": "article.match-card.match-card--prototype > div.fixture > div.match-team > strong",
+              "text": "Bosna và Hercegovina",
+              "scrollWidth": 74,
+              "clientWidth": 71,
+              "scrollHeight": 30,
+              "clientHeight": 30
+            },
+            {
+              "selector": "article.match-card.match-card--prototype > div.fixture > div.match-team > strong",
+              "text": "Bosna và Hercegovina",
+              "scrollWidth": 74,
+              "clientWidth": 71,
+              "scrollHeight": 30,
+              "clientHeight": 30
+            }
+          ],
+          "footerOccludedByNav": false,
+          "bottomNav": {
+            "top": 776,
+            "bottom": 830,
+            "width": 366
+          }
+        }
+      },
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\mobile-daily.png",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "daily",
+          "pageWidth": 390,
+          "viewportWidth": 390,
+          "bodyScrollWidth": 390,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 26,
+              "height": 20
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [],
+          "footerOccludedByNav": false,
+          "bottomNav": {
+            "top": 776,
+            "bottom": 830,
+            "width": 366
+          }
+        }
+      },
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\mobile-leaderboard.png",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "leaderboard",
+          "pageWidth": 390,
+          "viewportWidth": 390,
+          "bodyScrollWidth": 390,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 26,
+              "height": 20
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [],
+          "footerOccludedByNav": false,
+          "bottomNav": {
+            "top": 776,
+            "bottom": 830,
+            "width": 366
+          }
+        }
+      },
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\mobile-results.png",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "results",
+          "pageWidth": 390,
+          "viewportWidth": 390,
+          "bodyScrollWidth": 390,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button.active",
+              "text": "A",
+              "width": 50,
+              "height": 34
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "B",
+              "width": 50,
+              "height": 34
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "C",
+              "width": 50,
+              "height": 34
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "D",
+              "width": 50,
+              "height": 34
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "E",
+              "width": 50,
+              "height": 34
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "F",
+              "width": 50,
+              "height": 34
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "G",
+              "width": 50,
+              "height": 34
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "H",
+              "width": 50,
+              "height": 34
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "I",
+              "width": 50,
+              "height": 34
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "J",
+              "width": 50,
+              "height": 34
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "K",
+              "width": 50,
+              "height": 34
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "L",
+              "width": 50,
+              "height": 34
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 26,
+              "height": 20
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [],
+          "footerOccludedByNav": false,
+          "bottomNav": {
+            "top": 776,
+            "bottom": 830,
+            "width": 366
+          }
+        }
+      },
+      {
+        "screenshot": "C:\\Users\\dqmin\\AI-Vinuni\\Mussy-App\\Mushy-miniapp-nha-tien-tri\\.agent\\ui-audit\\mobile-rules.png",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "rules",
+          "pageWidth": 390,
+          "viewportWidth": 390,
+          "bodyScrollWidth": 390,
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 26,
+              "height": 20
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 50,
+              "height": 20
+            }
+          ],
+          "mojibakeTexts": [],
+          "clippedText": [],
+          "footerOccludedByNav": false,
+          "bottomNav": {
+            "top": 776,
+            "bottom": 830,
+            "width": 366
+          }
+        }
+      }
+    ]
+  }
+]

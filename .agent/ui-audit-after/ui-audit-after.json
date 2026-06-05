@@ -1,0 +1,2718 @@
+[
+  {
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 1000,
+      "isMobile": false
+    },
+    "logs": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting..."
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected."
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "info",
+        "text": "Images loaded lazily and replaced with placeholders. Load events are deferred. See https://go.microsoft.com/fwlink/?linkid=2048113"
+      },
+      {
+        "type": "warning",
+        "text": "GoTrueClient@sb-dftgyqxhegjamllsblsw-auth-token:1 (2.105.4) 2026-06-05T07:45:19.943Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key."
+      },
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      }
+    ],
+    "badResponses": [],
+    "tabResults": [
+      {
+        "tab": "matches",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "matches",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "section.screen > div.screen-heading > div.search-pill > input",
+              "text": "Đội bóng...",
+              "width": 289,
+              "height": 25
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 230,
+              "height": 42
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 9995
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 9995
+            },
+            {
+              "selector": "div#root > div.wc-app > main",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 9675
+            },
+            {
+              "selector": "div#root > div.wc-app > main > section.screen",
+              "text": "DỰ ĐOÁN TỈ SỐ 72 trận vòng bảng Live score: DEV mock · 14:45 Tìm Tất cả Bảng A Bảng B Bảng C Bảng D ",
+              "top": 181,
+              "bottom": 9675
+            },
+            {
+              "selector": "div.wc-app > main > section.screen > div.match-days",
+              "text": "Thứ 5, 11/06 1 trận #1 · Vòng bảng · A Đã kết thúc Mexico FIFA #15 2 FT Nam Phi FIFA #60 1 Bạn dự 2-",
+              "top": 375,
+              "bottom": 9627
+            },
+            {
+              "selector": "main > section.screen > div.match-days > section.match-day",
+              "text": "Thứ 6, 12/06 2 trận #2 · Vòng bảng · A Đã kết thúc Hàn Quốc FIFA #25 1 FT Séc FIFA #41 1 Bạn dự 1-0 ",
+              "top": 719,
+              "bottom": 1052
+            },
+            {
+              "selector": "section.screen > div.match-days > section.match-day > div.match-grid",
+              "text": "#2 · Vòng bảng · A Đã kết thúc Hàn Quốc FIFA #25 1 FT Séc FIFA #41 1 Bạn dự 1-0 +0đ #3 · Vòng bảng ·",
+              "top": 762,
+              "bottom": 1052
+            },
+            {
+              "selector": "div.match-days > section.match-day > div.match-grid > article.match-card.match-card--prototype",
+              "text": "#3 · Vòng bảng · B Đã kết thúc Canada FIFA #30 3 FT Bosna và Hercegovina FIFA #65 0 Bạn dự 2-0 +2đ",
+              "top": 778,
+              "bottom": 1052
+            },
+            {
+              "selector": "section.match-day > div.match-grid > article.match-card.match-card--prototype > div.fixture.finished-fixture",
+              "text": "Canada FIFA #30 3 FT Bosna và Hercegovina FIFA #65 0",
+              "top": 829,
+              "bottom": 966
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.fixture.finished-fixture > div.match-team",
+              "text": "Canada FIFA #30 3",
+              "top": 829,
+              "bottom": 951
+            },
+            {
+              "selector": "article.match-card.match-card--prototype > div.fixture.finished-fixture > div.match-team > b.real-score",
+              "text": "3",
+              "top": 915,
+              "bottom": 951
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.fixture.finished-fixture > div.match-team",
+              "text": "Bosna và Hercegovina FIFA #65 0",
+              "top": 829,
+              "bottom": 966
+            },
+            {
+              "selector": "article.match-card.match-card--prototype > div.fixture.finished-fixture > div.match-team > b.real-score",
+              "text": "0",
+              "top": 930,
+              "bottom": 966
+            },
+            {
+              "selector": "section.match-day > div.match-grid > article.match-card.match-card--prototype > div.prediction-done",
+              "text": "Bạn dự 2-0 +2đ",
+              "top": 978,
+              "bottom": 1037
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -8985,
+              "bottom": 1000
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -8985,
+              "bottom": 1000
+            }
+          ]
+        }
+      },
+      {
+        "tab": "daily",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "daily",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "section.screen > article.question-card.long-term-card > div.question-footer > button.primary-btn.small",
+              "text": "Lưu",
+              "width": 63,
+              "height": 42
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 34,
+              "height": 36
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 58,
+              "height": 36
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1229
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1229
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer",
+              "text": "Dữ liệu lịch: FIFA match schedule, crawlable mirror via MatchTimes FIFA BXH FIFA: 2026-04-01 Ranking",
+              "top": 909,
+              "bottom": 1099
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > span",
+              "text": "Dữ liệu lịch: FIFA match schedule, crawlable mirror via MatchTimes",
+              "top": 942,
+              "bottom": 961
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "top": 934,
+              "bottom": 969
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > span",
+              "text": "BXH FIFA: 2026-04-01",
+              "top": 942,
+              "bottom": 961
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -219,
+              "bottom": 1000
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -219,
+              "bottom": 1000
+            }
+          ]
+        }
+      },
+      {
+        "tab": "leaderboard",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "leaderboard",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "main > section.screen > section.score-history-panel > button.secondary-btn.score-history-toggle",
+              "text": "Xem lịch sử cộng điểm",
+              "width": 1190,
+              "height": 42
+            },
+            {
+              "selector": "main > section.screen > div.leader-modes > button.active",
+              "text": "Tổng",
+              "width": 403,
+              "height": 40
+            },
+            {
+              "selector": "main > section.screen > div.leader-modes > button",
+              "text": "Theo tuần",
+              "width": 403,
+              "height": 40
+            },
+            {
+              "selector": "main > section.screen > div.leader-modes > button",
+              "text": "Theo vòng",
+              "width": 403,
+              "height": 40
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 34,
+              "height": 36
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 58,
+              "height": 36
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1780
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1780
+            },
+            {
+              "selector": "div#root > div.wc-app > main",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1460
+            },
+            {
+              "selector": "div#root > div.wc-app > main > section.screen",
+              "text": "LỊCH SỬ CỘNG ĐIỂM 7đ #3 6 đã dự 2 mục Xem lịch sử cộng điểm Tổng Theo tuần Theo vòng 1 LE Lan Exact ",
+              "top": 181,
+              "bottom": 1460
+            },
+            {
+              "selector": "div.wc-app > main > section.screen > div.leader-list",
+              "text": "1 LE Lan Exact 15 trận · 0 cửa dưới · 5 streak · 0 vui 20đ 2 MC Minh Chill 8 trận · 0 cửa dưới · 0 s",
+              "top": 423,
+              "bottom": 1185
+            },
+            {
+              "selector": "main > section.screen > div.leader-list > article.lb-row",
+              "text": "8 LQ Lưu Quang Lực 0 trận · 0 cửa dưới · 0 streak · 0 vui 0đ",
+              "top": 913,
+              "bottom": 975
+            },
+            {
+              "selector": "section.screen > div.leader-list > article.lb-row > span.lb-person",
+              "text": "Lưu Quang Lực 0 trận · 0 cửa dưới · 0 streak · 0 vui",
+              "top": 926,
+              "bottom": 963
+            },
+            {
+              "selector": "div.leader-list > article.lb-row > span.lb-person > strong",
+              "text": "Lưu Quang Lực",
+              "top": 926,
+              "bottom": 947
+            },
+            {
+              "selector": "div.leader-list > article.lb-row > span.lb-person > small",
+              "text": "0 trận · 0 cửa dưới · 0 streak · 0 vui",
+              "top": 947,
+              "bottom": 963
+            },
+            {
+              "selector": "main > section.screen > div.leader-list > article.lb-row",
+              "text": "9 NB Nguyễn Bá Khánh 0 trận · 0 cửa dưới · 0 streak · 0 vui 0đ",
+              "top": 983,
+              "bottom": 1045
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -770,
+              "bottom": 1000
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -770,
+              "bottom": 1000
+            }
+          ]
+        }
+      },
+      {
+        "tab": "results",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "results",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button.active",
+              "text": "A",
+              "width": 72,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "B",
+              "width": 72,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "C",
+              "width": 72,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "D",
+              "width": 72,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "E",
+              "width": 72,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "F",
+              "width": 72,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "G",
+              "width": 72,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "H",
+              "width": 72,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "I",
+              "width": 72,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "J",
+              "width": 72,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "K",
+              "width": 72,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "L",
+              "width": 72,
+              "height": 38
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 34,
+              "height": 36
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 58,
+              "height": 36
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1597
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1597
+            },
+            {
+              "selector": "div#root > div.wc-app > main",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1277
+            },
+            {
+              "selector": "div#root > div.wc-app > main > section.screen.results-screen",
+              "text": "BẢNG ĐẤU Bảng xếp hạng bóng đá Live score: DEV mock · 14:45 BẢNG A Cục diện bảng A 2/6 trận FT · 0 l",
+              "top": 181,
+              "bottom": 1277
+            },
+            {
+              "selector": "div.wc-app > main > section.screen.results-screen > section.football-board",
+              "text": "BẢNG A Cục diện bảng A 2/6 trận FT · 0 live · 2 có tỉ số 1 Mexico 3đ 2 Hàn Quốc 1đ A B C D E F G H I",
+              "top": 309,
+              "bottom": 1229
+            },
+            {
+              "selector": "main > section.screen.results-screen > section.football-board > div.fixtures-panel",
+              "text": "Lịch & tỉ số bảng A 6 trận #1 · 02:00 12-06 Mexico 2 - 1 Nam Phi FT #2 · 09:00 12-06 Hàn Quốc 1 - 1 ",
+              "top": 821,
+              "bottom": 1210
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.fixtures-panel > div.group-match-list",
+              "text": "#1 · 02:00 12-06 Mexico 2 - 1 Nam Phi FT #2 · 09:00 12-06 Hàn Quốc 1 - 1 Séc FT #25 · 23:00 18-06 Sé",
+              "top": 867,
+              "bottom": 1210
+            },
+            {
+              "selector": "section.football-board > div.fixtures-panel > div.group-match-list > article.football-match-row.final",
+              "text": "#2 · 09:00 12-06 Hàn Quốc 1 - 1 Séc FT",
+              "top": 924,
+              "bottom": 974
+            },
+            {
+              "selector": "div.fixtures-panel > div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.home",
+              "text": "Hàn Quốc",
+              "top": 937,
+              "bottom": 961
+            },
+            {
+              "selector": "div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.home > span.fixture-team-name",
+              "text": "Hàn Quốc",
+              "top": 939,
+              "bottom": 959
+            },
+            {
+              "selector": "div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.home > span.team-dot.fixture-flag",
+              "text": "",
+              "top": 937,
+              "bottom": 961
+            },
+            {
+              "selector": "article.football-match-row.final > span.football-match-team.fixture-team.home > span.team-dot.fixture-flag > img",
+              "text": "",
+              "top": 937,
+              "bottom": 961
+            },
+            {
+              "selector": "div.fixtures-panel > div.group-match-list > article.football-match-row.final > span.football-match-score",
+              "text": "1 - 1",
+              "top": 933,
+              "bottom": 965
+            },
+            {
+              "selector": "div.fixtures-panel > div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.away",
+              "text": "Séc",
+              "top": 937,
+              "bottom": 961
+            },
+            {
+              "selector": "div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.away > span.team-dot.fixture-flag",
+              "text": "",
+              "top": 937,
+              "bottom": 961
+            },
+            {
+              "selector": "article.football-match-row.final > span.football-match-team.fixture-team.away > span.team-dot.fixture-flag > img",
+              "text": "",
+              "top": 937,
+              "bottom": 961
+            },
+            {
+              "selector": "div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.away > span.fixture-team-name",
+              "text": "Séc",
+              "top": 939,
+              "bottom": 959
+            },
+            {
+              "selector": "section.football-board > div.fixtures-panel > div.group-match-list > article.football-match-row.scheduled",
+              "text": "#25 · 23:00 18-06 Séc - Nam Phi 23:00 18-06",
+              "top": 982,
+              "bottom": 1033
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -587,
+              "bottom": 1000
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -587,
+              "bottom": 1000
+            }
+          ]
+        }
+      },
+      {
+        "tab": "rules",
+        "metrics": {
+          "viewport": "desktop",
+          "tab": "rules",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 34,
+              "height": 36
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 58,
+              "height": 36
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1150
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1150
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer",
+              "text": "Dữ liệu lịch: FIFA match schedule, crawlable mirror via MatchTimes FIFA BXH FIFA: 2026-04-01 Ranking",
+              "top": 829,
+              "bottom": 1020
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -140,
+              "bottom": 1000
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -140,
+              "bottom": 1000
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024,
+      "isMobile": false
+    },
+    "logs": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting..."
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "info",
+        "text": "Images loaded lazily and replaced with placeholders. Load events are deferred. See https://go.microsoft.com/fwlink/?linkid=2048113"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected."
+      },
+      {
+        "type": "warning",
+        "text": "GoTrueClient@sb-dftgyqxhegjamllsblsw-auth-token:1 (2.105.4) 2026-06-05T07:45:28.269Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key."
+      }
+    ],
+    "badResponses": [],
+    "tabResults": [
+      {
+        "tab": "matches",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "matches",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "section.screen > div.screen-heading > div.search-pill > input",
+              "text": "Đội bóng...",
+              "width": 289,
+              "height": 25
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 194,
+              "height": 42
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 12818
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 12818
+            },
+            {
+              "selector": "div#root > div.wc-app > main",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 12498
+            },
+            {
+              "selector": "div#root > div.wc-app > main > section.screen",
+              "text": "DỰ ĐOÁN TỈ SỐ 72 trận vòng bảng Live score: DEV mock · 14:45 Tìm Tất cả Bảng A Bảng B Bảng C Bảng D ",
+              "top": 181,
+              "bottom": 12498
+            },
+            {
+              "selector": "div.wc-app > main > section.screen > div.match-days",
+              "text": "Thứ 5, 11/06 1 trận #1 · Vòng bảng · A Đã kết thúc Mexico FIFA #15 2 FT Nam Phi FIFA #60 1 Bạn dự 2-",
+              "top": 375,
+              "bottom": 12450
+            },
+            {
+              "selector": "main > section.screen > div.match-days > section.match-day",
+              "text": "Thứ 6, 12/06 2 trận #2 · Vòng bảng · A Đã kết thúc Hàn Quốc FIFA #25 1 FT Séc FIFA #41 1 Bạn dự 1-0 ",
+              "top": 719,
+              "bottom": 1052
+            },
+            {
+              "selector": "section.screen > div.match-days > section.match-day > div.match-grid",
+              "text": "#2 · Vòng bảng · A Đã kết thúc Hàn Quốc FIFA #25 1 FT Séc FIFA #41 1 Bạn dự 1-0 +0đ #3 · Vòng bảng ·",
+              "top": 762,
+              "bottom": 1052
+            },
+            {
+              "selector": "div.match-days > section.match-day > div.match-grid > article.match-card.match-card--prototype",
+              "text": "#2 · Vòng bảng · A Đã kết thúc Hàn Quốc FIFA #25 1 FT Séc FIFA #41 1 Bạn dự 1-0 +0đ",
+              "top": 778,
+              "bottom": 1052
+            },
+            {
+              "selector": "section.match-day > div.match-grid > article.match-card.match-card--prototype > div.prediction-done",
+              "text": "Bạn dự 1-0 +0đ",
+              "top": 963,
+              "bottom": 1022
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.prediction-done > span",
+              "text": "Bạn dự 1-0",
+              "top": 973,
+              "bottom": 991
+            },
+            {
+              "selector": "article.match-card.match-card--prototype > div.prediction-done > span > b",
+              "text": "1-0",
+              "top": 974,
+              "bottom": 990
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.prediction-done > strong",
+              "text": "+0đ",
+              "top": 994,
+              "bottom": 1012
+            },
+            {
+              "selector": "div.match-days > section.match-day > div.match-grid > article.match-card.match-card--prototype",
+              "text": "#3 · Vòng bảng · B Đã kết thúc Canada FIFA #30 3 FT Bosna và Hercegovina FIFA #65 0 Bạn dự 2-0 +2đ",
+              "top": 778,
+              "bottom": 1052
+            },
+            {
+              "selector": "section.match-day > div.match-grid > article.match-card.match-card--prototype > div.fixture.finished-fixture",
+              "text": "Canada FIFA #30 3 FT Bosna và Hercegovina FIFA #65 0",
+              "top": 829,
+              "bottom": 966
+            },
+            {
+              "selector": "section.match-day > div.match-grid > article.match-card.match-card--prototype > div.prediction-done",
+              "text": "Bạn dự 2-0 +2đ",
+              "top": 978,
+              "bottom": 1037
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.prediction-done > span",
+              "text": "Bạn dự 2-0",
+              "top": 988,
+              "bottom": 1006
+            },
+            {
+              "selector": "article.match-card.match-card--prototype > div.prediction-done > span > b",
+              "text": "2-0",
+              "top": 989,
+              "bottom": 1005
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -11784,
+              "bottom": 1024
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -11784,
+              "bottom": 1024
+            }
+          ]
+        }
+      },
+      {
+        "tab": "daily",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "daily",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "section.screen > article.question-card.long-term-card > div.question-footer > button.primary-btn.small",
+              "text": "Lưu",
+              "width": 63,
+              "height": 42
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 34,
+              "height": 36
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 58,
+              "height": 36
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1229
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1229
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer",
+              "text": "Dữ liệu lịch: FIFA match schedule, crawlable mirror via MatchTimes FIFA BXH FIFA: 2026-04-01 Ranking",
+              "top": 909,
+              "bottom": 1099
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > span",
+              "text": "Dữ liệu lịch: FIFA match schedule, crawlable mirror via MatchTimes",
+              "top": 942,
+              "bottom": 961
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "top": 934,
+              "bottom": 969
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > span",
+              "text": "BXH FIFA: 2026-04-01",
+              "top": 942,
+              "bottom": 961
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -195,
+              "bottom": 1024
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -195,
+              "bottom": 1024
+            }
+          ]
+        }
+      },
+      {
+        "tab": "leaderboard",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "leaderboard",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "main > section.screen > section.score-history-panel > button.secondary-btn.score-history-toggle",
+              "text": "Xem lịch sử cộng điểm",
+              "width": 706,
+              "height": 42
+            },
+            {
+              "selector": "main > section.screen > div.leader-modes > button.active",
+              "text": "Tổng",
+              "width": 241,
+              "height": 40
+            },
+            {
+              "selector": "main > section.screen > div.leader-modes > button",
+              "text": "Theo tuần",
+              "width": 241,
+              "height": 40
+            },
+            {
+              "selector": "main > section.screen > div.leader-modes > button",
+              "text": "Theo vòng",
+              "width": 241,
+              "height": 40
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 34,
+              "height": 36
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 58,
+              "height": 36
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1780
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1780
+            },
+            {
+              "selector": "div#root > div.wc-app > main",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1460
+            },
+            {
+              "selector": "div#root > div.wc-app > main > section.screen",
+              "text": "LỊCH SỬ CỘNG ĐIỂM 7đ #3 6 đã dự 2 mục Xem lịch sử cộng điểm Tổng Theo tuần Theo vòng 1 LE Lan Exact ",
+              "top": 181,
+              "bottom": 1460
+            },
+            {
+              "selector": "div.wc-app > main > section.screen > div.leader-list",
+              "text": "1 LE Lan Exact 15 trận · 0 cửa dưới · 5 streak · 0 vui 20đ 2 MC Minh Chill 8 trận · 0 cửa dưới · 0 s",
+              "top": 423,
+              "bottom": 1185
+            },
+            {
+              "selector": "main > section.screen > div.leader-list > article.lb-row",
+              "text": "8 LQ Lưu Quang Lực 0 trận · 0 cửa dưới · 0 streak · 0 vui 0đ",
+              "top": 913,
+              "bottom": 975
+            },
+            {
+              "selector": "section.screen > div.leader-list > article.lb-row > span.lb-person",
+              "text": "Lưu Quang Lực 0 trận · 0 cửa dưới · 0 streak · 0 vui",
+              "top": 926,
+              "bottom": 963
+            },
+            {
+              "selector": "div.leader-list > article.lb-row > span.lb-person > small",
+              "text": "0 trận · 0 cửa dưới · 0 streak · 0 vui",
+              "top": 947,
+              "bottom": 963
+            },
+            {
+              "selector": "main > section.screen > div.leader-list > article.lb-row",
+              "text": "9 NB Nguyễn Bá Khánh 0 trận · 0 cửa dưới · 0 streak · 0 vui 0đ",
+              "top": 983,
+              "bottom": 1045
+            },
+            {
+              "selector": "section.screen > div.leader-list > article.lb-row > span.lb-person",
+              "text": "Nguyễn Bá Khánh 0 trận · 0 cửa dưới · 0 streak · 0 vui",
+              "top": 996,
+              "bottom": 1033
+            },
+            {
+              "selector": "div.leader-list > article.lb-row > span.lb-person > strong",
+              "text": "Nguyễn Bá Khánh",
+              "top": 996,
+              "bottom": 1017
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -746,
+              "bottom": 1024
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -746,
+              "bottom": 1024
+            }
+          ]
+        }
+      },
+      {
+        "tab": "results",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "results",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button.active",
+              "text": "A",
+              "width": 52,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "B",
+              "width": 52,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "C",
+              "width": 52,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "D",
+              "width": 52,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "E",
+              "width": 52,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "F",
+              "width": 52,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "G",
+              "width": 52,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "H",
+              "width": 52,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "I",
+              "width": 52,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "J",
+              "width": 52,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "K",
+              "width": 52,
+              "height": 38
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.group-picker > button",
+              "text": "L",
+              "width": 52,
+              "height": 38
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 34,
+              "height": 36
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 58,
+              "height": 36
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1653
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1653
+            },
+            {
+              "selector": "div#root > div.wc-app > main",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1333
+            },
+            {
+              "selector": "div#root > div.wc-app > main > section.screen.results-screen",
+              "text": "BẢNG ĐẤU Bảng xếp hạng bóng đá Live score: DEV mock · 14:45 BẢNG A Cục diện bảng A 2/6 trận FT · 0 l",
+              "top": 181,
+              "bottom": 1333
+            },
+            {
+              "selector": "div.wc-app > main > section.screen.results-screen > section.football-board",
+              "text": "BẢNG A Cục diện bảng A 2/6 trận FT · 0 live · 2 có tỉ số 1 Mexico 3đ 2 Hàn Quốc 1đ A B C D E F G H I",
+              "top": 309,
+              "bottom": 1285
+            },
+            {
+              "selector": "main > section.screen.results-screen > section.football-board > div.fixtures-panel",
+              "text": "Lịch & tỉ số bảng A 6 trận #1 · 02:00 12-06 Mexico 2 - 1 Nam Phi FT #2 · 09:00 12-06 Hàn Quốc 1 - 1 ",
+              "top": 877,
+              "bottom": 1266
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.fixtures-panel > div.group-match-list",
+              "text": "#1 · 02:00 12-06 Mexico 2 - 1 Nam Phi FT #2 · 09:00 12-06 Hàn Quốc 1 - 1 Séc FT #25 · 23:00 18-06 Sé",
+              "top": 923,
+              "bottom": 1266
+            },
+            {
+              "selector": "section.football-board > div.fixtures-panel > div.group-match-list > article.football-match-row.final",
+              "text": "#1 · 02:00 12-06 Mexico 2 - 1 Nam Phi FT",
+              "top": 923,
+              "bottom": 972
+            },
+            {
+              "selector": "div.fixtures-panel > div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.home",
+              "text": "Mexico",
+              "top": 935,
+              "bottom": 959
+            },
+            {
+              "selector": "div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.home > span.fixture-team-name",
+              "text": "Mexico",
+              "top": 938,
+              "bottom": 957
+            },
+            {
+              "selector": "div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.home > span.team-dot.fixture-flag",
+              "text": "",
+              "top": 935,
+              "bottom": 959
+            },
+            {
+              "selector": "article.football-match-row.final > span.football-match-team.fixture-team.home > span.team-dot.fixture-flag > img",
+              "text": "",
+              "top": 935,
+              "bottom": 959
+            },
+            {
+              "selector": "div.fixtures-panel > div.group-match-list > article.football-match-row.final > span.football-match-score",
+              "text": "2 - 1",
+              "top": 932,
+              "bottom": 963
+            },
+            {
+              "selector": "div.fixtures-panel > div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.away",
+              "text": "Nam Phi",
+              "top": 935,
+              "bottom": 959
+            },
+            {
+              "selector": "div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.away > span.team-dot.fixture-flag",
+              "text": "",
+              "top": 935,
+              "bottom": 959
+            },
+            {
+              "selector": "article.football-match-row.final > span.football-match-team.fixture-team.away > span.team-dot.fixture-flag > img",
+              "text": "",
+              "top": 935,
+              "bottom": 959
+            },
+            {
+              "selector": "div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.away > span.fixture-team-name",
+              "text": "Nam Phi",
+              "top": 938,
+              "bottom": 957
+            },
+            {
+              "selector": "section.football-board > div.fixtures-panel > div.group-match-list > article.football-match-row.final",
+              "text": "#2 · 09:00 12-06 Hàn Quốc 1 - 1 Séc FT",
+              "top": 980,
+              "bottom": 1030
+            },
+            {
+              "selector": "div.fixtures-panel > div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.home",
+              "text": "Hàn Quốc",
+              "top": 993,
+              "bottom": 1017
+            },
+            {
+              "selector": "div.group-match-list > article.football-match-row.final > span.football-match-team.fixture-team.home > span.fixture-team-name",
+              "text": "Hàn Quốc",
+              "top": 995,
+              "bottom": 1015
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -619,
+              "bottom": 1024
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -619,
+              "bottom": 1024
+            }
+          ]
+        }
+      },
+      {
+        "tab": "rules",
+        "metrics": {
+          "viewport": "tablet",
+          "tab": "rules",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 34,
+              "height": 36
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 58,
+              "height": 36
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1476
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1476
+            },
+            {
+              "selector": "div#root > div.wc-app > main",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1155
+            },
+            {
+              "selector": "div#root > div.wc-app > main > section.screen.rules",
+              "text": "LUẬT CHƠI V1 Chơi nhẹ, thắng vui, có cớ ăn mừng. Điểm từng trận Đúng tỉ số 5đ. Đúng đội thắng/hòa và",
+              "top": 181,
+              "bottom": 1155
+            },
+            {
+              "selector": "div.wc-app > main > section.screen.rules > div.rules-grid",
+              "text": "Điểm từng trận Đúng tỉ số 5đ. Đúng đội thắng/hòa và đúng hiệu số 3đ. Chỉ đúng kết quả thắng/hòa/thua",
+              "top": 295,
+              "bottom": 1107
+            },
+            {
+              "selector": "main > section.screen.rules > div.rules-grid > article.rule-card",
+              "text": "Chốt sổ Dự đoán phải lưu trước giờ bóng lăn. Trễ trận nào thì trận đó 0đ, không phạt thêm.",
+              "top": 892,
+              "bottom": 992
+            },
+            {
+              "selector": "section.screen.rules > div.rules-grid > article.rule-card > p",
+              "text": "Dự đoán phải lưu trước giờ bóng lăn. Trễ trận nào thì trận đó 0đ, không phạt thêm.",
+              "top": 952,
+              "bottom": 973
+            },
+            {
+              "selector": "main > section.screen.rules > div.rules-grid > article.rule-card",
+              "text": "Trao thưởng Top 1, Top 2 và Top 3 sau 72 trận vòng bảng nhận thưởng theo kế hoạch của BTC.",
+              "top": 1008,
+              "bottom": 1107
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -442,
+              "bottom": 1024
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -442,
+              "bottom": 1024
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "isMobile": true
+    },
+    "logs": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting..."
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "info",
+        "text": "Images loaded lazily and replaced with placeholders. Load events are deferred. See https://go.microsoft.com/fwlink/?linkid=2048113"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected."
+      },
+      {
+        "type": "warning",
+        "text": "GoTrueClient@sb-dftgyqxhegjamllsblsw-auth-token:1 (2.105.4) 2026-06-05T07:45:35.754Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key."
+      }
+    ],
+    "badResponses": [],
+    "tabResults": [
+      {
+        "tab": "matches",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "matches",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [
+            {
+              "selector": "section.screen > div.group-filter-wrap > div.chip-row > button",
+              "text": "Bảng D",
+              "left": 335,
+              "right": 411,
+              "width": 76
+            },
+            {
+              "selector": "section.screen > div.group-filter-wrap > div.chip-row > button",
+              "text": "+ thêm",
+              "left": 419,
+              "right": 496,
+              "width": 77
+            }
+          ],
+          "tinyTargets": [
+            {
+              "selector": "section.screen > div.screen-heading > div.search-pill > input",
+              "text": "Đội bóng...",
+              "width": 299,
+              "height": 25
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.primary-btn.small",
+              "text": "Lưu dự đoán",
+              "width": 126,
+              "height": 42
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.match-actions.compact-actions > button.double-btn.star-btn",
+              "text": "★",
+              "width": 204,
+              "height": 42
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 20879
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 20879
+            },
+            {
+              "selector": "div#root > div.wc-app > main",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 20510
+            },
+            {
+              "selector": "div#root > div.wc-app > main > section.screen",
+              "text": "DỰ ĐOÁN TỈ SỐ 72 trận vòng bảng Live score: DEV mock · 14:45 Tìm Tất cả Bảng A Bảng B Bảng C Bảng D ",
+              "top": 247,
+              "bottom": 20510
+            },
+            {
+              "selector": "div.wc-app > main > section.screen > div.match-days",
+              "text": "Thứ 5, 11/06 1 trận #1 · Vòng bảng · A Đã kết thúc Mexico FIFA #15 2 FT Nam Phi FIFA #60 1 Bạn dự 2-",
+              "top": 508,
+              "bottom": 20462
+            },
+            {
+              "selector": "main > section.screen > div.match-days > section.match-day",
+              "text": "Thứ 5, 11/06 1 trận #1 · Vòng bảng · A Đã kết thúc Mexico FIFA #15 2 FT Nam Phi FIFA #60 1 Bạn dự 2-",
+              "top": 508,
+              "bottom": 826
+            },
+            {
+              "selector": "section.screen > div.match-days > section.match-day > div.match-grid",
+              "text": "#1 · Vòng bảng · A Đã kết thúc Mexico FIFA #15 2 FT Nam Phi FIFA #60 1 Bạn dự 2-1 +5đ tỉ số chính xá",
+              "top": 551,
+              "bottom": 826
+            },
+            {
+              "selector": "div.match-days > section.match-day > div.match-grid > article.match-card.match-card--prototype",
+              "text": "#1 · Vòng bảng · A Đã kết thúc Mexico FIFA #15 2 FT Nam Phi FIFA #60 1 Bạn dự 2-1 +5đ tỉ số chính xá",
+              "top": 567,
+              "bottom": 826
+            },
+            {
+              "selector": "section.match-day > div.match-grid > article.match-card.match-card--prototype > div.prediction-done",
+              "text": "Bạn dự 2-1 +5đ tỉ số chính xác",
+              "top": 752,
+              "bottom": 811
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.prediction-done > span",
+              "text": "Bạn dự 2-1",
+              "top": 762,
+              "bottom": 780
+            },
+            {
+              "selector": "article.match-card.match-card--prototype > div.prediction-done > span > b",
+              "text": "2-1",
+              "top": 763,
+              "bottom": 779
+            },
+            {
+              "selector": "div.match-grid > article.match-card.match-card--prototype > div.prediction-done > strong",
+              "text": "+5đ tỉ số chính xác",
+              "top": 783,
+              "bottom": 801
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -20025,
+              "bottom": 844
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -20025,
+              "bottom": 844
+            }
+          ]
+        }
+      },
+      {
+        "tab": "daily",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "daily",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "section.screen > article.question-card.long-term-card > div.question-footer > button.primary-btn.small",
+              "text": "Lưu",
+              "width": 332,
+              "height": 42
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 34,
+              "height": 36
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 58,
+              "height": 36
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1444
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1444
+            },
+            {
+              "selector": "div#root > div.wc-app > main",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1074
+            },
+            {
+              "selector": "div#root > div.wc-app > main > section.screen",
+              "text": "KHÔNG CẦN GIỎI BÓNG ĐÁ Câu hỏi hôm nay và ngày mai Chưa có câu hỏi cho hôm nay hoặc ngày mai. Dài hạ",
+              "top": 247,
+              "bottom": 1074
+            },
+            {
+              "selector": "div.wc-app > main > section.screen > article.question-card.long-term-card",
+              "text": "Dài hạn Dự đoán dài hạn Chọn trước giải. Đúng vô địch +20đ, vua phá lưới +10đ, đội gây sốc +10đ. Vô ",
+              "top": 477,
+              "bottom": 1026
+            },
+            {
+              "selector": "main > section.screen > article.question-card.long-term-card > div.long-term-fields",
+              "text": "Vô địch 🇫🇷 Pháp · FIFA #1 ▾ Vua phá lưới Đội gây sốc Đội bị đánh giá thấp nhưng đi sâu hơn kỳ vọng",
+              "top": 621,
+              "bottom": 909
+            },
+            {
+              "selector": "section.screen > article.question-card.long-term-card > div.long-term-fields > label",
+              "text": "Vua phá lưới",
+              "top": 708,
+              "bottom": 781
+            },
+            {
+              "selector": "article.question-card.long-term-card > div.long-term-fields > label > input.answer-input",
+              "text": "",
+              "top": 733,
+              "bottom": 781
+            },
+            {
+              "selector": "section.screen > article.question-card.long-term-card > div.long-term-fields > label",
+              "text": "Đội gây sốc Đội bị đánh giá thấp nhưng đi sâu hơn kỳ vọng, tạo bất ngờ lớn so với BXH FIFA và tương ",
+              "top": 793,
+              "bottom": 909
+            },
+            {
+              "selector": "article.question-card.long-term-card > div.long-term-fields > label > span",
+              "text": "Đội gây sốc",
+              "top": 793,
+              "bottom": 811
+            },
+            {
+              "selector": "article.question-card.long-term-card > div.long-term-fields > label > small.field-hint",
+              "text": "Đội bị đánh giá thấp nhưng đi sâu hơn kỳ vọng, tạo bất ngờ lớn so với BXH FIFA và tương quan bảng đấ",
+              "top": 818,
+              "bottom": 852
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -590,
+              "bottom": 844
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -590,
+              "bottom": 844
+            }
+          ]
+        }
+      },
+      {
+        "tab": "leaderboard",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "leaderboard",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "main > section.screen > section.score-history-panel > button.secondary-btn.score-history-toggle",
+              "text": "Xem lịch sử cộng điểm",
+              "width": 340,
+              "height": 42
+            },
+            {
+              "selector": "main > section.screen > div.leader-modes > button.active",
+              "text": "Tổng",
+              "width": 119,
+              "height": 40
+            },
+            {
+              "selector": "main > section.screen > div.leader-modes > button",
+              "text": "Theo tuần",
+              "width": 119,
+              "height": 40
+            },
+            {
+              "selector": "main > section.screen > div.leader-modes > button",
+              "text": "Theo vòng",
+              "width": 119,
+              "height": 40
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 34,
+              "height": 36
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 58,
+              "height": 36
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1913
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1913
+            },
+            {
+              "selector": "div#root > div.wc-app > main",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1543
+            },
+            {
+              "selector": "div#root > div.wc-app > main > section.screen",
+              "text": "LỊCH SỬ CỘNG ĐIỂM 7đ #3 6 đã dự 2 mục Xem lịch sử cộng điểm Tổng Theo tuần Theo vòng 1 LE Lan Exact ",
+              "top": 247,
+              "bottom": 1543
+            },
+            {
+              "selector": "div.wc-app > main > section.screen > div.leader-list",
+              "text": "1 LE Lan Exact 15 trận · 0 cửa dưới · 5 streak · 0 vui 20đ 2 MC Minh Chill 8 trận · 0 cửa dưới · 0 s",
+              "top": 529,
+              "bottom": 1269
+            },
+            {
+              "selector": "main > section.screen > div.leader-list > article.lb-row",
+              "text": "4 BU Bao Upset 5 trận · 0 cửa dưới · 0 streak · 0 vui 5đ",
+              "top": 733,
+              "bottom": 793
+            },
+            {
+              "selector": "section.screen > div.leader-list > article.lb-row > span.lb-rank",
+              "text": "4",
+              "top": 749,
+              "bottom": 777
+            },
+            {
+              "selector": "section.screen > div.leader-list > article.lb-row > span.lb-avatar",
+              "text": "BU",
+              "top": 744,
+              "bottom": 782
+            },
+            {
+              "selector": "section.screen > div.leader-list > article.lb-row > span.lb-person",
+              "text": "Bao Upset 5 trận · 0 cửa dưới · 0 streak · 0 vui",
+              "top": 744,
+              "bottom": 782
+            },
+            {
+              "selector": "div.leader-list > article.lb-row > span.lb-person > small",
+              "text": "5 trận · 0 cửa dưới · 0 streak · 0 vui",
+              "top": 765,
+              "bottom": 782
+            },
+            {
+              "selector": "section.screen > div.leader-list > article.lb-row > b",
+              "text": "5đ",
+              "top": 751,
+              "bottom": 775
+            },
+            {
+              "selector": "main > section.screen > div.leader-list > article.lb-row",
+              "text": "5 CT Chu Thị Ngọc Huyền 0 trận · 0 cửa dưới · 0 streak · 0 vui 0đ",
+              "top": 801,
+              "bottom": 861
+            },
+            {
+              "selector": "section.screen > div.leader-list > article.lb-row > span.lb-rank",
+              "text": "5",
+              "top": 817,
+              "bottom": 845
+            },
+            {
+              "selector": "section.screen > div.leader-list > article.lb-row > span.lb-avatar",
+              "text": "CT",
+              "top": 812,
+              "bottom": 850
+            },
+            {
+              "selector": "section.screen > div.leader-list > article.lb-row > span.lb-person",
+              "text": "Chu Thị Ngọc Huyền 0 trận · 0 cửa dưới · 0 streak · 0 vui",
+              "top": 812,
+              "bottom": 850
+            },
+            {
+              "selector": "div.leader-list > article.lb-row > span.lb-person > strong",
+              "text": "Chu Thị Ngọc Huyền",
+              "top": 812,
+              "bottom": 833
+            },
+            {
+              "selector": "section.screen > div.leader-list > article.lb-row > b",
+              "text": "0đ",
+              "top": 819,
+              "bottom": 843
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -1059,
+              "bottom": 844
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -1059,
+              "bottom": 844
+            }
+          ]
+        }
+      },
+      {
+        "tab": "results",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "results",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 34,
+              "height": 36
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 58,
+              "height": 36
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 2021
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 2021
+            },
+            {
+              "selector": "div#root > div.wc-app > main",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1652
+            },
+            {
+              "selector": "div#root > div.wc-app > main > section.screen.results-screen",
+              "text": "BẢNG ĐẤU Bảng xếp hạng bóng đá Live score: DEV mock · 14:45 BẢNG A Cục diện bảng A 2/6 trận FT · 0 l",
+              "top": 247,
+              "bottom": 1652
+            },
+            {
+              "selector": "div.wc-app > main > section.screen.results-screen > section.football-board",
+              "text": "BẢNG A Cục diện bảng A 2/6 trận FT · 0 live · 2 có tỉ số 1 Mexico 3đ 2 Hàn Quốc 1đ A B C D E F G H I",
+              "top": 374,
+              "bottom": 1604
+            },
+            {
+              "selector": "main > section.screen.results-screen > section.football-board > div.football-table-wrap",
+              "text": "ĐỘI TR HS Đ 1 Mexico 1T 0H 0B 1 +1 3 2 Hàn Quốc 0T 1H 0B 1 0 1 3 Séc 0T 1H 0B 1 0 1 4 Nam Phi 0T 0H ",
+              "top": 722,
+              "bottom": 984
+            },
+            {
+              "selector": "section.screen.results-screen > section.football-board > div.football-table-wrap > table.football-table",
+              "text": "ĐỘI TR HS Đ 1 Mexico 1T 0H 0B 1 +1 3 2 Hàn Quốc 0T 1H 0B 1 0 1 3 Séc 0T 1H 0B 1 0 1 4 Nam Phi 0T 0H ",
+              "top": 723,
+              "bottom": 983
+            },
+            {
+              "selector": "section.football-board > div.football-table-wrap > table.football-table > tbody",
+              "text": "1 Mexico 1T 0H 0B 1 +1 3 2 Hàn Quốc 0T 1H 0B 1 0 1 3 Séc 0T 1H 0B 1 0 1 4 Nam Phi 0T 0H 1B 1 -1 0",
+              "top": 760,
+              "bottom": 983
+            },
+            {
+              "selector": "div.football-table-wrap > table.football-table > tbody > tr.qualify-row",
+              "text": "1 Mexico 1T 0H 0B 1 +1 3",
+              "top": 760,
+              "bottom": 816
+            },
+            {
+              "selector": "table.football-table > tbody > tr.qualify-row > td",
+              "text": "1 Mexico 1T 0H 0B",
+              "top": 760,
+              "bottom": 816
+            },
+            {
+              "selector": "tbody > tr.qualify-row > td > span.table-team",
+              "text": "1 Mexico 1T 0H 0B",
+              "top": 770,
+              "bottom": 805
+            },
+            {
+              "selector": "tr.qualify-row > td > span.table-team > span.table-rank",
+              "text": "1",
+              "top": 778,
+              "bottom": 798
+            },
+            {
+              "selector": "tr.qualify-row > td > span.table-team > span.team-dot.small",
+              "text": "",
+              "top": 776,
+              "bottom": 800
+            },
+            {
+              "selector": "td > span.table-team > span.team-dot.small > img",
+              "text": "",
+              "top": 776,
+              "bottom": 800
+            },
+            {
+              "selector": "tr.qualify-row > td > span.table-team > span",
+              "text": "Mexico 1T 0H 0B",
+              "top": 770,
+              "bottom": 805
+            },
+            {
+              "selector": "td > span.table-team > span > strong",
+              "text": "Mexico",
+              "top": 771,
+              "bottom": 787
+            },
+            {
+              "selector": "td > span.table-team > span > small",
+              "text": "1T 0H 0B",
+              "top": 790,
+              "bottom": 805
+            },
+            {
+              "selector": "table.football-table > tbody > tr.qualify-row > td",
+              "text": "1",
+              "top": 760,
+              "bottom": 816
+            },
+            {
+              "selector": "table.football-table > tbody > tr.qualify-row > td",
+              "text": "+1",
+              "top": 760,
+              "bottom": 816
+            },
+            {
+              "selector": "table.football-table > tbody > tr.qualify-row > td",
+              "text": "3",
+              "top": 760,
+              "bottom": 816
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -1167,
+              "bottom": 844
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -1167,
+              "bottom": 844
+            }
+          ]
+        }
+      },
+      {
+        "tab": "rules",
+        "metrics": {
+          "viewport": "mobile",
+          "tab": "rules",
+          "hasHorizontalScroll": false,
+          "horizontalOverflow": [],
+          "tinyTargets": [
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "FIFA",
+              "width": 34,
+              "height": 36
+            },
+            {
+              "selector": "div#root > div.wc-app > footer.app-footer > a",
+              "text": "Ranking",
+              "width": 58,
+              "height": 36
+            }
+          ],
+          "clippedText": [],
+          "topOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1774
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1774
+            },
+            {
+              "selector": "div#root > div.wc-app > main",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": 10,
+              "bottom": 1405
+            },
+            {
+              "selector": "div#root > div.wc-app > main > section.screen.rules",
+              "text": "LUẬT CHƠI V1 Chơi nhẹ, thắng vui, có cớ ăn mừng. Điểm từng trận Đúng tỉ số 5đ. Đúng đội thắng/hòa và",
+              "top": 247,
+              "bottom": 1405
+            },
+            {
+              "selector": "div.wc-app > main > section.screen.rules > div.rules-grid",
+              "text": "Điểm từng trận Đúng tỉ số 5đ. Đúng đội thắng/hòa và đúng hiệu số 3đ. Chỉ đúng kết quả thắng/hòa/thua",
+              "top": 403,
+              "bottom": 1357
+            },
+            {
+              "selector": "main > section.screen.rules > div.rules-grid > article.rule-card",
+              "text": "Kèo tủ mỗi ngày Mỗi người chỉ có 1 kèo tủ trong ngày thi đấu, và chỉ chọn được trong lượt trận của n",
+              "top": 694,
+              "bottom": 814
+            },
+            {
+              "selector": "section.screen.rules > div.rules-grid > article.rule-card > p",
+              "text": "Mỗi người chỉ có 1 kèo tủ trong ngày thi đấu, và chỉ chọn được trong lượt trận của ngày đó.",
+              "top": 754,
+              "bottom": 795
+            }
+          ],
+          "bottomOverlaps": [
+            {
+              "selector": "div#root",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -920,
+              "bottom": 844
+            },
+            {
+              "selector": "div#root > div.wc-app",
+              "text": "LIVE SCORE 3 trận đang live Nguồn miễn phí: DEV mock · 14:45 3 live 3 FT API 6 trận DEV mock: 6 tran",
+              "top": -920,
+              "bottom": 844
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

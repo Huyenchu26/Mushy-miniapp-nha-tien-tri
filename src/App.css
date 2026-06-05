@@ -1,4 +1,6 @@
 :root {
+  --bottom-nav-height: 76px;
+  --bottom-nav-clearance: calc(var(--bottom-nav-height) + 18px + env(safe-area-inset-bottom));
   --wc-canvas: #ffffff;
   --wc-ink: #222222;
   --wc-body: #3f3f3f;
@@ -46,18 +48,24 @@ input:disabled {
 .wc-app {
   overflow-x: clip;
   min-height: 100vh;
-  padding-bottom: 104px;
+  padding-bottom: var(--bottom-nav-clearance);
   background: var(--wc-canvas);
 }
 
 .tab-nav {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 4px;
-  padding: 5px;
-  border: 1px solid var(--wc-line);
-  border-radius: 999px;
-  background: var(--wc-canvas);
-  box-shadow: var(--wc-shadow);
+  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  border: 0;
+  border-top: 1px solid var(--wc-line-soft);
+  border-radius: 18px 18px 0 0;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow:
+    rgba(0, 0, 0, 0.12) 0 -8px 28px,
+    rgba(0, 0, 0, 0.04) 0 0 0 1px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .tab-nav button,
@@ -71,30 +79,82 @@ input:disabled {
 }
 
 .tab-nav button {
-  min-height: 38px;
-  padding: 0 16px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 5px 2px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.1;
 }
 
 .tab-nav button.active {
   background: var(--wc-ink);
-  color: white;
+  color: #ffffff;
+}
+
+.tab-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 10px;
+  background: var(--wc-soft);
+  color: var(--wc-muted);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.tab-nav button.active .tab-icon {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.tab-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bottom-nav {
   position: fixed;
-  left: 50%;
-  bottom: max(14px, env(safe-area-inset-bottom));
-  z-index: 50;
-  width: min(430px, calc(100% - 24px));
-  transform: translateX(-50%);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  width: 100%;
+  min-height: var(--bottom-nav-height);
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 .bottom-nav button {
   flex: 1 1 0;
   min-width: 0;
+}
+
+@media (min-width: 700px) {
+  .tab-nav {
+    padding: 6px;
+    border: 1px solid var(--wc-line);
+    border-radius: 22px;
+    box-shadow:
+      rgba(0, 0, 0, 0.08) 0 10px 30px,
+      rgba(0, 0, 0, 0.04) 0 0 0 1px;
+  }
+
+  .bottom-nav {
+    right: auto;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    left: 50%;
+    width: min(460px, calc(100% - 20px));
+    transform: translateX(-50%) translateZ(0);
+  }
 }
 
 .brand-mark {
@@ -369,16 +429,28 @@ main {
 }
 
 .group-filter-wrap {
+  position: relative;
   display: grid;
   gap: 8px;
   padding-bottom: 18px;
+}
+
+.group-filter-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 18px;
+  width: 34px;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), var(--wc-canvas));
 }
 
 .chip-row {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding: 2px 0;
+  padding: 2px 34px 2px 0;
   scrollbar-width: none;
 }
 
@@ -388,7 +460,7 @@ main {
 
 .chip-row button {
   flex: 0 0 auto;
-  min-height: 38px;
+  min-height: 44px;
   border: 1px solid var(--wc-line);
   border-radius: 999px;
   padding: 0 14px;
@@ -560,17 +632,13 @@ main {
 }
 
 .match-team strong {
-  display: -webkit-box;
-  width: min(112px, 100%);
+  width: min(128px, 100%);
   margin-top: 6px;
   color: var(--wc-ink);
-  overflow: hidden;
   font-size: 12.5px;
-  line-height: 1.18;
-  overflow-wrap: normal;
+  line-height: 1.22;
+  overflow-wrap: anywhere;
   text-wrap: balance;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
 }
 
 .match-team small {
@@ -591,16 +659,16 @@ main {
 
 .step-group {
   display: grid;
-  grid-template-columns: 26px 28px 26px;
+  grid-template-columns: 44px 30px 44px;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 .step-group button {
-  width: 26px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 12px;
   background: var(--wc-strong);
   color: var(--wc-primary);
   font-size: 18px;
@@ -829,7 +897,7 @@ main {
 
 .double-btn,
 .secondary-btn {
-  min-height: 42px;
+  min-height: 44px;
   border: 1px solid var(--wc-line);
   border-radius: 8px;
   padding: 0 14px;
@@ -877,7 +945,7 @@ main {
 }
 
 .primary-btn.small {
-  min-height: 42px;
+  min-height: 44px;
   padding: 0 18px;
 }
 
@@ -995,7 +1063,7 @@ main {
 
 .group-picker button {
   min-width: 0;
-  min-height: 38px;
+  min-height: 44px;
   border: 0;
   border-radius: 10px;
   background: transparent;
@@ -1526,7 +1594,7 @@ main {
 
 .leader-modes button {
   flex: 1 1 0;
-  min-height: 40px;
+  min-height: 44px;
   border: 1px solid var(--wc-line);
   border-radius: 11px;
   background: white;
@@ -1827,9 +1895,15 @@ main {
 }
 
 .app-footer a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   color: var(--wc-primary);
   font-weight: 700;
   text-decoration: none;
+  padding: 8px 6px;
 }
 
 @media (max-width: 980px) {
@@ -1889,10 +1963,6 @@ main {
     width: min(100% - 20px, 1220px);
   }
 
-  .bottom-nav {
-    justify-content: space-between;
-  }
-
   .screen-heading {
     align-items: flex-start;
     flex-direction: column;
@@ -1950,22 +2020,22 @@ main {
   }
 
   .match-team {
-    flex-basis: 64px;
+    flex-basis: 76px;
     min-width: 0;
   }
 
   .match-team strong {
-    width: min(104px, 100%);
+    width: min(124px, 100%);
   }
 
   .step-group {
-    grid-template-columns: 24px 26px 24px;
+    grid-template-columns: 44px 28px 44px;
     gap: 4px;
   }
 
   .step-group button {
-    width: 24px;
-    height: 30px;
+    width: 44px;
+    height: 44px;
   }
 
   .result-grid {
@@ -1991,7 +2061,7 @@ main {
   }
 
   .group-picker button {
-    min-height: 34px;
+    min-height: 44px;
   }
 
   .football-group-card {
