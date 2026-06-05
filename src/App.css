@@ -205,6 +205,18 @@ main {
   color: #c13515;
 }
 
+.dev-sim-line {
+  margin: -8px 0 18px;
+  border: 1px dashed rgba(28, 100, 242, 0.26);
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: rgba(28, 100, 242, 0.06);
+  color: #1c64f2;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .live-score-panel {
   display: flex;
   align-items: center;

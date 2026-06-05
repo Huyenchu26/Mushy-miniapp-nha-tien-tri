@@ -1,5 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DAILY_QUESTIONS, DATA_SOURCE, FIFA_RANKING_SOURCE, GROUPS, MATCHES, TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS } from './lib/app/worldcup-data.js';
+import {
+  MOCK_SCORE_STEP_MS,
+  buildMockLiveScorePayload,
+  createMockContext,
+  createMockLongTermBet,
+  isMockContext,
+  mergeMockMembers,
+  mergeMockPredictions,
+} from './lib/app/mock-simulation.js';
 import { computeStandings, dailyPoints, isFinished, matchBasePoints, matchScoreBreakdown, outcome } from './lib/app/scoring.js';
 import Select from './components/Select.jsx';
 import { getContext } from './lib/context.js';
@@ -20,6 +29,7 @@ const PRIMARY_GROUP_FILTERS = ['A', 'B', 'C', 'D'];
 const EXTRA_GROUP_FILTERS = Object.keys(GROUPS).filter((group) => !PRIMARY_GROUP_FILTERS.includes(group));
 
 export default function App() {
+  const localSimulation = isLocalSimulationEnabled();
   const [ctx, setCtx] = useState(null);
   const [ctxError, setCtxError] = useState('');
   const [activeTab, setActiveTab] = useState(DEFAULT_TAB);
@@ -44,14 +54,24 @@ export default function App() {
     try {
       const nextCtx = getContext();
       if (!nextCtx?.userId || !nextCtx?.workspaceId || !nextCtx?.token) {
+        if (localSimulation) {
+          setCtx(createMockContext());
+          setNotice('DEV mock: local simulation is running.');
+          return;
+        }
         setCtxError('Thiếu Mushy context. Hãy mở app từ Mushy hoặc chạy npm run dev:setup để có token dev.');
       } else {
         setCtx(nextCtx);
       }
     } catch (err) {
+      if (localSimulation) {
+        setCtx(createMockContext());
+        setNotice('DEV mock: local simulation is running.');
+        return;
+      }
       setCtxError(err.message || 'Không đọc được Mushy context.');
     }
-  }, []);
+  }, [localSimulation]);
 
   useEffect(() => {
     if (!ctx?.userId || !scope?.workspaceId) return;
@@ -65,7 +85,7 @@ export default function App() {
     let cancelled = false;
     async function syncLiveScores() {
       try {
-        const payload = await fetchLiveScores(ctx.token, scope.workspaceId);
+        const payload = await fetchLiveScores(ctx.token, scope.workspaceId, { useMock: localSimulation });
         if (cancelled) return;
         setLiveScores(payload.matches || []);
         setLiveSync({
@@ -86,13 +106,13 @@ export default function App() {
     syncLiveScores();
     const interval = window.setInterval(() => {
       if (document.visibilityState !== 'hidden') syncLiveScores();
-    }, LIVE_SCORE_POLL_MS);
+    }, localSimulation ? MOCK_SCORE_STEP_MS : LIVE_SCORE_POLL_MS);
 
     return () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [ctx?.token, scope?.workspaceId]);
+  }, [ctx?.token, scope?.workspaceId, localSimulation]);
 
   const predictionMap = useMemo(
     () => new Map(predictions.filter((p) => p.createdBy === ctx?.userId).map((p) => [Number(p.matchNo), p])),
@@ -139,6 +159,16 @@ export default function App() {
   async function loadGameData() {
     setLoading(true);
     setError('');
+    if (localSimulation && isMockContext(ctx)) {
+      setPredictions(mergeMockPredictions([], ctx, scope.workspaceId));
+      setAnswers([]);
+      setLongTermBet(createMockLongTermBet(ctx, scope.workspaceId));
+      setMembers(mergeMockMembers([], ctx));
+      setNotice('DEV mock: sample predictions and 6 match scores loaded.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const [predictionRows, answerRows, longTermRow, memberRows] = await Promise.all([
         fetchPredictions(scope.workspaceId),
@@ -146,11 +176,20 @@ export default function App() {
         fetchLongTermBet(scope.workspaceId, ctx.userId),
         listMembers(scope.workspaceId),
       ]);
-      setPredictions(predictionRows);
+      setPredictions(localSimulation ? mergeMockPredictions(predictionRows, ctx, scope.workspaceId) : predictionRows);
       setAnswers(answerRows);
-      setLongTermBet(longTermRow);
-      setMembers(ensureCurrentMember(memberRows, ctx));
+      setLongTermBet(longTermRow || (localSimulation ? createMockLongTermBet(ctx, scope.workspaceId) : null));
+      const ensuredMembers = ensureCurrentMember(memberRows, ctx);
+      setMembers(localSimulation ? mergeMockMembers(ensuredMembers, ctx) : ensuredMembers);
     } catch (err) {
+      if (localSimulation) {
+        setPredictions(mergeMockPredictions([], ctx, scope.workspaceId));
+        setAnswers([]);
+        setLongTermBet(createMockLongTermBet(ctx, scope.workspaceId));
+        setMembers(mergeMockMembers([], ctx));
+        setNotice('DEV mock: DB unavailable, using local sample data.');
+        return;
+      }
       setError(err.message || 'Không tải được dữ liệu game.');
     } finally {
       setLoading(false);
@@ -179,6 +218,20 @@ export default function App() {
         if (existingDailyDouble) {
           throw new Error(`Ngày ${formatDate(match.matchDay)} đã có kèo tủ ở trận #${existingDailyDouble.matchNo}.`);
         }
+      }
+
+      if (localSimulation && isMockContext(ctx)) {
+        setPredictions((rows) => upsertLocalPrediction(rows, {
+          workspaceId: scope.workspaceId,
+          createdBy: ctx.userId,
+          matchNo: match.matchNo,
+          matchDay: match.matchDay,
+          homePred: normalizeScore(draft.homePred),
+          awayPred: normalizeScore(draft.awayPred),
+          doubleDown: draft.doubleDown === true,
+        }));
+        setNotice('DEV mock: saved prediction locally.');
+        return;
       }
 
       const { error: upsertError } = await db.from('group_predictions').upsert(
@@ -212,6 +265,17 @@ export default function App() {
       const cleanAnswer = String(answer || '').trim().replace(/\s+/g, ' ').slice(0, 280);
       if (!cleanAnswer) throw new Error('Bạn cần nhập câu trả lời.');
 
+      if (localSimulation && isMockContext(ctx)) {
+        setAnswers((rows) => upsertLocalAnswer(rows, {
+          workspaceId: scope.workspaceId,
+          createdBy: ctx.userId,
+          questionKey: question.key,
+          answer: cleanAnswer,
+        }));
+        setNotice('DEV mock: saved answer locally.');
+        return;
+      }
+
       const { error: upsertError } = await db.from('group_daily_answers').upsert(
         {
           workspace_id: scope.workspaceId,
@@ -239,6 +303,21 @@ export default function App() {
       const shockTeam = String(draft.shockTeam || '').trim();
       if (!champion || !topScorer || !shockTeam) {
         throw new Error('Bạn cần chọn đủ vô địch, vua phá lưới và đội gây sốc.');
+      }
+
+      if (localSimulation && isMockContext(ctx)) {
+        setLongTermBet({
+          id: `${ctx.userId}-long-term-local`,
+          workspaceId: scope.workspaceId,
+          createdBy: ctx.userId,
+          champion,
+          topScorer,
+          shockTeam,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        setNotice('DEV mock: saved long-term bet locally.');
+        return;
       }
 
       const { error: upsertError } = await db.from('long_term_bets').upsert(
@@ -289,6 +368,11 @@ export default function App() {
         )}
 
         <LiveScorePanel liveScores={liveScores} liveSync={liveSync} />
+        {localSimulation && (
+          <div className="dev-sim-line" role="status">
+            DEV mock: 6 tran dau gia lap, BXH tinh lai moi {MOCK_SCORE_STEP_MS / 1000}s. Them ?mock=0 de tat.
+          </div>
+        )}
 
         {activeTab === 'matches' && (
           <MatchesScreen
@@ -1269,7 +1353,9 @@ function TeamRow({ team }) {
   );
 }
 
-async function fetchLiveScores(token, workspaceId) {
+async function fetchLiveScores(token, workspaceId, { useMock = false } = {}) {
+  if (useMock) return normalizeLiveScorePayload(buildMockLiveScorePayload());
+
   const response = await fetch('/api/live-scores', {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -1286,6 +1372,10 @@ async function fetchLiveScores(token, workspaceId) {
   }
 
   const payload = await response.json();
+  return normalizeLiveScorePayload(payload);
+}
+
+function normalizeLiveScorePayload(payload) {
   return {
     ...payload,
     matches: (payload.matches || []).map((match) => ({
@@ -1404,6 +1494,41 @@ function toLongTermBet(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+function upsertLocalPrediction(rows, draft) {
+  const next = {
+    id: `${draft.createdBy}-${draft.matchNo}-local`,
+    workspaceId: draft.workspaceId,
+    createdBy: draft.createdBy,
+    matchNo: draft.matchNo,
+    matchDay: draft.matchDay,
+    homePred: draft.homePred,
+    awayPred: draft.awayPred,
+    doubleDown: draft.doubleDown,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  return [
+    ...rows.filter((row) => !(row.createdBy === draft.createdBy && Number(row.matchNo) === Number(draft.matchNo))),
+    next,
+  ].sort((a, b) => Number(a.matchNo) - Number(b.matchNo));
+}
+
+function upsertLocalAnswer(rows, draft) {
+  const next = {
+    id: `${draft.createdBy}-${draft.questionKey}-local`,
+    workspaceId: draft.workspaceId,
+    createdBy: draft.createdBy,
+    questionKey: draft.questionKey,
+    answer: draft.answer,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  return [
+    ...rows.filter((row) => !(row.createdBy === draft.createdBy && row.questionKey === draft.questionKey)),
+    next,
+  ];
 }
 
 function applyAutomaticScores(matches, liveScores) {
@@ -1681,7 +1806,15 @@ function liveLabel(liveScore) {
 }
 
 function sourceLabel(source) {
+  if (source === 'local-mock') return 'DEV mock';
   if (source === 'worldcup26.ir') return 'WorldCup26';
   if (source === 'espn') return 'ESPN';
   return source || 'live';
+}
+
+function isLocalSimulationEnabled() {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  const value = params.get('mock');
+  return value !== '0' && value !== 'false';
 }

@@ -3,6 +3,7 @@ import test from 'node:test';
 import { computeStandings, dailyPoints, matchBasePoints, matchPoints, matchUpsetBonus, streakBonus } from './scoring.js';
 import { validateWorldCupData } from './data-validation.js';
 import { DAILY_QUESTIONS, MATCHES } from './worldcup-data.js';
+import { buildMockLiveScorePayload, createMockMembers, createMockPredictions } from './mock-simulation.js';
 
 const finishedMatch = {
   matchNo: 1,
@@ -104,8 +105,48 @@ test('computeStandings ranks by total, exact count, then predicted count', () =>
   assert.equal(standings[1].total, 6);
 });
 
+test('local mock simulation covers six matches and recalculates standings', () => {
+  const payload = buildMockLiveScorePayload({ nowMs: Date.parse('2026-06-05T00:00:00Z'), step: 3 });
+  assert.equal(payload.matches.length, 6);
+  assert.equal(payload.matches.filter((match) => match.status === 'finished').length, 6);
+
+  const ctx = { userId: 'test-user', workspaceId: 'test-workspace', role: 'admin' };
+  const participants = createMockMembers(ctx).map((member) => ({
+    id: member.user_id,
+    displayName: member.full_name,
+  }));
+  const predictions = createMockPredictions(ctx, ctx.workspaceId).map((prediction) => ({
+    ...prediction,
+    participantId: prediction.createdBy,
+  }));
+  const standings = computeStandings({
+    participants,
+    predictions,
+    dailyAnswers: [],
+    matches: applyMockFinishedScores(MATCHES, payload.matches),
+  });
+
+  assert.equal(standings.length, 4);
+  assert.ok(standings[0].total > 0);
+  assert.ok(standings.some((row) => row.participantId === ctx.userId && row.finishedPredicted === 6));
+});
+
 test('static World Cup data is internally consistent', () => {
   const result = validateWorldCupData({ matches: MATCHES, questions: DAILY_QUESTIONS });
   assert.deepEqual(result.errors, []);
   assert.equal(result.ok, true);
 });
+
+function applyMockFinishedScores(matches, liveScores) {
+  const liveByNo = new Map(liveScores.map((score) => [Number(score.matchNo), score]));
+  return matches.map((match) => {
+    const liveScore = liveByNo.get(Number(match.matchNo));
+    if (!liveScore || liveScore.status !== 'finished') return match;
+    return {
+      ...match,
+      status: 'finished',
+      homeScore: liveScore.homeScore,
+      awayScore: liveScore.awayScore,
+    };
+  });
+}
