@@ -83,6 +83,11 @@ export default function App() {
   const [predictions, setPredictions] = useState([]);
   const [answers, setAnswers] = useState([]);
   const [longTermBet, setLongTermBet] = useState(null);
+  const [roomMatch, setRoomMatch] = useState(null);
+  const [roomMessages, setRoomMessages] = useState([]);
+  const [roomLoading, setRoomLoading] = useState(false);
+  const [roomError, setRoomError] = useState('');
+  const [spamBlockedUntil, setSpamBlockedUntil] = useState(0);
   const [liveScores, setLiveScores] = useState([]);
   const [liveSync, setLiveSync] = useState({ source: '', fetchedAt: '', error: '' });
   const [members, setMembers] = useState([]);
@@ -92,6 +97,7 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const refreshGestureRef = useRef({ startY: 0, scrollY: 0 });
+  const chatSendTimesRef = useRef([]);
   const scope = useMemo(
     () => (ctx?.workspaceId ? { workspaceId: ctx.workspaceId, label: ctx.workspaceSlug || 'Mushy' } : null),
     [ctx?.workspaceId, ctx?.workspaceSlug]
@@ -125,6 +131,16 @@ export default function App() {
     loadGameData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx?.userId, scope?.workspaceId]);
+
+  useEffect(() => {
+    if (!roomMatch || !scope?.workspaceId) return;
+    loadRoomMessages(roomMatch.matchNo);
+    const interval = window.setInterval(() => {
+      loadRoomMessages(roomMatch.matchNo, { silent: true });
+    }, 5000);
+    return () => window.clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomMatch?.matchNo, scope?.workspaceId]);
 
   useEffect(() => {
     if (!ctx?.token || !scope?.workspaceId) return undefined;
@@ -263,6 +279,16 @@ export default function App() {
     setNotice('');
     setError('');
     try {
+      const nextPrediction = {
+        workspaceId: scope.workspaceId,
+        createdBy: ctx.userId,
+        matchNo: match.matchNo,
+        matchDay: match.matchDay,
+        homePred: normalizeScore(draft.homePred),
+        awayPred: normalizeScore(draft.awayPred),
+        doubleDown: draft.doubleDown === true,
+      };
+
       if (Date.now() >= new Date(match.kickoffAt).getTime()) {
         throw new Error('Trận này đã khóa dự đoán.');
       }
@@ -284,17 +310,9 @@ export default function App() {
       }
 
       if (localSimulation && isMockContext(ctx)) {
-        setPredictions((rows) => upsertLocalPrediction(rows, {
-          workspaceId: scope.workspaceId,
-          createdBy: ctx.userId,
-          matchNo: match.matchNo,
-          matchDay: match.matchDay,
-          homePred: normalizeScore(draft.homePred),
-          awayPred: normalizeScore(draft.awayPred),
-          doubleDown: draft.doubleDown === true,
-        }));
+        setPredictions((rows) => upsertLocalPrediction(rows, nextPrediction));
         setNotice('DEV mock: saved prediction locally.');
-        return;
+        return true;
       }
 
       const { error: upsertError } = await db.from('group_predictions').upsert(
@@ -303,18 +321,28 @@ export default function App() {
           created_by: ctx.userId,
           match_no: match.matchNo,
           match_day: match.matchDay,
-          home_pred: normalizeScore(draft.homePred),
-          away_pred: normalizeScore(draft.awayPred),
-          double_down: draft.doubleDown === true,
+          home_pred: nextPrediction.homePred,
+          away_pred: nextPrediction.awayPred,
+          double_down: nextPrediction.doubleDown,
         },
         { onConflict: 'workspace_id,created_by,match_no' }
       );
-      if (upsertError) throw upsertError;
+      if (upsertError) {
+        if (localSimulation && isAuthError(upsertError)) {
+          setPredictions((rows) => upsertLocalPrediction(rows, nextPrediction));
+          setNotice('DEV local: token hết hạn, đã lưu dự đoán tạm trên máy.');
+          return true;
+        }
+        throw upsertError;
+      }
 
+      setPredictions((rows) => upsertLocalPrediction(rows, nextPrediction));
       setPredictions(await fetchPredictions(scope.workspaceId));
       setNotice('Đã lưu dự đoán.');
+      return true;
     } catch (err) {
       setError(err.message || 'Không lưu được dự đoán.');
+      return false;
     }
   }
 
@@ -403,6 +431,84 @@ export default function App() {
     }
   }
 
+  function handleOpenPredictionRoom(match) {
+    const prediction = predictionMap.get(Number(match.matchNo));
+    if (!prediction) {
+      setNotice('Bạn cần lưu dự đoán trước khi vào phòng trận này.');
+      return;
+    }
+    setRoomMatch(match);
+    setRoomError('');
+  }
+
+  async function loadRoomMessages(matchNo, { silent = false } = {}) {
+    if (!scope?.workspaceId) return;
+    if (!silent) setRoomLoading(true);
+    setRoomError('');
+    try {
+      const rows = await fetchMatchRoomMessages(scope.workspaceId, matchNo);
+      setRoomMessages(rows);
+    } catch (err) {
+      setRoomError(roomStorageErrorMessage(err));
+    } finally {
+      if (!silent) setRoomLoading(false);
+    }
+  }
+
+  async function handleSendRoomMessage({ kind = 'chat', body = '', emoji = null }) {
+    if (!roomMatch || !scope?.workspaceId || !ctx?.userId) return false;
+    const now = Date.now();
+    if (spamBlockedUntil > now) {
+      setRoomError(`Bạn gửi hơi sung. Chờ ${Math.ceil((spamBlockedUntil - now) / 1000)}s rồi cà khịa tiếp.`);
+      return false;
+    }
+
+    const recent = chatSendTimesRef.current.filter((time) => now - time <= 1000);
+    if (recent.length >= 3) {
+      const blockedUntil = now + 20000;
+      chatSendTimesRef.current = recent;
+      setSpamBlockedUntil(blockedUntil);
+      setRoomError('Bạn gửi 3 tin quá nhanh. Phòng khóa chat của bạn 20s để chống spam.');
+      return false;
+    }
+
+    const cleanBody = String(body || '').trim().replace(/\s+/g, ' ').slice(0, 280);
+    if (!cleanBody) return false;
+
+    const optimisticMessage = {
+      id: `local-${ctx.userId}-${roomMatch.matchNo}-${now}`,
+      workspaceId: scope.workspaceId,
+      createdBy: ctx.userId,
+      matchNo: roomMatch.matchNo,
+      kind,
+      body: cleanBody,
+      emoji,
+      createdAt: new Date(now).toISOString(),
+      optimistic: true,
+    };
+
+    chatSendTimesRef.current = [...recent, now];
+    setRoomMessages((rows) => [...rows, optimisticMessage]);
+    setRoomError('');
+
+    try {
+      const saved = await insertMatchRoomMessage({
+        workspaceId: scope.workspaceId,
+        createdBy: ctx.userId,
+        matchNo: roomMatch.matchNo,
+        kind,
+        body: cleanBody,
+        emoji,
+      });
+      setRoomMessages((rows) => rows.map((row) => (row.id === optimisticMessage.id ? saved : row)));
+      return true;
+    } catch (err) {
+      setRoomMessages((rows) => rows.map((row) => (row.id === optimisticMessage.id ? { ...row, failed: true } : row)));
+      setRoomError(roomStorageErrorMessage(err));
+      return false;
+    }
+  }
+
   if (ctxError) {
     return <SetupScreen error={ctxError} />;
   }
@@ -425,68 +531,91 @@ export default function App() {
 
   return (
     <div className="wc-app" onTouchStart={handleRefreshTouchStart} onTouchEnd={handleRefreshTouchEnd}>
-      <AppHeader
-        notifications={pointNotifications}
-        totalScore={currentStanding?.total ?? 0}
-      />
       <main>
-        <PromoHero onStart={() => setActiveTab('daily')} />
-
-        {(visibleNotice || error || loading) && (
-          <div className={`toast-line ${error ? 'error' : ''}`} role="status">
-            {loading ? 'Đang tải dữ liệu...' : error || visibleNotice}
-          </div>
-        )}
-
-        {activeTab === 'matches' && (
-          <MatchesScreen
-            matches={filteredMatches}
-            predictionMap={predictionMap}
-            dailyDoubleDownMap={dailyDoubleDownMap}
-            groupFilter={groupFilter}
-            query={query}
-            onGroupFilter={setGroupFilter}
-            onQuery={setQuery}
-            onSave={handleSavePrediction}
-            liveSync={liveSync}
+        {roomMatch ? (
+          <PredictionRoomScreen
+            match={roomMatch}
+            prediction={predictionMap.get(Number(roomMatch.matchNo))}
+            predictions={predictions}
+            members={members}
+            messages={roomMessages}
+            loading={roomLoading}
+            error={roomError}
+            spamBlockedUntil={spamBlockedUntil}
+            currentUserId={ctx?.userId}
+            onBack={() => {
+              setRoomMatch(null);
+              setRoomMessages([]);
+              setRoomError('');
+            }}
+            onSend={handleSendRoomMessage}
           />
-        )}
-        {activeTab === 'matches' && (
+        ) : (
           <>
-            <TopPredictors standings={standings} />
-            <RewardBanner onOpenRules={() => setActiveTab('rules')} />
+            <PromoHero
+              onStart={() => setActiveTab('daily')}
+              notifications={pointNotifications}
+              totalScore={currentStanding?.total ?? 0}
+            />
+
+            {(visibleNotice || error || loading) && (
+              <div className={`toast-line ${error ? 'error' : ''}`} role="status">
+                {loading ? 'Đang tải dữ liệu...' : error || visibleNotice}
+              </div>
+            )}
+
+            {activeTab === 'matches' && (
+              <MatchesScreen
+                matches={filteredMatches}
+                predictionMap={predictionMap}
+                dailyDoubleDownMap={dailyDoubleDownMap}
+                groupFilter={groupFilter}
+                query={query}
+                onGroupFilter={setGroupFilter}
+                onQuery={setQuery}
+                onSave={handleSavePrediction}
+                onOpenRoom={handleOpenPredictionRoom}
+                liveSync={liveSync}
+              />
+            )}
+            {activeTab === 'matches' && (
+              <>
+                <TopPredictors standings={standings} />
+                <RewardBanner onOpenRules={() => setActiveTab('rules')} />
+              </>
+            )}
+            {activeTab === 'daily' && (
+              <DailyScreen
+                questions={DAILY_QUESTIONS}
+                answerMap={answerMap}
+                longTermBet={longTermBet}
+                onSave={handleSaveAnswer}
+                onSaveLongTerm={handleSaveLongTermBet}
+              />
+            )}
+            {activeTab === 'leaderboard' && (
+              <LeaderboardScreen
+                standings={standings}
+                currentParticipantId={ctx?.userId}
+                currentStanding={currentStanding}
+                predictedCount={predictionMap.size}
+                predictions={currentUserPredictions}
+                answers={currentUserAnswers}
+                matches={matchesWithOfficialScores}
+              />
+            )}
+            {activeTab === 'results' && (
+              <ResultsScreen
+                matches={matchesWithLiveScores}
+                liveSync={liveSync}
+              />
+            )}
+            {activeTab === 'rules' && <RulesScreen />}
           </>
         )}
-        {activeTab === 'daily' && (
-          <DailyScreen
-            questions={DAILY_QUESTIONS}
-            answerMap={answerMap}
-            longTermBet={longTermBet}
-            onSave={handleSaveAnswer}
-            onSaveLongTerm={handleSaveLongTermBet}
-          />
-        )}
-        {activeTab === 'leaderboard' && (
-          <LeaderboardScreen
-            standings={standings}
-            currentParticipantId={ctx?.userId}
-            currentStanding={currentStanding}
-            predictedCount={predictionMap.size}
-            predictions={currentUserPredictions}
-            answers={currentUserAnswers}
-            matches={matchesWithOfficialScores}
-          />
-        )}
-        {activeTab === 'results' && (
-          <ResultsScreen
-            matches={matchesWithLiveScores}
-            liveSync={liveSync}
-          />
-        )}
-        {activeTab === 'rules' && <RulesScreen />}
       </main>
 
-      <nav className="tab-nav bottom-nav" aria-label="Điều hướng">
+      {!roomMatch && <nav className="tab-nav bottom-nav" aria-label="Điều hướng">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -500,31 +629,24 @@ export default function App() {
             <span className="tab-label">{tab.shortLabel}</span>
           </button>
         ))}
-      </nav>
+      </nav>}
 
-      <footer className="app-footer">
+      {!roomMatch && <footer className="app-footer">
         <span>Dữ liệu lịch: {DATA_SOURCE.label}</span>
         <a href={DATA_SOURCE.officialUrl} target="_blank" rel="noreferrer">FIFA</a>
         <span>BXH FIFA: {FIFA_RANKING_SOURCE.lastOfficialUpdate}</span>
         <a href={FIFA_RANKING_SOURCE.officialUrl} target="_blank" rel="noreferrer">Ranking</a>
-      </footer>
+      </footer>}
     </div>
   );
 }
 
-function AppHeader({ notifications = [], totalScore = 0 }) {
+function NotificationBell({ notifications = [], totalScore = 0 }) {
   const [open, setOpen] = useState(false);
   const countLabel = notifications.length > 9 ? '9+' : String(notifications.length);
 
   return (
-    <header className="app-header" aria-label="Nhà Tiên Tri">
-      <div className="brand-lockup">
-        <div className="brand-ball" aria-hidden="true">⚽</div>
-        <div>
-          <h1><span>Nhà</span> Tiên Tri</h1>
-          <p>Dự đoán - Nhận quà - Leo top</p>
-        </div>
-      </div>
+    <div className="hero-notification" aria-label="Thông báo">
       <button
         className="notify-btn"
         type="button"
@@ -536,7 +658,7 @@ function AppHeader({ notifications = [], totalScore = 0 }) {
         <span className="notify-badge" aria-hidden="true">{countLabel}</span>
       </button>
       {open && <PointNotificationPanel items={notifications} totalScore={totalScore} />}
-    </header>
+    </div>
   );
 }
 
@@ -556,13 +678,13 @@ function PointNotificationPanel({ items, totalScore }) {
       ) : (
         <div className="point-notification-list">
           {items.slice(0, 6).map((item) => (
-            <article key={item.key} className={`point-notification-row ${item.points > 0 ? 'plus' : 'zero'}`}>
+            <article key={item.key} className={`point-notification-row ${item.status === 'saved' ? 'saved' : item.points > 0 ? 'plus' : 'zero'}`}>
               <span className="point-notification-icon" aria-hidden="true">{item.icon}</span>
               <span className="point-notification-copy">
                 <strong>{item.label}</strong>
                 <small>{item.detail}</small>
               </span>
-              <b>{formatPointDelta(item.points)}</b>
+              <b>{item.status === 'saved' ? 'OK' : formatPointDelta(item.points)}</b>
             </article>
           ))}
         </div>
@@ -571,26 +693,29 @@ function PointNotificationPanel({ items, totalScore }) {
   );
 }
 
-function PromoHero({ onStart }) {
+function PromoHero({ onStart, notifications, totalScore }) {
   return (
-    <section className="promo-hero" aria-label="Dự đoán nhận quà">
-      <div className="confetti-layer" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-        <i />
-        <i />
-      </div>
-      <div className="promo-copy">
-        <h2>Dự đoán cực hay</h2>
-        <strong>Rinh quà mỗi ngày!</strong>
-        <button type="button" onClick={onStart}>Tham gia ngay <span>→</span></button>
-      </div>
-      <div className="goal-scene" aria-hidden="true">
-        <div className="goal-net" />
-        <div className="hero-ball">⚽</div>
-      </div>
-    </section>
+    <div className="promo-hero-shell">
+      <NotificationBell notifications={notifications} totalScore={totalScore} />
+      <section className="promo-hero" aria-label="Dự đoán nhận quà">
+        <div className="confetti-layer" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+        </div>
+        <div className="promo-copy">
+          <h2>Dự đoán cực hay</h2>
+          <strong>Rinh quà mỗi ngày!</strong>
+          <button type="button" onClick={onStart}>Tham gia ngay <span>→</span></button>
+        </div>
+        <div className="goal-scene" aria-hidden="true">
+          <div className="goal-net" />
+          <div className="hero-ball">⚽</div>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -667,6 +792,7 @@ function MatchesScreen({
   onGroupFilter,
   onQuery,
   onSave,
+  onOpenRoom,
   liveSync,
 }) {
   const grouped = useMemo(() => groupByDate(matches), [matches]);
@@ -766,6 +892,7 @@ function MatchesScreen({
                   roastText={roastMap.get(Number(match.matchNo))}
                   dailyDoubleMatchNo={dailyDoubleDownMap.get(match.matchDay)}
                   onSave={onSave}
+                  onOpenRoom={onOpenRoom}
                 />
               ))}
             </div>
@@ -831,7 +958,7 @@ function LiveScorePanel({ liveScores, liveSync }) {
   );
 }
 
-function MatchCardPrototype({ match, prediction, roastText, dailyDoubleMatchNo, onSave }) {
+function MatchCardPrototype({ match, prediction, roastText, dailyDoubleMatchNo, onSave, onOpenRoom }) {
   const teamsKnown = !hasUnknownTeam(match);
   const locked = Date.now() >= new Date(match.kickoffAt).getTime() || !teamsKnown;
   const finished = isFinished(match);
@@ -843,6 +970,7 @@ function MatchCardPrototype({ match, prediction, roastText, dailyDoubleMatchNo, 
   const [homePred, setHomePred] = useState(prediction?.homePred ?? 0);
   const [awayPred, setAwayPred] = useState(prediction?.awayPred ?? 0);
   const [doubleDown, setDoubleDown] = useState(prediction?.doubleDown ?? false);
+  const [saving, setSaving] = useState(false);
   const base = matchBasePoints(prediction, match);
   const breakdown = matchScoreBreakdown(prediction, match);
   const displayHomeScore = finished ? match.homeScore : liveScore?.homeScore;
@@ -857,6 +985,11 @@ function MatchCardPrototype({ match, prediction, roastText, dailyDoubleMatchNo, 
   const homeScore = normalizeDraftScore(homePred);
   const awayScore = normalizeDraftScore(awayPred);
   const canUseDoubleDown = teamsKnown && !locked && isTodayMatchDay && !doubleDownReserved;
+  const canOpenRoom = !!prediction;
+  const draftIsSaved = !!prediction
+    && Number(prediction.homePred) === homeScore
+    && Number(prediction.awayPred) === awayScore
+    && !!prediction.doubleDown === !!doubleDown;
 
   function bumpScore(side, delta) {
     if (locked) return;
@@ -865,8 +998,36 @@ function MatchCardPrototype({ match, prediction, roastText, dailyDoubleMatchNo, 
     setter(Math.max(0, Math.min(99, current + delta)));
   }
 
+  async function handleSaveClick() {
+    if (locked || saving) return;
+    setSaving(true);
+    try {
+      await onSave(match, { homePred: homeScore, awayPred: awayScore, doubleDown });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleCardOpen(event) {
+    if (event.target.closest('button')) return;
+    onOpenRoom?.(match);
+  }
+
+  function handleCardKeyDown(event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    onOpenRoom?.(match);
+  }
+
   return (
-    <article className="match-card match-card--prototype">
+    <article
+      className={`match-card match-card--prototype ${canOpenRoom ? 'has-room' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-label={canOpenRoom ? `Mở phòng dự đoán trận ${match.matchNo}` : `Trận ${match.matchNo}, lưu dự đoán để mở phòng`}
+      onClick={handleCardOpen}
+      onKeyDown={handleCardKeyDown}
+    >
       <div className="match-card-head">
         <span className="mstage">#{match.matchNo} · {matchStageLabel(match)}</span>
         <span className={finished ? 'mtime done-time' : liveInProgress ? 'mtime live-time' : 'mtime'}>
@@ -936,13 +1097,24 @@ function MatchCardPrototype({ match, prediction, roastText, dailyDoubleMatchNo, 
               type="button"
               className={`double-btn star-btn ${doubleDown ? 'active' : ''}`}
               disabled={!canUseDoubleDown}
-              onClick={() => setDoubleDown((value) => !value)}
+              onClick={(event) => {
+                event.stopPropagation();
+                setDoubleDown((value) => !value);
+              }}
               title="Kèo tủ x2"
             >
               ★
             </button>
-            <button type="button" className="primary-btn small" disabled={locked} onClick={() => onSave(match, { homePred: homeScore, awayPred: awayScore, doubleDown })}>
-              Lưu dự đoán
+            <button
+              type="button"
+              className={`primary-btn small save-prediction-btn ${draftIsSaved ? 'saved' : ''}`}
+              disabled={locked || saving}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleSaveClick();
+              }}
+            >
+              {saving ? 'Đang lưu...' : draftIsSaved ? 'Đã lưu' : 'Lưu dự đoán'}
             </button>
           </div>
           <p className="double-hint">
@@ -959,6 +1131,265 @@ function MatchCardPrototype({ match, prediction, roastText, dailyDoubleMatchNo, 
         </>
       )}
     </article>
+  );
+}
+
+function PredictionRoomScreen({
+  match,
+  prediction,
+  predictions = [],
+  members = [],
+  messages = [],
+  loading,
+  error,
+  spamBlockedUntil,
+  currentUserId,
+  onBack,
+  onSend,
+}) {
+  const [draft, setDraft] = useState('');
+  const [predictionFaction, setPredictionFaction] = useState('mine');
+  const [showPredictionSheet, setShowPredictionSheet] = useState(false);
+  const chatFeedRef = useRef(null);
+  const matchPredictions = useMemo(
+    () => predictions
+      .filter((item) => Number(item.matchNo) === Number(match.matchNo))
+      .sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || ''))),
+    [predictions, match.matchNo]
+  );
+  const memberMap = useMemo(() => new Map(members.map((member) => [member.user_id, member])), [members]);
+  const split = useMemo(() => buildPredictionSplit(match, matchPredictions), [match, matchPredictions]);
+  const myFaction = prediction ? predictedOutcomeKey(prediction) : 'all';
+  const activeFaction = predictionFaction === 'mine' ? myFaction : predictionFaction;
+  const factionTabs = useMemo(
+    () => [
+      { key: 'all', label: 'Tất cả', count: matchPredictions.length },
+      ...split.map((item) => ({ key: item.key, label: item.label, count: item.count })),
+    ],
+    [matchPredictions.length, split]
+  );
+  const visiblePredictions = useMemo(
+    () => activeFaction === 'all'
+      ? matchPredictions
+      : matchPredictions.filter((item) => predictedOutcomeKey(item) === activeFaction),
+    [activeFaction, matchPredictions]
+  );
+  const sameFactionCount = myFaction === 'all'
+    ? 0
+    : matchPredictions.filter((item) => predictedOutcomeKey(item) === myFaction).length;
+  const cooldownLeft = Math.max(0, Math.ceil((Number(spamBlockedUntil || 0) - Date.now()) / 1000));
+
+  useEffect(() => {
+    const feed = chatFeedRef.current;
+    if (!feed) return;
+    feed.scrollTop = feed.scrollHeight;
+  }, [messages.length]);
+
+  async function sendChat() {
+    const ok = await onSend({ kind: 'chat', body: draft });
+    if (ok) setDraft('');
+  }
+
+  function sendChallenge() {
+    const score = prediction ? `${prediction.homePred}-${prediction.awayPred}` : 'kèo này';
+    onSend({
+      kind: 'challenge',
+      body: `Thách kèo tay đôi: ai dám ngược cửa dự đoán ${displayTeamName(match.homeTeam)} ${score} ${displayTeamName(match.awayTeam)}?`,
+    });
+  }
+
+  return (
+      <section className="prediction-room screen" aria-label={`Phòng dự đoán trận ${match.matchNo}`}>
+        <div className="room-head">
+          <button type="button" className="room-back" onClick={onBack} aria-label="Quay lại danh sách trận">
+            ←
+          </button>
+          <div>
+            <p className="section-label">Phòng dự đoán</p>
+            <h2>#{match.matchNo} {displayTeamName(match.homeTeam)} vs {displayTeamName(match.awayTeam)}</h2>
+          </div>
+        </div>
+
+        <div className="room-status-card">
+          <MatchRoomStatus match={match} />
+        </div>
+
+        <div className="room-section">
+          <div className="room-section-head">
+            <h3>Phe nào đông</h3>
+            <span>{matchPredictions.length} dự đoán</span>
+          </div>
+          <div className="prediction-split-bar" aria-label="Tỉ lệ phe dự đoán">
+            {split.map((item) => (
+              <span
+                key={item.key}
+                className={`split-segment ${item.key}`}
+                style={{ width: `${item.percent}%` }}
+                title={`${item.label}: ${item.percent}%`}
+              />
+            ))}
+          </div>
+          <div className="prediction-split-legend">
+            {split.map((item) => (
+              <span key={item.key} className={item.key}>
+                <i aria-hidden="true" />
+                {item.label} <b>{item.percent}%</b>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="room-section room-history-compact">
+          <div className="room-section-head">
+            <h3>Lịch sử dự đoán</h3>
+            <span>{prediction ? `Bạn: ${prediction.homePred}-${prediction.awayPred}` : 'Chưa có kèo'}</span>
+          </div>
+          <button type="button" className="prediction-history-row" onClick={() => setShowPredictionSheet(true)}>
+            <span>Cùng phe: <b>{sameFactionCount}</b> người</span>
+            <strong>Xem</strong>
+          </button>
+        </div>
+
+        <div className="room-chat">
+          <div className="room-section-head">
+            <h3>Cà khịa trực tiếp</h3>
+            <span>{loading ? 'Đang tải...' : `${messages.length} tin`}</span>
+          </div>
+
+          <div className="reaction-row" aria-label="Thả cảm xúc nhanh">
+            {['😂', '🔥', '😭', '🤝'].map((emoji) => (
+              <button key={emoji} type="button" onClick={() => onSend({ kind: 'reaction', body: emoji, emoji })}>
+                {emoji}
+              </button>
+            ))}
+            <button type="button" className="challenge-btn" onClick={sendChallenge}>Thách kèo</button>
+          </div>
+
+          <div className="chat-feed" ref={chatFeedRef}>
+            {messages.length === 0 ? (
+              <p className="room-empty">{error || 'Chưa có ai gáy. Bạn mở bát đi.'}</p>
+            ) : messages.slice(-30).map((message) => (
+              <article key={message.id} className={`chat-message ${message.createdBy === currentUserId ? 'mine' : ''} ${message.failed ? 'failed' : ''}`}>
+                <span>{memberDisplayName(memberMap, message.createdBy)}</span>
+                <p>{message.kind === 'reaction' ? `${message.emoji || message.body}` : message.body}</p>
+                <small>{message.failed ? 'Chưa gửi được' : formatRoomTime(message.createdAt)}{message.kind === 'challenge' ? ' · thách kèo' : ''}</small>
+              </article>
+            ))}
+          </div>
+
+          {error && messages.length > 0 ? <p className="room-error">{error}</p> : null}
+          {cooldownLeft > 0 ? <p className="room-error">Chống spam: chờ khoảng {cooldownLeft}s.</p> : null}
+
+          <div className="chat-compose">
+            <input
+              value={draft}
+              maxLength={280}
+              placeholder="Cà khịa văn minh, đau nhưng vui..."
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') sendChat();
+              }}
+            />
+            <button type="button" disabled={!draft.trim() || cooldownLeft > 0} onClick={sendChat}>Gửi</button>
+          </div>
+        </div>
+        {showPredictionSheet && (
+          <PredictionHistorySheet
+            match={match}
+            memberMap={memberMap}
+            predictions={matchPredictions}
+            factionTabs={factionTabs}
+            initialFaction={activeFaction}
+            currentUserId={currentUserId}
+            onClose={() => setShowPredictionSheet(false)}
+          />
+        )}
+      </section>
+  );
+}
+
+function PredictionHistorySheet({ match, memberMap, predictions, factionTabs, initialFaction, currentUserId, onClose }) {
+  const [activeFaction, setActiveFaction] = useState(initialFaction || 'all');
+  const activeLabel = factionTabs.find((tab) => tab.key === activeFaction)?.label || 'Tất cả';
+  const visiblePredictions = activeFaction === 'all'
+    ? predictions
+    : predictions.filter((item) => predictedOutcomeKey(item) === activeFaction);
+
+  return (
+    <div className="prediction-sheet-backdrop" role="presentation" onMouseDown={(event) => {
+      if (event.target === event.currentTarget) onClose();
+    }}>
+      <section className="prediction-sheet" role="dialog" aria-modal="true" aria-label="Danh sách dự đoán">
+        <div className="prediction-sheet-head">
+          <div>
+            <p className="section-label">Danh sách dự đoán</p>
+            <h3>{activeLabel} · {visiblePredictions.length} người</h3>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Đóng danh sách">×</button>
+        </div>
+        <div className="prediction-faction-tabs sheet-tabs" aria-label="Lọc dự đoán theo phe">
+          {factionTabs.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              className={activeFaction === tab.key ? 'active' : ''}
+              onClick={() => setActiveFaction(tab.key)}
+            >
+              {tab.label}
+              <b>{tab.count}</b>
+            </button>
+          ))}
+        </div>
+        <div className="prediction-sheet-list">
+          {visiblePredictions.map((item) => (
+            <article key={`${item.createdBy}-${item.matchNo}-sheet`} className={item.createdBy === currentUserId ? 'mine' : ''}>
+              <span>{memberDisplayName(memberMap, item.createdBy)}</span>
+              <b>{item.homePred}-{item.awayPred}</b>
+              <small>{item.doubleDown ? 'Kèo tủ x2' : predictionOutcomeLabel(match, item)}</small>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function MatchRoomStatus({ match }) {
+  const liveScore = shouldShowLiveScore(match) ? match.liveScore : null;
+  const finished = isFinished(match);
+  const liveInProgress = isLiveInProgress(liveScore);
+  const homeScore = finished ? match.homeScore : liveScore?.homeScore;
+  const awayScore = finished ? match.awayScore : liveScore?.awayScore;
+  const status = finished ? finalStatusLabel(match) : liveInProgress ? liveLabel(liveScore) : 'Chưa bắt đầu';
+  const hasStarted = finished || liveInProgress;
+
+  return (
+    <div className="room-scoreboard">
+      <div className={`room-status-pill ${liveInProgress ? 'live' : finished ? 'done' : ''}`}>{status}</div>
+      <div className="room-scoreline">
+        <div className="room-team home">
+          <TeamFlag team={match.homeTeam} className="room-team-flag" />
+          <strong>{displayTeamName(match.homeTeam)}</strong>
+        </div>
+        <div className="room-score">
+          <b>{homeScore ?? '-'}</b>
+          <span>:</span>
+          <b>{awayScore ?? '-'}</b>
+        </div>
+        <div className="room-team away">
+          <TeamFlag team={match.awayTeam} className="room-team-flag" />
+          <strong>{displayTeamName(match.awayTeam)}</strong>
+        </div>
+      </div>
+      {hasStarted ? (
+        <div className="goal-timeline" aria-label="Diễn biến ghi bàn">
+          <span />
+          <p>Đang chờ cập nhật cầu thủ ghi bàn</p>
+        </div>
+      ) : (
+        <small className="room-kickoff">Bắt đầu {formatTime(match.kickoffAt)}</small>
+      )}
+    </div>
   );
 }
 
@@ -1508,7 +1939,18 @@ function buildScoreHistory({ predictions = [], answers = [], matches = [], curre
   const matchItems = predictions
     .map((prediction) => {
       const match = matchesByNo.get(Number(prediction.matchNo));
-      if (!match || !isFinished(match)) return null;
+      if (!match) return null;
+      if (!isFinished(match)) {
+        return {
+          key: `notify-saved-match-${prediction.matchNo}`,
+          sortKey: prediction.updatedAt || prediction.createdAt || match.kickoffAt,
+          icon: '✅',
+          label: 'Đã lưu dự đoán',
+          detail: `#${match.matchNo} ${displayTeamName(match.homeTeam)} - ${displayTeamName(match.awayTeam)} · Bạn dự ${prediction.homePred}-${prediction.awayPred}${prediction.doubleDown ? ' · kèo tủ x2' : ''}`,
+          points: 0,
+          status: 'saved',
+        };
+      }
 
       const breakdown = matchScoreBreakdown(prediction, match);
       if (breakdown.total <= 0) return null;
@@ -1642,6 +2084,52 @@ function predictionRoast(base, match, prediction) {
   const tone = base > 0 && actualOutcome === 0 ? 'draw' : base > 0 ? 'win' : 'lose';
   const seed = `${match?.matchNo || 'x'}:${prediction?.homePred ?? '-'}:${prediction?.awayPred ?? '-'}:${base}:${tone}`;
   return stablePick(ROAST_COPY[tone], seed);
+}
+
+function buildPredictionSplit(match, predictions = []) {
+  const total = Math.max(1, predictions.length);
+  const counts = predictions.reduce((acc, prediction) => {
+    const key = predictedOutcomeKey(prediction);
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, { home: 0, draw: 0, away: 0 });
+
+  return [
+    { key: 'home', label: displayTeamName(match.homeTeam), count: counts.home },
+    { key: 'draw', label: 'Hòa', count: counts.draw },
+    { key: 'away', label: displayTeamName(match.awayTeam), count: counts.away },
+  ].map((item) => ({
+    ...item,
+    percent: predictions.length ? Math.round((item.count / total) * 100) : 0,
+  }));
+}
+
+function predictedOutcomeKey(prediction) {
+  const home = Number(prediction?.homePred || 0);
+  const away = Number(prediction?.awayPred || 0);
+  if (home > away) return 'home';
+  if (away > home) return 'away';
+  return 'draw';
+}
+
+function predictionOutcomeLabel(match, prediction) {
+  const key = predictedOutcomeKey(prediction);
+  if (key === 'home') return `Tin ${displayTeamName(match.homeTeam)} thắng`;
+  if (key === 'away') return `Tin ${displayTeamName(match.awayTeam)} thắng`;
+  return 'Tin hòa';
+}
+
+function memberDisplayName(memberMap, userId) {
+  const member = memberMap.get(userId);
+  return member?.full_name || member?.email || `Người chơi ${String(userId || '').slice(0, 4)}`;
+}
+
+function formatRoomTime(value) {
+  if (!value) return '';
+  return new Intl.DateTimeFormat('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
 }
 
 function buildRoastMap(matches = [], predictionMap = new Map()) {
@@ -1835,6 +2323,35 @@ async function fetchDailyAnswers(workspaceId) {
   return (data || []).map(toDailyAnswer);
 }
 
+async function fetchMatchRoomMessages(workspaceId, matchNo) {
+  const { data, error } = await db
+    .from('match_room_messages')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .eq('match_no', matchNo)
+    .order('created_at', { ascending: true })
+    .limit(80);
+  if (error) throw error;
+  return (data || []).map(toRoomMessage);
+}
+
+async function insertMatchRoomMessage({ workspaceId, createdBy, matchNo, kind, body, emoji }) {
+  const { data, error } = await db
+    .from('match_room_messages')
+    .insert({
+      workspace_id: workspaceId,
+      created_by: createdBy,
+      match_no: matchNo,
+      kind,
+      body,
+      emoji,
+    })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return toRoomMessage(data);
+}
+
 async function fetchLongTermBet(workspaceId, userId) {
   if (!workspaceId || !userId) return null;
   const { data, error } = await db
@@ -1922,6 +2439,19 @@ function toLongTermBet(row) {
     shockTeam: row.shock_team || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+function toRoomMessage(row) {
+  return {
+    id: row.id,
+    workspaceId: row.workspace_id,
+    createdBy: row.created_by,
+    matchNo: row.match_no,
+    kind: row.kind || 'chat',
+    body: row.body || '',
+    emoji: row.emoji || null,
+    createdAt: row.created_at,
   };
 }
 
@@ -2269,4 +2799,19 @@ function isLocalSimulationEnabled() {
   const params = new URLSearchParams(window.location.search);
   const value = params.get('mock');
   return value !== '0' && value !== 'false';
+}
+
+function isAuthError(error) {
+  const status = Number(error?.status || error?.code);
+  const message = String(error?.message || '').toLowerCase();
+  return status === 401 || message.includes('jwt') || message.includes('unauthorized');
+}
+
+function roomStorageErrorMessage(error) {
+  const message = String(error?.message || '').toLowerCase();
+  if (isAuthError(error)) return 'Token local đã hết hạn. Chạy npm run dev:token để chat lưu thật vào Supabase.';
+  if (message.includes('match_room_messages') || message.includes('relation') || message.includes('does not exist')) {
+    return 'Chưa có bảng chat. Hãy submit migration 005_match_room_messages.sql qua Admin Portal.';
+  }
+  return error?.message || 'Không kết nối được phòng dự đoán.';
 }

@@ -1,0 +1,1913 @@
+- generic [ref=e3]:
+  - banner "Nhà Tiên Tri" [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: ⚽
+      - generic [ref=e7]:
+        - heading "Nhà Tiên Tri" [level=1] [ref=e8]
+        - paragraph [ref=e9]: Dự đoán - Nhận quà - Leo top
+    - button "Thông báo" [ref=e10] [cursor=pointer]: 🔔
+  - main [ref=e12]:
+    - region "Dự đoán nhận quà" [ref=e13]:
+      - generic [ref=e19]:
+        - heading "Dự đoán cực hay" [level=2] [ref=e20]
+        - strong [ref=e21]: Rinh quà mỗi ngày!
+        - button "Tham gia ngay →" [ref=e22] [cursor=pointer]
+      - generic [ref=e25]: ⚽
+    - region "Lối tắt" [ref=e26]:
+      - button "⚽ Trận đấu" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: ⚽
+        - text: Trận đấu
+      - button "♕ Bảng xếp hạng" [ref=e29] [cursor=pointer]:
+        - generic [ref=e30]: ♕
+        - text: Bảng xếp hạng
+      - button "↺ Lịch sử" [ref=e31] [cursor=pointer]:
+        - generic [ref=e32]: ↺
+        - text: Lịch sử
+      - button "♙ Cá nhân" [ref=e33] [cursor=pointer]:
+        - generic [ref=e34]: ♙
+        - text: Cá nhân
+    - status [ref=e35]: Đang tải dữ liệu...
+    - generic [ref=e36]:
+      - generic [ref=e37]:
+        - generic [ref=e38]:
+          - heading "⚽ Trận đấu sắp tới" [level=2] [ref=e39]
+          - paragraph [ref=e40]: Live score sẽ tự đồng bộ mỗi 2 phút.
+        - generic [ref=e41]:
+          - generic [ref=e42]: Tìm
+          - textbox "Đội bóng..." [ref=e43]
+      - group "Lọc bảng" [ref=e44]:
+        - generic [ref=e45]:
+          - button "Tất cả" [ref=e46] [cursor=pointer]
+          - button "Bảng A" [ref=e47] [cursor=pointer]
+          - button "Bảng B" [ref=e48] [cursor=pointer]
+          - button "Bảng C" [ref=e49] [cursor=pointer]
+          - button "Bảng D" [ref=e50] [cursor=pointer]
+          - button "+ thêm" [ref=e51] [cursor=pointer]
+      - generic [ref=e52]:
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - heading "Thứ 5, 11/06" [level=3] [ref=e55]
+            - generic [ref=e56]: 1 trận
+          - article [ref=e58]:
+            - generic [ref=e59]:
+              - generic [ref=e60]: "#1 · Vòng bảng · A"
+              - generic [ref=e61]: 02:00 12-06
+            - generic [ref=e62]:
+              - generic [ref=e63]:
+                - generic "Cờ Mexico" [ref=e64]
+                - strong [ref=e65]: Mexico
+              - generic "Dự đoán tỉ số" [ref=e66]:
+                - generic [ref=e67]:
+                  - button "-" [ref=e68] [cursor=pointer]
+                  - generic [ref=e69]: "0"
+                  - button "+" [ref=e70] [cursor=pointer]
+                - generic [ref=e71]:
+                  - button "-" [ref=e72] [cursor=pointer]
+                  - generic [ref=e73]: "0"
+                  - button "+" [ref=e74] [cursor=pointer]
+              - generic [ref=e75]:
+                - generic "Cờ South Africa" [ref=e76]
+                - strong [ref=e77]: Nam Phi
+            - generic [ref=e78]:
+              - button "★" [disabled] [ref=e79]
+              - button "Lưu dự đoán" [ref=e80] [cursor=pointer]
+            - paragraph [ref=e81]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e82]:
+          - generic [ref=e83]:
+            - heading "Thứ 6, 12/06" [level=3] [ref=e84]
+            - generic [ref=e85]: 2 trận
+          - generic [ref=e86]:
+            - article [ref=e87]:
+              - generic [ref=e88]:
+                - generic [ref=e89]: "#2 · Vòng bảng · A"
+                - generic [ref=e90]: 09:00 12-06
+              - generic [ref=e91]:
+                - generic [ref=e92]:
+                  - generic "Cờ Korea Republic" [ref=e93]
+                  - strong [ref=e94]: Hàn Quốc
+                - generic "Dự đoán tỉ số" [ref=e95]:
+                  - generic [ref=e96]:
+                    - button "-" [ref=e97] [cursor=pointer]
+                    - generic [ref=e98]: "0"
+                    - button "+" [ref=e99] [cursor=pointer]
+                  - generic [ref=e100]:
+                    - button "-" [ref=e101] [cursor=pointer]
+                    - generic [ref=e102]: "0"
+                    - button "+" [ref=e103] [cursor=pointer]
+                - generic [ref=e104]:
+                  - generic "Cờ Czechia" [ref=e105]
+                  - strong [ref=e106]: Séc
+              - generic [ref=e107]:
+                - button "★" [disabled] [ref=e108]
+                - button "Lưu dự đoán" [ref=e109] [cursor=pointer]
+              - paragraph [ref=e110]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e111]:
+              - generic [ref=e112]:
+                - generic [ref=e113]: "#3 · Vòng bảng · B"
+                - generic [ref=e114]: 02:00 13-06
+              - generic [ref=e115]:
+                - generic [ref=e116]:
+                  - generic "Cờ Canada" [ref=e117]
+                  - strong [ref=e118]: Canada
+                - generic "Dự đoán tỉ số" [ref=e119]:
+                  - generic [ref=e120]:
+                    - button "-" [ref=e121] [cursor=pointer]
+                    - generic [ref=e122]: "0"
+                    - button "+" [ref=e123] [cursor=pointer]
+                  - generic [ref=e124]:
+                    - button "-" [ref=e125] [cursor=pointer]
+                    - generic [ref=e126]: "0"
+                    - button "+" [ref=e127] [cursor=pointer]
+                - generic [ref=e128]:
+                  - generic "Cờ Bosnia and Herzegovina" [ref=e129]
+                  - strong [ref=e130]: Bosna và Hercegovina
+              - generic [ref=e131]:
+                - button "★" [disabled] [ref=e132]
+                - button "Lưu dự đoán" [ref=e133] [cursor=pointer]
+              - paragraph [ref=e134]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e135]:
+          - generic [ref=e136]:
+            - heading "Thứ 7, 13/06" [level=3] [ref=e137]
+            - generic [ref=e138]: 3 trận
+          - generic [ref=e139]:
+            - article [ref=e140]:
+              - generic [ref=e141]:
+                - generic [ref=e142]: "#4 · Vòng bảng · D"
+                - generic [ref=e143]: 08:00 13-06
+              - generic [ref=e144]:
+                - generic [ref=e145]:
+                  - generic "Cờ United States" [ref=e146]
+                  - strong [ref=e147]: Hoa Kỳ
+                - generic "Dự đoán tỉ số" [ref=e148]:
+                  - generic [ref=e149]:
+                    - button "-" [ref=e150] [cursor=pointer]
+                    - generic [ref=e151]: "0"
+                    - button "+" [ref=e152] [cursor=pointer]
+                  - generic [ref=e153]:
+                    - button "-" [ref=e154] [cursor=pointer]
+                    - generic [ref=e155]: "0"
+                    - button "+" [ref=e156] [cursor=pointer]
+                - generic [ref=e157]:
+                  - generic "Cờ Paraguay" [ref=e158]
+                  - strong [ref=e159]: Paraguay
+              - generic [ref=e160]:
+                - button "★" [disabled] [ref=e161]
+                - button "Lưu dự đoán" [ref=e162] [cursor=pointer]
+              - paragraph [ref=e163]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e164]:
+              - generic [ref=e165]:
+                - generic [ref=e166]: "#7 · Vòng bảng · C"
+                - generic [ref=e167]: 05:00 14-06
+              - generic [ref=e168]:
+                - generic [ref=e169]:
+                  - generic "Cờ Brazil" [ref=e170]
+                  - strong [ref=e171]: Brasil
+                - generic "Dự đoán tỉ số" [ref=e172]:
+                  - generic [ref=e173]:
+                    - button "-" [ref=e174] [cursor=pointer]
+                    - generic [ref=e175]: "0"
+                    - button "+" [ref=e176] [cursor=pointer]
+                  - generic [ref=e177]:
+                    - button "-" [ref=e178] [cursor=pointer]
+                    - generic [ref=e179]: "0"
+                    - button "+" [ref=e180] [cursor=pointer]
+                - generic [ref=e181]:
+                  - generic "Cờ Morocco" [ref=e182]
+                  - strong [ref=e183]: Maroc
+              - generic [ref=e184]:
+                - button "★" [disabled] [ref=e185]
+                - button "Lưu dự đoán" [ref=e186] [cursor=pointer]
+              - paragraph [ref=e187]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e188]:
+              - generic [ref=e189]:
+                - generic [ref=e190]: "#8 · Vòng bảng · B"
+                - generic [ref=e191]: 02:00 14-06
+              - generic [ref=e192]:
+                - generic [ref=e193]:
+                  - generic "Cờ Qatar" [ref=e194]
+                  - strong [ref=e195]: Qatar
+                - generic "Dự đoán tỉ số" [ref=e196]:
+                  - generic [ref=e197]:
+                    - button "-" [ref=e198] [cursor=pointer]
+                    - generic [ref=e199]: "0"
+                    - button "+" [ref=e200] [cursor=pointer]
+                  - generic [ref=e201]:
+                    - button "-" [ref=e202] [cursor=pointer]
+                    - generic [ref=e203]: "0"
+                    - button "+" [ref=e204] [cursor=pointer]
+                - generic [ref=e205]:
+                  - generic "Cờ Switzerland" [ref=e206]
+                  - strong [ref=e207]: Thụy Sĩ
+              - generic [ref=e208]:
+                - button "★" [disabled] [ref=e209]
+                - button "Lưu dự đoán" [ref=e210] [cursor=pointer]
+              - paragraph [ref=e211]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e212]:
+          - generic [ref=e213]:
+            - heading "CN, 14/06" [level=3] [ref=e214]
+            - generic [ref=e215]: 5 trận
+          - generic [ref=e216]:
+            - article [ref=e217]:
+              - generic [ref=e218]:
+                - generic [ref=e219]: "#5 · Vòng bảng · C"
+                - generic [ref=e220]: 08:00 14-06
+              - generic [ref=e221]:
+                - generic [ref=e222]:
+                  - generic "Cờ Haiti" [ref=e223]
+                  - strong [ref=e224]: Haiti
+                - generic "Dự đoán tỉ số" [ref=e225]:
+                  - generic [ref=e226]:
+                    - button "-" [ref=e227] [cursor=pointer]
+                    - generic [ref=e228]: "0"
+                    - button "+" [ref=e229] [cursor=pointer]
+                  - generic [ref=e230]:
+                    - button "-" [ref=e231] [cursor=pointer]
+                    - generic [ref=e232]: "0"
+                    - button "+" [ref=e233] [cursor=pointer]
+                - generic [ref=e234]:
+                  - generic "Cờ Scotland" [ref=e235]
+                  - strong [ref=e236]: Scotland
+              - generic [ref=e237]:
+                - button "★" [disabled] [ref=e238]
+                - button "Lưu dự đoán" [ref=e239] [cursor=pointer]
+              - paragraph [ref=e240]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e241]:
+              - generic [ref=e242]:
+                - generic [ref=e243]: "#6 · Vòng bảng · D"
+                - generic [ref=e244]: 11:00 14-06
+              - generic [ref=e245]:
+                - generic [ref=e246]:
+                  - generic "Cờ Australia" [ref=e247]
+                  - strong [ref=e248]: Úc
+                - generic "Dự đoán tỉ số" [ref=e249]:
+                  - generic [ref=e250]:
+                    - button "-" [ref=e251] [cursor=pointer]
+                    - generic [ref=e252]: "0"
+                    - button "+" [ref=e253] [cursor=pointer]
+                  - generic [ref=e254]:
+                    - button "-" [ref=e255] [cursor=pointer]
+                    - generic [ref=e256]: "0"
+                    - button "+" [ref=e257] [cursor=pointer]
+                - generic [ref=e258]:
+                  - generic "Cờ Turkey" [ref=e259]
+                  - strong [ref=e260]: Thổ Nhĩ Kỳ
+              - generic [ref=e261]:
+                - button "★" [disabled] [ref=e262]
+                - button "Lưu dự đoán" [ref=e263] [cursor=pointer]
+              - paragraph [ref=e264]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e265]:
+              - generic [ref=e266]:
+                - generic [ref=e267]: "#9 · Vòng bảng · E"
+                - generic [ref=e268]: 06:00 15-06
+              - generic [ref=e269]:
+                - generic [ref=e270]:
+                  - generic "Cờ Cote d'Ivoire" [ref=e271]
+                  - strong [ref=e272]: Bờ Biển Ngà
+                - generic "Dự đoán tỉ số" [ref=e273]:
+                  - generic [ref=e274]:
+                    - button "-" [ref=e275] [cursor=pointer]
+                    - generic [ref=e276]: "0"
+                    - button "+" [ref=e277] [cursor=pointer]
+                  - generic [ref=e278]:
+                    - button "-" [ref=e279] [cursor=pointer]
+                    - generic [ref=e280]: "0"
+                    - button "+" [ref=e281] [cursor=pointer]
+                - generic [ref=e282]:
+                  - generic "Cờ Ecuador" [ref=e283]
+                  - strong [ref=e284]: Ecuador
+              - generic [ref=e285]:
+                - button "★" [disabled] [ref=e286]
+                - button "Lưu dự đoán" [ref=e287] [cursor=pointer]
+              - paragraph [ref=e288]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e289]:
+              - generic [ref=e290]:
+                - generic [ref=e291]: "#10 · Vòng bảng · E"
+                - generic [ref=e292]: 00:00 15-06
+              - generic [ref=e293]:
+                - generic [ref=e294]:
+                  - generic "Cờ Germany" [ref=e295]
+                  - strong [ref=e296]: Đức
+                - generic "Dự đoán tỉ số" [ref=e297]:
+                  - generic [ref=e298]:
+                    - button "-" [ref=e299] [cursor=pointer]
+                    - generic [ref=e300]: "0"
+                    - button "+" [ref=e301] [cursor=pointer]
+                  - generic [ref=e302]:
+                    - button "-" [ref=e303] [cursor=pointer]
+                    - generic [ref=e304]: "0"
+                    - button "+" [ref=e305] [cursor=pointer]
+                - generic [ref=e306]:
+                  - generic "Cờ Curacao" [ref=e307]
+                  - strong [ref=e308]: Curaçao
+              - generic [ref=e309]:
+                - button "★" [disabled] [ref=e310]
+                - button "Lưu dự đoán" [ref=e311] [cursor=pointer]
+              - paragraph [ref=e312]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e313]:
+              - generic [ref=e314]:
+                - generic [ref=e315]: "#11 · Vòng bảng · F"
+                - generic [ref=e316]: 03:00 15-06
+              - generic [ref=e317]:
+                - generic [ref=e318]:
+                  - generic "Cờ Netherlands" [ref=e319]
+                  - strong [ref=e320]: Hà Lan
+                - generic "Dự đoán tỉ số" [ref=e321]:
+                  - generic [ref=e322]:
+                    - button "-" [ref=e323] [cursor=pointer]
+                    - generic [ref=e324]: "0"
+                    - button "+" [ref=e325] [cursor=pointer]
+                  - generic [ref=e326]:
+                    - button "-" [ref=e327] [cursor=pointer]
+                    - generic [ref=e328]: "0"
+                    - button "+" [ref=e329] [cursor=pointer]
+                - generic [ref=e330]:
+                  - generic "Cờ Japan" [ref=e331]
+                  - strong [ref=e332]: Nhật Bản
+              - generic [ref=e333]:
+                - button "★" [disabled] [ref=e334]
+                - button "Lưu dự đoán" [ref=e335] [cursor=pointer]
+              - paragraph [ref=e336]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e337]:
+          - generic [ref=e338]:
+            - heading "Thứ 2, 15/06" [level=3] [ref=e339]
+            - generic [ref=e340]: 4 trận
+          - generic [ref=e341]:
+            - article [ref=e342]:
+              - generic [ref=e343]:
+                - generic [ref=e344]: "#12 · Vòng bảng · F"
+                - generic [ref=e345]: 09:00 15-06
+              - generic [ref=e346]:
+                - generic [ref=e347]:
+                  - generic "Cờ Sweden" [ref=e348]
+                  - strong [ref=e349]: Thụy Điển
+                - generic "Dự đoán tỉ số" [ref=e350]:
+                  - generic [ref=e351]:
+                    - button "-" [ref=e352] [cursor=pointer]
+                    - generic [ref=e353]: "0"
+                    - button "+" [ref=e354] [cursor=pointer]
+                  - generic [ref=e355]:
+                    - button "-" [ref=e356] [cursor=pointer]
+                    - generic [ref=e357]: "0"
+                    - button "+" [ref=e358] [cursor=pointer]
+                - generic [ref=e359]:
+                  - generic "Cờ Tunisia" [ref=e360]
+                  - strong [ref=e361]: Tunisia
+              - generic [ref=e362]:
+                - button "★" [disabled] [ref=e363]
+                - button "Lưu dự đoán" [ref=e364] [cursor=pointer]
+              - paragraph [ref=e365]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e366]:
+              - generic [ref=e367]:
+                - generic [ref=e368]: "#13 · Vòng bảng · H"
+                - generic [ref=e369]: 05:00 16-06
+              - generic [ref=e370]:
+                - generic [ref=e371]:
+                  - generic "Cờ Saudi Arabia" [ref=e372]
+                  - strong [ref=e373]: Ả Rập Xê Út
+                - generic "Dự đoán tỉ số" [ref=e374]:
+                  - generic [ref=e375]:
+                    - button "-" [ref=e376] [cursor=pointer]
+                    - generic [ref=e377]: "0"
+                    - button "+" [ref=e378] [cursor=pointer]
+                  - generic [ref=e379]:
+                    - button "-" [ref=e380] [cursor=pointer]
+                    - generic [ref=e381]: "0"
+                    - button "+" [ref=e382] [cursor=pointer]
+                - generic [ref=e383]:
+                  - generic "Cờ Uruguay" [ref=e384]
+                  - strong [ref=e385]: Uruguay
+              - generic [ref=e386]:
+                - button "★" [disabled] [ref=e387]
+                - button "Lưu dự đoán" [ref=e388] [cursor=pointer]
+              - paragraph [ref=e389]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e390]:
+              - generic [ref=e391]:
+                - generic [ref=e392]: "#14 · Vòng bảng · H"
+                - generic [ref=e393]: 23:00 15-06
+              - generic [ref=e394]:
+                - generic [ref=e395]:
+                  - generic "Cờ Spain" [ref=e396]
+                  - strong [ref=e397]: Tây Ban Nha
+                - generic "Dự đoán tỉ số" [ref=e398]:
+                  - generic [ref=e399]:
+                    - button "-" [ref=e400] [cursor=pointer]
+                    - generic [ref=e401]: "0"
+                    - button "+" [ref=e402] [cursor=pointer]
+                  - generic [ref=e403]:
+                    - button "-" [ref=e404] [cursor=pointer]
+                    - generic [ref=e405]: "0"
+                    - button "+" [ref=e406] [cursor=pointer]
+                - generic [ref=e407]:
+                  - generic "Cờ Cabo Verde" [ref=e408]
+                  - strong [ref=e409]: Cabo Verde
+              - generic [ref=e410]:
+                - button "★" [disabled] [ref=e411]
+                - button "Lưu dự đoán" [ref=e412] [cursor=pointer]
+              - paragraph [ref=e413]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e414]:
+              - generic [ref=e415]:
+                - generic [ref=e416]: "#16 · Vòng bảng · G"
+                - generic [ref=e417]: 02:00 16-06
+              - generic [ref=e418]:
+                - generic [ref=e419]:
+                  - generic "Cờ Belgium" [ref=e420]
+                  - strong [ref=e421]: Bỉ
+                - generic "Dự đoán tỉ số" [ref=e422]:
+                  - generic [ref=e423]:
+                    - button "-" [ref=e424] [cursor=pointer]
+                    - generic [ref=e425]: "0"
+                    - button "+" [ref=e426] [cursor=pointer]
+                  - generic [ref=e427]:
+                    - button "-" [ref=e428] [cursor=pointer]
+                    - generic [ref=e429]: "0"
+                    - button "+" [ref=e430] [cursor=pointer]
+                - generic [ref=e431]:
+                  - generic "Cờ Egypt" [ref=e432]
+                  - strong [ref=e433]: Ai Cập
+              - generic [ref=e434]:
+                - button "★" [disabled] [ref=e435]
+                - button "Lưu dự đoán" [ref=e436] [cursor=pointer]
+              - paragraph [ref=e437]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e438]:
+          - generic [ref=e439]:
+            - heading "Thứ 3, 16/06" [level=3] [ref=e440]
+            - generic [ref=e441]: 3 trận
+          - generic [ref=e442]:
+            - article [ref=e443]:
+              - generic [ref=e444]:
+                - generic [ref=e445]: "#15 · Vòng bảng · G"
+                - generic [ref=e446]: 08:00 16-06
+              - generic [ref=e447]:
+                - generic [ref=e448]:
+                  - generic "Cờ Iran" [ref=e449]
+                  - strong [ref=e450]: Iran
+                - generic "Dự đoán tỉ số" [ref=e451]:
+                  - generic [ref=e452]:
+                    - button "-" [ref=e453] [cursor=pointer]
+                    - generic [ref=e454]: "0"
+                    - button "+" [ref=e455] [cursor=pointer]
+                  - generic [ref=e456]:
+                    - button "-" [ref=e457] [cursor=pointer]
+                    - generic [ref=e458]: "0"
+                    - button "+" [ref=e459] [cursor=pointer]
+                - generic [ref=e460]:
+                  - generic "Cờ New Zealand" [ref=e461]
+                  - strong [ref=e462]: New Zealand
+              - generic [ref=e463]:
+                - button "★" [disabled] [ref=e464]
+                - button "Lưu dự đoán" [ref=e465] [cursor=pointer]
+              - paragraph [ref=e466]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e467]:
+              - generic [ref=e468]:
+                - generic [ref=e469]: "#17 · Vòng bảng · I"
+                - generic [ref=e470]: 02:00 17-06
+              - generic [ref=e471]:
+                - generic [ref=e472]:
+                  - generic "Cờ France" [ref=e473]
+                  - strong [ref=e474]: Pháp
+                - generic "Dự đoán tỉ số" [ref=e475]:
+                  - generic [ref=e476]:
+                    - button "-" [ref=e477] [cursor=pointer]
+                    - generic [ref=e478]: "0"
+                    - button "+" [ref=e479] [cursor=pointer]
+                  - generic [ref=e480]:
+                    - button "-" [ref=e481] [cursor=pointer]
+                    - generic [ref=e482]: "0"
+                    - button "+" [ref=e483] [cursor=pointer]
+                - generic [ref=e484]:
+                  - generic "Cờ Senegal" [ref=e485]
+                  - strong [ref=e486]: Senegal
+              - generic [ref=e487]:
+                - button "★" [disabled] [ref=e488]
+                - button "Lưu dự đoán" [ref=e489] [cursor=pointer]
+              - paragraph [ref=e490]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e491]:
+              - generic [ref=e492]:
+                - generic [ref=e493]: "#18 · Vòng bảng · I"
+                - generic [ref=e494]: 05:00 17-06
+              - generic [ref=e495]:
+                - generic [ref=e496]:
+                  - generic "Cờ Iraq" [ref=e497]
+                  - strong [ref=e498]: Iraq
+                - generic "Dự đoán tỉ số" [ref=e499]:
+                  - generic [ref=e500]:
+                    - button "-" [ref=e501] [cursor=pointer]
+                    - generic [ref=e502]: "0"
+                    - button "+" [ref=e503] [cursor=pointer]
+                  - generic [ref=e504]:
+                    - button "-" [ref=e505] [cursor=pointer]
+                    - generic [ref=e506]: "0"
+                    - button "+" [ref=e507] [cursor=pointer]
+                - generic [ref=e508]:
+                  - generic "Cờ Norway" [ref=e509]
+                  - strong [ref=e510]: Na Uy
+              - generic [ref=e511]:
+                - button "★" [disabled] [ref=e512]
+                - button "Lưu dự đoán" [ref=e513] [cursor=pointer]
+              - paragraph [ref=e514]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e515]:
+          - generic [ref=e516]:
+            - heading "Thứ 4, 17/06" [level=3] [ref=e517]
+            - generic [ref=e518]: 5 trận
+          - generic [ref=e519]:
+            - article [ref=e520]:
+              - generic [ref=e521]:
+                - generic [ref=e522]: "#19 · Vòng bảng · J"
+                - generic [ref=e523]: 08:00 17-06
+              - generic [ref=e524]:
+                - generic [ref=e525]:
+                  - generic "Cờ Argentina" [ref=e526]
+                  - strong [ref=e527]: Argentina
+                - generic "Dự đoán tỉ số" [ref=e528]:
+                  - generic [ref=e529]:
+                    - button "-" [ref=e530] [cursor=pointer]
+                    - generic [ref=e531]: "0"
+                    - button "+" [ref=e532] [cursor=pointer]
+                  - generic [ref=e533]:
+                    - button "-" [ref=e534] [cursor=pointer]
+                    - generic [ref=e535]: "0"
+                    - button "+" [ref=e536] [cursor=pointer]
+                - generic [ref=e537]:
+                  - generic "Cờ Algeria" [ref=e538]
+                  - strong [ref=e539]: Algérie
+              - generic [ref=e540]:
+                - button "★" [disabled] [ref=e541]
+                - button "Lưu dự đoán" [ref=e542] [cursor=pointer]
+              - paragraph [ref=e543]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e544]:
+              - generic [ref=e545]:
+                - generic [ref=e546]: "#20 · Vòng bảng · J"
+                - generic [ref=e547]: 11:00 17-06
+              - generic [ref=e548]:
+                - generic [ref=e549]:
+                  - generic "Cờ Austria" [ref=e550]
+                  - strong [ref=e551]: Áo
+                - generic "Dự đoán tỉ số" [ref=e552]:
+                  - generic [ref=e553]:
+                    - button "-" [ref=e554] [cursor=pointer]
+                    - generic [ref=e555]: "0"
+                    - button "+" [ref=e556] [cursor=pointer]
+                  - generic [ref=e557]:
+                    - button "-" [ref=e558] [cursor=pointer]
+                    - generic [ref=e559]: "0"
+                    - button "+" [ref=e560] [cursor=pointer]
+                - generic [ref=e561]:
+                  - generic "Cờ Jordan" [ref=e562]
+                  - strong [ref=e563]: Jordan
+              - generic [ref=e564]:
+                - button "★" [disabled] [ref=e565]
+                - button "Lưu dự đoán" [ref=e566] [cursor=pointer]
+              - paragraph [ref=e567]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e568]:
+              - generic [ref=e569]:
+                - generic [ref=e570]: "#21 · Vòng bảng · L"
+                - generic [ref=e571]: 06:00 18-06
+              - generic [ref=e572]:
+                - generic [ref=e573]:
+                  - generic "Cờ Ghana" [ref=e574]
+                  - strong [ref=e575]: Ghana
+                - generic "Dự đoán tỉ số" [ref=e576]:
+                  - generic [ref=e577]:
+                    - button "-" [ref=e578] [cursor=pointer]
+                    - generic [ref=e579]: "0"
+                    - button "+" [ref=e580] [cursor=pointer]
+                  - generic [ref=e581]:
+                    - button "-" [ref=e582] [cursor=pointer]
+                    - generic [ref=e583]: "0"
+                    - button "+" [ref=e584] [cursor=pointer]
+                - generic [ref=e585]:
+                  - generic "Cờ Panama" [ref=e586]
+                  - strong [ref=e587]: Panama
+              - generic [ref=e588]:
+                - button "★" [disabled] [ref=e589]
+                - button "Lưu dự đoán" [ref=e590] [cursor=pointer]
+              - paragraph [ref=e591]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e592]:
+              - generic [ref=e593]:
+                - generic [ref=e594]: "#22 · Vòng bảng · L"
+                - generic [ref=e595]: 03:00 18-06
+              - generic [ref=e596]:
+                - generic [ref=e597]:
+                  - generic "Cờ England" [ref=e598]
+                  - strong [ref=e599]: Anh
+                - generic "Dự đoán tỉ số" [ref=e600]:
+                  - generic [ref=e601]:
+                    - button "-" [ref=e602] [cursor=pointer]
+                    - generic [ref=e603]: "0"
+                    - button "+" [ref=e604] [cursor=pointer]
+                  - generic [ref=e605]:
+                    - button "-" [ref=e606] [cursor=pointer]
+                    - generic [ref=e607]: "0"
+                    - button "+" [ref=e608] [cursor=pointer]
+                - generic [ref=e609]:
+                  - generic "Cờ Croatia" [ref=e610]
+                  - strong [ref=e611]: Croatia
+              - generic [ref=e612]:
+                - button "★" [disabled] [ref=e613]
+                - button "Lưu dự đoán" [ref=e614] [cursor=pointer]
+              - paragraph [ref=e615]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e616]:
+              - generic [ref=e617]:
+                - generic [ref=e618]: "#23 · Vòng bảng · K"
+                - generic [ref=e619]: 00:00 18-06
+              - generic [ref=e620]:
+                - generic [ref=e621]:
+                  - generic "Cờ Portugal" [ref=e622]
+                  - strong [ref=e623]: Bồ Đào Nha
+                - generic "Dự đoán tỉ số" [ref=e624]:
+                  - generic [ref=e625]:
+                    - button "-" [ref=e626] [cursor=pointer]
+                    - generic [ref=e627]: "0"
+                    - button "+" [ref=e628] [cursor=pointer]
+                  - generic [ref=e629]:
+                    - button "-" [ref=e630] [cursor=pointer]
+                    - generic [ref=e631]: "0"
+                    - button "+" [ref=e632] [cursor=pointer]
+                - generic [ref=e633]:
+                  - generic "Cờ Congo DR" [ref=e634]
+                  - strong [ref=e635]: CHDC Congo
+              - generic [ref=e636]:
+                - button "★" [disabled] [ref=e637]
+                - button "Lưu dự đoán" [ref=e638] [cursor=pointer]
+              - paragraph [ref=e639]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e640]:
+          - generic [ref=e641]:
+            - heading "Thứ 5, 18/06" [level=3] [ref=e642]
+            - generic [ref=e643]: 4 trận
+          - generic [ref=e644]:
+            - article [ref=e645]:
+              - generic [ref=e646]:
+                - generic [ref=e647]: "#24 · Vòng bảng · K"
+                - generic [ref=e648]: 09:00 18-06
+              - generic [ref=e649]:
+                - generic [ref=e650]:
+                  - generic "Cờ Uzbekistan" [ref=e651]
+                  - strong [ref=e652]: Uzbekistan
+                - generic "Dự đoán tỉ số" [ref=e653]:
+                  - generic [ref=e654]:
+                    - button "-" [ref=e655] [cursor=pointer]
+                    - generic [ref=e656]: "0"
+                    - button "+" [ref=e657] [cursor=pointer]
+                  - generic [ref=e658]:
+                    - button "-" [ref=e659] [cursor=pointer]
+                    - generic [ref=e660]: "0"
+                    - button "+" [ref=e661] [cursor=pointer]
+                - generic [ref=e662]:
+                  - generic "Cờ Colombia" [ref=e663]
+                  - strong [ref=e664]: Colombia
+              - generic [ref=e665]:
+                - button "★" [disabled] [ref=e666]
+                - button "Lưu dự đoán" [ref=e667] [cursor=pointer]
+              - paragraph [ref=e668]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e669]:
+              - generic [ref=e670]:
+                - generic [ref=e671]: "#25 · Vòng bảng · A"
+                - generic [ref=e672]: 23:00 18-06
+              - generic [ref=e673]:
+                - generic [ref=e674]:
+                  - generic "Cờ Czechia" [ref=e675]
+                  - strong [ref=e676]: Séc
+                - generic "Dự đoán tỉ số" [ref=e677]:
+                  - generic [ref=e678]:
+                    - button "-" [ref=e679] [cursor=pointer]
+                    - generic [ref=e680]: "0"
+                    - button "+" [ref=e681] [cursor=pointer]
+                  - generic [ref=e682]:
+                    - button "-" [ref=e683] [cursor=pointer]
+                    - generic [ref=e684]: "0"
+                    - button "+" [ref=e685] [cursor=pointer]
+                - generic [ref=e686]:
+                  - generic "Cờ South Africa" [ref=e687]
+                  - strong [ref=e688]: Nam Phi
+              - generic [ref=e689]:
+                - button "★" [disabled] [ref=e690]
+                - button "Lưu dự đoán" [ref=e691] [cursor=pointer]
+              - paragraph [ref=e692]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e693]:
+              - generic [ref=e694]:
+                - generic [ref=e695]: "#26 · Vòng bảng · B"
+                - generic [ref=e696]: 02:00 19-06
+              - generic [ref=e697]:
+                - generic [ref=e698]:
+                  - generic "Cờ Switzerland" [ref=e699]
+                  - strong [ref=e700]: Thụy Sĩ
+                - generic "Dự đoán tỉ số" [ref=e701]:
+                  - generic [ref=e702]:
+                    - button "-" [ref=e703] [cursor=pointer]
+                    - generic [ref=e704]: "0"
+                    - button "+" [ref=e705] [cursor=pointer]
+                  - generic [ref=e706]:
+                    - button "-" [ref=e707] [cursor=pointer]
+                    - generic [ref=e708]: "0"
+                    - button "+" [ref=e709] [cursor=pointer]
+                - generic [ref=e710]:
+                  - generic "Cờ Bosnia and Herzegovina" [ref=e711]
+                  - strong [ref=e712]: Bosna và Hercegovina
+              - generic [ref=e713]:
+                - button "★" [disabled] [ref=e714]
+                - button "Lưu dự đoán" [ref=e715] [cursor=pointer]
+              - paragraph [ref=e716]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e717]:
+              - generic [ref=e718]:
+                - generic [ref=e719]: "#27 · Vòng bảng · B"
+                - generic [ref=e720]: 05:00 19-06
+              - generic [ref=e721]:
+                - generic [ref=e722]:
+                  - generic "Cờ Canada" [ref=e723]
+                  - strong [ref=e724]: Canada
+                - generic "Dự đoán tỉ số" [ref=e725]:
+                  - generic [ref=e726]:
+                    - button "-" [ref=e727] [cursor=pointer]
+                    - generic [ref=e728]: "0"
+                    - button "+" [ref=e729] [cursor=pointer]
+                  - generic [ref=e730]:
+                    - button "-" [ref=e731] [cursor=pointer]
+                    - generic [ref=e732]: "0"
+                    - button "+" [ref=e733] [cursor=pointer]
+                - generic [ref=e734]:
+                  - generic "Cờ Qatar" [ref=e735]
+                  - strong [ref=e736]: Qatar
+              - generic [ref=e737]:
+                - button "★" [disabled] [ref=e738]
+                - button "Lưu dự đoán" [ref=e739] [cursor=pointer]
+              - paragraph [ref=e740]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e741]:
+          - generic [ref=e742]:
+            - heading "Thứ 6, 19/06" [level=3] [ref=e743]
+            - generic [ref=e744]: 3 trận
+          - generic [ref=e745]:
+            - article [ref=e746]:
+              - generic [ref=e747]:
+                - generic [ref=e748]: "#28 · Vòng bảng · A"
+                - generic [ref=e749]: 08:00 19-06
+              - generic [ref=e750]:
+                - generic [ref=e751]:
+                  - generic "Cờ Mexico" [ref=e752]
+                  - strong [ref=e753]: Mexico
+                - generic "Dự đoán tỉ số" [ref=e754]:
+                  - generic [ref=e755]:
+                    - button "-" [ref=e756] [cursor=pointer]
+                    - generic [ref=e757]: "0"
+                    - button "+" [ref=e758] [cursor=pointer]
+                  - generic [ref=e759]:
+                    - button "-" [ref=e760] [cursor=pointer]
+                    - generic [ref=e761]: "0"
+                    - button "+" [ref=e762] [cursor=pointer]
+                - generic [ref=e763]:
+                  - generic "Cờ Korea Republic" [ref=e764]
+                  - strong [ref=e765]: Hàn Quốc
+              - generic [ref=e766]:
+                - button "★" [disabled] [ref=e767]
+                - button "Lưu dự đoán" [ref=e768] [cursor=pointer]
+              - paragraph [ref=e769]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e770]:
+              - generic [ref=e771]:
+                - generic [ref=e772]: "#30 · Vòng bảng · C"
+                - generic [ref=e773]: 05:00 20-06
+              - generic [ref=e774]:
+                - generic [ref=e775]:
+                  - generic "Cờ Scotland" [ref=e776]
+                  - strong [ref=e777]: Scotland
+                - generic "Dự đoán tỉ số" [ref=e778]:
+                  - generic [ref=e779]:
+                    - button "-" [ref=e780] [cursor=pointer]
+                    - generic [ref=e781]: "0"
+                    - button "+" [ref=e782] [cursor=pointer]
+                  - generic [ref=e783]:
+                    - button "-" [ref=e784] [cursor=pointer]
+                    - generic [ref=e785]: "0"
+                    - button "+" [ref=e786] [cursor=pointer]
+                - generic [ref=e787]:
+                  - generic "Cờ Morocco" [ref=e788]
+                  - strong [ref=e789]: Maroc
+              - generic [ref=e790]:
+                - button "★" [disabled] [ref=e791]
+                - button "Lưu dự đoán" [ref=e792] [cursor=pointer]
+              - paragraph [ref=e793]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e794]:
+              - generic [ref=e795]:
+                - generic [ref=e796]: "#32 · Vòng bảng · D"
+                - generic [ref=e797]: 02:00 20-06
+              - generic [ref=e798]:
+                - generic [ref=e799]:
+                  - generic "Cờ United States" [ref=e800]
+                  - strong [ref=e801]: Hoa Kỳ
+                - generic "Dự đoán tỉ số" [ref=e802]:
+                  - generic [ref=e803]:
+                    - button "-" [ref=e804] [cursor=pointer]
+                    - generic [ref=e805]: "0"
+                    - button "+" [ref=e806] [cursor=pointer]
+                  - generic [ref=e807]:
+                    - button "-" [ref=e808] [cursor=pointer]
+                    - generic [ref=e809]: "0"
+                    - button "+" [ref=e810] [cursor=pointer]
+                - generic [ref=e811]:
+                  - generic "Cờ Australia" [ref=e812]
+                  - strong [ref=e813]: Úc
+              - generic [ref=e814]:
+                - button "★" [disabled] [ref=e815]
+                - button "Lưu dự đoán" [ref=e816] [cursor=pointer]
+              - paragraph [ref=e817]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e818]:
+          - generic [ref=e819]:
+            - heading "Thứ 7, 20/06" [level=3] [ref=e820]
+            - generic [ref=e821]: 4 trận
+          - generic [ref=e822]:
+            - article [ref=e823]:
+              - generic [ref=e824]:
+                - generic [ref=e825]: "#29 · Vòng bảng · C"
+                - generic [ref=e826]: 07:30 20-06
+              - generic [ref=e827]:
+                - generic [ref=e828]:
+                  - generic "Cờ Brazil" [ref=e829]
+                  - strong [ref=e830]: Brasil
+                - generic "Dự đoán tỉ số" [ref=e831]:
+                  - generic [ref=e832]:
+                    - button "-" [ref=e833] [cursor=pointer]
+                    - generic [ref=e834]: "0"
+                    - button "+" [ref=e835] [cursor=pointer]
+                  - generic [ref=e836]:
+                    - button "-" [ref=e837] [cursor=pointer]
+                    - generic [ref=e838]: "0"
+                    - button "+" [ref=e839] [cursor=pointer]
+                - generic [ref=e840]:
+                  - generic "Cờ Haiti" [ref=e841]
+                  - strong [ref=e842]: Haiti
+              - generic [ref=e843]:
+                - button "★" [disabled] [ref=e844]
+                - button "Lưu dự đoán" [ref=e845] [cursor=pointer]
+              - paragraph [ref=e846]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e847]:
+              - generic [ref=e848]:
+                - generic [ref=e849]: "#31 · Vòng bảng · D"
+                - generic [ref=e850]: 10:00 20-06
+              - generic [ref=e851]:
+                - generic [ref=e852]:
+                  - generic "Cờ Turkey" [ref=e853]
+                  - strong [ref=e854]: Thổ Nhĩ Kỳ
+                - generic "Dự đoán tỉ số" [ref=e855]:
+                  - generic [ref=e856]:
+                    - button "-" [ref=e857] [cursor=pointer]
+                    - generic [ref=e858]: "0"
+                    - button "+" [ref=e859] [cursor=pointer]
+                  - generic [ref=e860]:
+                    - button "-" [ref=e861] [cursor=pointer]
+                    - generic [ref=e862]: "0"
+                    - button "+" [ref=e863] [cursor=pointer]
+                - generic [ref=e864]:
+                  - generic "Cờ Paraguay" [ref=e865]
+                  - strong [ref=e866]: Paraguay
+              - generic [ref=e867]:
+                - button "★" [disabled] [ref=e868]
+                - button "Lưu dự đoán" [ref=e869] [cursor=pointer]
+              - paragraph [ref=e870]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e871]:
+              - generic [ref=e872]:
+                - generic [ref=e873]: "#33 · Vòng bảng · E"
+                - generic [ref=e874]: 03:00 21-06
+              - generic [ref=e875]:
+                - generic [ref=e876]:
+                  - generic "Cờ Germany" [ref=e877]
+                  - strong [ref=e878]: Đức
+                - generic "Dự đoán tỉ số" [ref=e879]:
+                  - generic [ref=e880]:
+                    - button "-" [ref=e881] [cursor=pointer]
+                    - generic [ref=e882]: "0"
+                    - button "+" [ref=e883] [cursor=pointer]
+                  - generic [ref=e884]:
+                    - button "-" [ref=e885] [cursor=pointer]
+                    - generic [ref=e886]: "0"
+                    - button "+" [ref=e887] [cursor=pointer]
+                - generic [ref=e888]:
+                  - generic "Cờ Cote d'Ivoire" [ref=e889]
+                  - strong [ref=e890]: Bờ Biển Ngà
+              - generic [ref=e891]:
+                - button "★" [disabled] [ref=e892]
+                - button "Lưu dự đoán" [ref=e893] [cursor=pointer]
+              - paragraph [ref=e894]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e895]:
+              - generic [ref=e896]:
+                - generic [ref=e897]: "#35 · Vòng bảng · F"
+                - generic [ref=e898]: 00:00 21-06
+              - generic [ref=e899]:
+                - generic [ref=e900]:
+                  - generic "Cờ Netherlands" [ref=e901]
+                  - strong [ref=e902]: Hà Lan
+                - generic "Dự đoán tỉ số" [ref=e903]:
+                  - generic [ref=e904]:
+                    - button "-" [ref=e905] [cursor=pointer]
+                    - generic [ref=e906]: "0"
+                    - button "+" [ref=e907] [cursor=pointer]
+                  - generic [ref=e908]:
+                    - button "-" [ref=e909] [cursor=pointer]
+                    - generic [ref=e910]: "0"
+                    - button "+" [ref=e911] [cursor=pointer]
+                - generic [ref=e912]:
+                  - generic "Cờ Sweden" [ref=e913]
+                  - strong [ref=e914]: Thụy Điển
+              - generic [ref=e915]:
+                - button "★" [disabled] [ref=e916]
+                - button "Lưu dự đoán" [ref=e917] [cursor=pointer]
+              - paragraph [ref=e918]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e919]:
+          - generic [ref=e920]:
+            - heading "CN, 21/06" [level=3] [ref=e921]
+            - generic [ref=e922]: 5 trận
+          - generic [ref=e923]:
+            - article [ref=e924]:
+              - generic [ref=e925]:
+                - generic [ref=e926]: "#34 · Vòng bảng · E"
+                - generic [ref=e927]: 07:00 21-06
+              - generic [ref=e928]:
+                - generic [ref=e929]:
+                  - generic "Cờ Ecuador" [ref=e930]
+                  - strong [ref=e931]: Ecuador
+                - generic "Dự đoán tỉ số" [ref=e932]:
+                  - generic [ref=e933]:
+                    - button "-" [ref=e934] [cursor=pointer]
+                    - generic [ref=e935]: "0"
+                    - button "+" [ref=e936] [cursor=pointer]
+                  - generic [ref=e937]:
+                    - button "-" [ref=e938] [cursor=pointer]
+                    - generic [ref=e939]: "0"
+                    - button "+" [ref=e940] [cursor=pointer]
+                - generic [ref=e941]:
+                  - generic "Cờ Curacao" [ref=e942]
+                  - strong [ref=e943]: Curaçao
+              - generic [ref=e944]:
+                - button "★" [disabled] [ref=e945]
+                - button "Lưu dự đoán" [ref=e946] [cursor=pointer]
+              - paragraph [ref=e947]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e948]:
+              - generic [ref=e949]:
+                - generic [ref=e950]: "#36 · Vòng bảng · F"
+                - generic [ref=e951]: 11:00 21-06
+              - generic [ref=e952]:
+                - generic [ref=e953]:
+                  - generic "Cờ Tunisia" [ref=e954]
+                  - strong [ref=e955]: Tunisia
+                - generic "Dự đoán tỉ số" [ref=e956]:
+                  - generic [ref=e957]:
+                    - button "-" [ref=e958] [cursor=pointer]
+                    - generic [ref=e959]: "0"
+                    - button "+" [ref=e960] [cursor=pointer]
+                  - generic [ref=e961]:
+                    - button "-" [ref=e962] [cursor=pointer]
+                    - generic [ref=e963]: "0"
+                    - button "+" [ref=e964] [cursor=pointer]
+                - generic [ref=e965]:
+                  - generic "Cờ Japan" [ref=e966]
+                  - strong [ref=e967]: Nhật Bản
+              - generic [ref=e968]:
+                - button "★" [disabled] [ref=e969]
+                - button "Lưu dự đoán" [ref=e970] [cursor=pointer]
+              - paragraph [ref=e971]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e972]:
+              - generic [ref=e973]:
+                - generic [ref=e974]: "#37 · Vòng bảng · H"
+                - generic [ref=e975]: 05:00 22-06
+              - generic [ref=e976]:
+                - generic [ref=e977]:
+                  - generic "Cờ Uruguay" [ref=e978]
+                  - strong [ref=e979]: Uruguay
+                - generic "Dự đoán tỉ số" [ref=e980]:
+                  - generic [ref=e981]:
+                    - button "-" [ref=e982] [cursor=pointer]
+                    - generic [ref=e983]: "0"
+                    - button "+" [ref=e984] [cursor=pointer]
+                  - generic [ref=e985]:
+                    - button "-" [ref=e986] [cursor=pointer]
+                    - generic [ref=e987]: "0"
+                    - button "+" [ref=e988] [cursor=pointer]
+                - generic [ref=e989]:
+                  - generic "Cờ Cabo Verde" [ref=e990]
+                  - strong [ref=e991]: Cabo Verde
+              - generic [ref=e992]:
+                - button "★" [disabled] [ref=e993]
+                - button "Lưu dự đoán" [ref=e994] [cursor=pointer]
+              - paragraph [ref=e995]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e996]:
+              - generic [ref=e997]:
+                - generic [ref=e998]: "#38 · Vòng bảng · H"
+                - generic [ref=e999]: 23:00 21-06
+              - generic [ref=e1000]:
+                - generic [ref=e1001]:
+                  - generic "Cờ Spain" [ref=e1002]
+                  - strong [ref=e1003]: Tây Ban Nha
+                - generic "Dự đoán tỉ số" [ref=e1004]:
+                  - generic [ref=e1005]:
+                    - button "-" [ref=e1006] [cursor=pointer]
+                    - generic [ref=e1007]: "0"
+                    - button "+" [ref=e1008] [cursor=pointer]
+                  - generic [ref=e1009]:
+                    - button "-" [ref=e1010] [cursor=pointer]
+                    - generic [ref=e1011]: "0"
+                    - button "+" [ref=e1012] [cursor=pointer]
+                - generic [ref=e1013]:
+                  - generic "Cờ Saudi Arabia" [ref=e1014]
+                  - strong [ref=e1015]: Ả Rập Xê Út
+              - generic [ref=e1016]:
+                - button "★" [disabled] [ref=e1017]
+                - button "Lưu dự đoán" [ref=e1018] [cursor=pointer]
+              - paragraph [ref=e1019]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1020]:
+              - generic [ref=e1021]:
+                - generic [ref=e1022]: "#39 · Vòng bảng · G"
+                - generic [ref=e1023]: 02:00 22-06
+              - generic [ref=e1024]:
+                - generic [ref=e1025]:
+                  - generic "Cờ Belgium" [ref=e1026]
+                  - strong [ref=e1027]: Bỉ
+                - generic "Dự đoán tỉ số" [ref=e1028]:
+                  - generic [ref=e1029]:
+                    - button "-" [ref=e1030] [cursor=pointer]
+                    - generic [ref=e1031]: "0"
+                    - button "+" [ref=e1032] [cursor=pointer]
+                  - generic [ref=e1033]:
+                    - button "-" [ref=e1034] [cursor=pointer]
+                    - generic [ref=e1035]: "0"
+                    - button "+" [ref=e1036] [cursor=pointer]
+                - generic [ref=e1037]:
+                  - generic "Cờ Iran" [ref=e1038]
+                  - strong [ref=e1039]: Iran
+              - generic [ref=e1040]:
+                - button "★" [disabled] [ref=e1041]
+                - button "Lưu dự đoán" [ref=e1042] [cursor=pointer]
+              - paragraph [ref=e1043]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e1044]:
+          - generic [ref=e1045]:
+            - heading "Thứ 2, 22/06" [level=3] [ref=e1046]
+            - generic [ref=e1047]: 3 trận
+          - generic [ref=e1048]:
+            - article [ref=e1049]:
+              - generic [ref=e1050]:
+                - generic [ref=e1051]: "#40 · Vòng bảng · G"
+                - generic [ref=e1052]: 08:00 22-06
+              - generic [ref=e1053]:
+                - generic [ref=e1054]:
+                  - generic "Cờ New Zealand" [ref=e1055]
+                  - strong [ref=e1056]: New Zealand
+                - generic "Dự đoán tỉ số" [ref=e1057]:
+                  - generic [ref=e1058]:
+                    - button "-" [ref=e1059] [cursor=pointer]
+                    - generic [ref=e1060]: "0"
+                    - button "+" [ref=e1061] [cursor=pointer]
+                  - generic [ref=e1062]:
+                    - button "-" [ref=e1063] [cursor=pointer]
+                    - generic [ref=e1064]: "0"
+                    - button "+" [ref=e1065] [cursor=pointer]
+                - generic [ref=e1066]:
+                  - generic "Cờ Egypt" [ref=e1067]
+                  - strong [ref=e1068]: Ai Cập
+              - generic [ref=e1069]:
+                - button "★" [disabled] [ref=e1070]
+                - button "Lưu dự đoán" [ref=e1071] [cursor=pointer]
+              - paragraph [ref=e1072]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1073]:
+              - generic [ref=e1074]:
+                - generic [ref=e1075]: "#42 · Vòng bảng · I"
+                - generic [ref=e1076]: 04:00 23-06
+              - generic [ref=e1077]:
+                - generic [ref=e1078]:
+                  - generic "Cờ France" [ref=e1079]
+                  - strong [ref=e1080]: Pháp
+                - generic "Dự đoán tỉ số" [ref=e1081]:
+                  - generic [ref=e1082]:
+                    - button "-" [ref=e1083] [cursor=pointer]
+                    - generic [ref=e1084]: "0"
+                    - button "+" [ref=e1085] [cursor=pointer]
+                  - generic [ref=e1086]:
+                    - button "-" [ref=e1087] [cursor=pointer]
+                    - generic [ref=e1088]: "0"
+                    - button "+" [ref=e1089] [cursor=pointer]
+                - generic [ref=e1090]:
+                  - generic "Cờ Iraq" [ref=e1091]
+                  - strong [ref=e1092]: Iraq
+              - generic [ref=e1093]:
+                - button "★" [disabled] [ref=e1094]
+                - button "Lưu dự đoán" [ref=e1095] [cursor=pointer]
+              - paragraph [ref=e1096]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1097]:
+              - generic [ref=e1098]:
+                - generic [ref=e1099]: "#43 · Vòng bảng · J"
+                - generic [ref=e1100]: 00:00 23-06
+              - generic [ref=e1101]:
+                - generic [ref=e1102]:
+                  - generic "Cờ Argentina" [ref=e1103]
+                  - strong [ref=e1104]: Argentina
+                - generic "Dự đoán tỉ số" [ref=e1105]:
+                  - generic [ref=e1106]:
+                    - button "-" [ref=e1107] [cursor=pointer]
+                    - generic [ref=e1108]: "0"
+                    - button "+" [ref=e1109] [cursor=pointer]
+                  - generic [ref=e1110]:
+                    - button "-" [ref=e1111] [cursor=pointer]
+                    - generic [ref=e1112]: "0"
+                    - button "+" [ref=e1113] [cursor=pointer]
+                - generic [ref=e1114]:
+                  - generic "Cờ Austria" [ref=e1115]
+                  - strong [ref=e1116]: Áo
+              - generic [ref=e1117]:
+                - button "★" [disabled] [ref=e1118]
+                - button "Lưu dự đoán" [ref=e1119] [cursor=pointer]
+              - paragraph [ref=e1120]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e1121]:
+          - generic [ref=e1122]:
+            - heading "Thứ 3, 23/06" [level=3] [ref=e1123]
+            - generic [ref=e1124]: 5 trận
+          - generic [ref=e1125]:
+            - article [ref=e1126]:
+              - generic [ref=e1127]:
+                - generic [ref=e1128]: "#41 · Vòng bảng · I"
+                - generic [ref=e1129]: 07:00 23-06
+              - generic [ref=e1130]:
+                - generic [ref=e1131]:
+                  - generic "Cờ Norway" [ref=e1132]
+                  - strong [ref=e1133]: Na Uy
+                - generic "Dự đoán tỉ số" [ref=e1134]:
+                  - generic [ref=e1135]:
+                    - button "-" [ref=e1136] [cursor=pointer]
+                    - generic [ref=e1137]: "0"
+                    - button "+" [ref=e1138] [cursor=pointer]
+                  - generic [ref=e1139]:
+                    - button "-" [ref=e1140] [cursor=pointer]
+                    - generic [ref=e1141]: "0"
+                    - button "+" [ref=e1142] [cursor=pointer]
+                - generic [ref=e1143]:
+                  - generic "Cờ Senegal" [ref=e1144]
+                  - strong [ref=e1145]: Senegal
+              - generic [ref=e1146]:
+                - button "★" [disabled] [ref=e1147]
+                - button "Lưu dự đoán" [ref=e1148] [cursor=pointer]
+              - paragraph [ref=e1149]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1150]:
+              - generic [ref=e1151]:
+                - generic [ref=e1152]: "#44 · Vòng bảng · J"
+                - generic [ref=e1153]: 10:00 23-06
+              - generic [ref=e1154]:
+                - generic [ref=e1155]:
+                  - generic "Cờ Jordan" [ref=e1156]
+                  - strong [ref=e1157]: Jordan
+                - generic "Dự đoán tỉ số" [ref=e1158]:
+                  - generic [ref=e1159]:
+                    - button "-" [ref=e1160] [cursor=pointer]
+                    - generic [ref=e1161]: "0"
+                    - button "+" [ref=e1162] [cursor=pointer]
+                  - generic [ref=e1163]:
+                    - button "-" [ref=e1164] [cursor=pointer]
+                    - generic [ref=e1165]: "0"
+                    - button "+" [ref=e1166] [cursor=pointer]
+                - generic [ref=e1167]:
+                  - generic "Cờ Algeria" [ref=e1168]
+                  - strong [ref=e1169]: Algérie
+              - generic [ref=e1170]:
+                - button "★" [disabled] [ref=e1171]
+                - button "Lưu dự đoán" [ref=e1172] [cursor=pointer]
+              - paragraph [ref=e1173]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1174]:
+              - generic [ref=e1175]:
+                - generic [ref=e1176]: "#45 · Vòng bảng · L"
+                - generic [ref=e1177]: 03:00 24-06
+              - generic [ref=e1178]:
+                - generic [ref=e1179]:
+                  - generic "Cờ England" [ref=e1180]
+                  - strong [ref=e1181]: Anh
+                - generic "Dự đoán tỉ số" [ref=e1182]:
+                  - generic [ref=e1183]:
+                    - button "-" [ref=e1184] [cursor=pointer]
+                    - generic [ref=e1185]: "0"
+                    - button "+" [ref=e1186] [cursor=pointer]
+                  - generic [ref=e1187]:
+                    - button "-" [ref=e1188] [cursor=pointer]
+                    - generic [ref=e1189]: "0"
+                    - button "+" [ref=e1190] [cursor=pointer]
+                - generic [ref=e1191]:
+                  - generic "Cờ Ghana" [ref=e1192]
+                  - strong [ref=e1193]: Ghana
+              - generic [ref=e1194]:
+                - button "★" [disabled] [ref=e1195]
+                - button "Lưu dự đoán" [ref=e1196] [cursor=pointer]
+              - paragraph [ref=e1197]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1198]:
+              - generic [ref=e1199]:
+                - generic [ref=e1200]: "#46 · Vòng bảng · L"
+                - generic [ref=e1201]: 06:00 24-06
+              - generic [ref=e1202]:
+                - generic [ref=e1203]:
+                  - generic "Cờ Panama" [ref=e1204]
+                  - strong [ref=e1205]: Panama
+                - generic "Dự đoán tỉ số" [ref=e1206]:
+                  - generic [ref=e1207]:
+                    - button "-" [ref=e1208] [cursor=pointer]
+                    - generic [ref=e1209]: "0"
+                    - button "+" [ref=e1210] [cursor=pointer]
+                  - generic [ref=e1211]:
+                    - button "-" [ref=e1212] [cursor=pointer]
+                    - generic [ref=e1213]: "0"
+                    - button "+" [ref=e1214] [cursor=pointer]
+                - generic [ref=e1215]:
+                  - generic "Cờ Croatia" [ref=e1216]
+                  - strong [ref=e1217]: Croatia
+              - generic [ref=e1218]:
+                - button "★" [disabled] [ref=e1219]
+                - button "Lưu dự đoán" [ref=e1220] [cursor=pointer]
+              - paragraph [ref=e1221]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1222]:
+              - generic [ref=e1223]:
+                - generic [ref=e1224]: "#47 · Vòng bảng · K"
+                - generic [ref=e1225]: 00:00 24-06
+              - generic [ref=e1226]:
+                - generic [ref=e1227]:
+                  - generic "Cờ Portugal" [ref=e1228]
+                  - strong [ref=e1229]: Bồ Đào Nha
+                - generic "Dự đoán tỉ số" [ref=e1230]:
+                  - generic [ref=e1231]:
+                    - button "-" [ref=e1232] [cursor=pointer]
+                    - generic [ref=e1233]: "0"
+                    - button "+" [ref=e1234] [cursor=pointer]
+                  - generic [ref=e1235]:
+                    - button "-" [ref=e1236] [cursor=pointer]
+                    - generic [ref=e1237]: "0"
+                    - button "+" [ref=e1238] [cursor=pointer]
+                - generic [ref=e1239]:
+                  - generic "Cờ Uzbekistan" [ref=e1240]
+                  - strong [ref=e1241]: Uzbekistan
+              - generic [ref=e1242]:
+                - button "★" [disabled] [ref=e1243]
+                - button "Lưu dự đoán" [ref=e1244] [cursor=pointer]
+              - paragraph [ref=e1245]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e1246]:
+          - generic [ref=e1247]:
+            - heading "Thứ 4, 24/06" [level=3] [ref=e1248]
+            - generic [ref=e1249]: 5 trận
+          - generic [ref=e1250]:
+            - article [ref=e1251]:
+              - generic [ref=e1252]:
+                - generic [ref=e1253]: "#48 · Vòng bảng · K"
+                - generic [ref=e1254]: 09:00 24-06
+              - generic [ref=e1255]:
+                - generic [ref=e1256]:
+                  - generic "Cờ Colombia" [ref=e1257]
+                  - strong [ref=e1258]: Colombia
+                - generic "Dự đoán tỉ số" [ref=e1259]:
+                  - generic [ref=e1260]:
+                    - button "-" [ref=e1261] [cursor=pointer]
+                    - generic [ref=e1262]: "0"
+                    - button "+" [ref=e1263] [cursor=pointer]
+                  - generic [ref=e1264]:
+                    - button "-" [ref=e1265] [cursor=pointer]
+                    - generic [ref=e1266]: "0"
+                    - button "+" [ref=e1267] [cursor=pointer]
+                - generic [ref=e1268]:
+                  - generic "Cờ Congo DR" [ref=e1269]
+                  - strong [ref=e1270]: CHDC Congo
+              - generic [ref=e1271]:
+                - button "★" [disabled] [ref=e1272]
+                - button "Lưu dự đoán" [ref=e1273] [cursor=pointer]
+              - paragraph [ref=e1274]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1275]:
+              - generic [ref=e1276]:
+                - generic [ref=e1277]: "#49 · Vòng bảng · C"
+                - generic [ref=e1278]: 05:00 25-06
+              - generic [ref=e1279]:
+                - generic [ref=e1280]:
+                  - generic "Cờ Scotland" [ref=e1281]
+                  - strong [ref=e1282]: Scotland
+                - generic "Dự đoán tỉ số" [ref=e1283]:
+                  - generic [ref=e1284]:
+                    - button "-" [ref=e1285] [cursor=pointer]
+                    - generic [ref=e1286]: "0"
+                    - button "+" [ref=e1287] [cursor=pointer]
+                  - generic [ref=e1288]:
+                    - button "-" [ref=e1289] [cursor=pointer]
+                    - generic [ref=e1290]: "0"
+                    - button "+" [ref=e1291] [cursor=pointer]
+                - generic [ref=e1292]:
+                  - generic "Cờ Brazil" [ref=e1293]
+                  - strong [ref=e1294]: Brasil
+              - generic [ref=e1295]:
+                - button "★" [disabled] [ref=e1296]
+                - button "Lưu dự đoán" [ref=e1297] [cursor=pointer]
+              - paragraph [ref=e1298]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1299]:
+              - generic [ref=e1300]:
+                - generic [ref=e1301]: "#50 · Vòng bảng · C"
+                - generic [ref=e1302]: 05:00 25-06
+              - generic [ref=e1303]:
+                - generic [ref=e1304]:
+                  - generic "Cờ Morocco" [ref=e1305]
+                  - strong [ref=e1306]: Maroc
+                - generic "Dự đoán tỉ số" [ref=e1307]:
+                  - generic [ref=e1308]:
+                    - button "-" [ref=e1309] [cursor=pointer]
+                    - generic [ref=e1310]: "0"
+                    - button "+" [ref=e1311] [cursor=pointer]
+                  - generic [ref=e1312]:
+                    - button "-" [ref=e1313] [cursor=pointer]
+                    - generic [ref=e1314]: "0"
+                    - button "+" [ref=e1315] [cursor=pointer]
+                - generic [ref=e1316]:
+                  - generic "Cờ Haiti" [ref=e1317]
+                  - strong [ref=e1318]: Haiti
+              - generic [ref=e1319]:
+                - button "★" [disabled] [ref=e1320]
+                - button "Lưu dự đoán" [ref=e1321] [cursor=pointer]
+              - paragraph [ref=e1322]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1323]:
+              - generic [ref=e1324]:
+                - generic [ref=e1325]: "#51 · Vòng bảng · B"
+                - generic [ref=e1326]: 02:00 25-06
+              - generic [ref=e1327]:
+                - generic [ref=e1328]:
+                  - generic "Cờ Switzerland" [ref=e1329]
+                  - strong [ref=e1330]: Thụy Sĩ
+                - generic "Dự đoán tỉ số" [ref=e1331]:
+                  - generic [ref=e1332]:
+                    - button "-" [ref=e1333] [cursor=pointer]
+                    - generic [ref=e1334]: "0"
+                    - button "+" [ref=e1335] [cursor=pointer]
+                  - generic [ref=e1336]:
+                    - button "-" [ref=e1337] [cursor=pointer]
+                    - generic [ref=e1338]: "0"
+                    - button "+" [ref=e1339] [cursor=pointer]
+                - generic [ref=e1340]:
+                  - generic "Cờ Canada" [ref=e1341]
+                  - strong [ref=e1342]: Canada
+              - generic [ref=e1343]:
+                - button "★" [disabled] [ref=e1344]
+                - button "Lưu dự đoán" [ref=e1345] [cursor=pointer]
+              - paragraph [ref=e1346]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1347]:
+              - generic [ref=e1348]:
+                - generic [ref=e1349]: "#52 · Vòng bảng · B"
+                - generic [ref=e1350]: 02:00 25-06
+              - generic [ref=e1351]:
+                - generic [ref=e1352]:
+                  - generic "Cờ Bosnia and Herzegovina" [ref=e1353]
+                  - strong [ref=e1354]: Bosna và Hercegovina
+                - generic "Dự đoán tỉ số" [ref=e1355]:
+                  - generic [ref=e1356]:
+                    - button "-" [ref=e1357] [cursor=pointer]
+                    - generic [ref=e1358]: "0"
+                    - button "+" [ref=e1359] [cursor=pointer]
+                  - generic [ref=e1360]:
+                    - button "-" [ref=e1361] [cursor=pointer]
+                    - generic [ref=e1362]: "0"
+                    - button "+" [ref=e1363] [cursor=pointer]
+                - generic [ref=e1364]:
+                  - generic "Cờ Qatar" [ref=e1365]
+                  - strong [ref=e1366]: Qatar
+              - generic [ref=e1367]:
+                - button "★" [disabled] [ref=e1368]
+                - button "Lưu dự đoán" [ref=e1369] [cursor=pointer]
+              - paragraph [ref=e1370]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e1371]:
+          - generic [ref=e1372]:
+            - heading "Thứ 5, 25/06" [level=3] [ref=e1373]
+            - generic [ref=e1374]: 6 trận
+          - generic [ref=e1375]:
+            - article [ref=e1376]:
+              - generic [ref=e1377]:
+                - generic [ref=e1378]: "#53 · Vòng bảng · A"
+                - generic [ref=e1379]: 08:00 25-06
+              - generic [ref=e1380]:
+                - generic [ref=e1381]:
+                  - generic "Cờ Czechia" [ref=e1382]
+                  - strong [ref=e1383]: Séc
+                - generic "Dự đoán tỉ số" [ref=e1384]:
+                  - generic [ref=e1385]:
+                    - button "-" [ref=e1386] [cursor=pointer]
+                    - generic [ref=e1387]: "0"
+                    - button "+" [ref=e1388] [cursor=pointer]
+                  - generic [ref=e1389]:
+                    - button "-" [ref=e1390] [cursor=pointer]
+                    - generic [ref=e1391]: "0"
+                    - button "+" [ref=e1392] [cursor=pointer]
+                - generic [ref=e1393]:
+                  - generic "Cờ Mexico" [ref=e1394]
+                  - strong [ref=e1395]: Mexico
+              - generic [ref=e1396]:
+                - button "★" [disabled] [ref=e1397]
+                - button "Lưu dự đoán" [ref=e1398] [cursor=pointer]
+              - paragraph [ref=e1399]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1400]:
+              - generic [ref=e1401]:
+                - generic [ref=e1402]: "#54 · Vòng bảng · A"
+                - generic [ref=e1403]: 08:00 25-06
+              - generic [ref=e1404]:
+                - generic [ref=e1405]:
+                  - generic "Cờ South Africa" [ref=e1406]
+                  - strong [ref=e1407]: Nam Phi
+                - generic "Dự đoán tỉ số" [ref=e1408]:
+                  - generic [ref=e1409]:
+                    - button "-" [ref=e1410] [cursor=pointer]
+                    - generic [ref=e1411]: "0"
+                    - button "+" [ref=e1412] [cursor=pointer]
+                  - generic [ref=e1413]:
+                    - button "-" [ref=e1414] [cursor=pointer]
+                    - generic [ref=e1415]: "0"
+                    - button "+" [ref=e1416] [cursor=pointer]
+                - generic [ref=e1417]:
+                  - generic "Cờ Korea Republic" [ref=e1418]
+                  - strong [ref=e1419]: Hàn Quốc
+              - generic [ref=e1420]:
+                - button "★" [disabled] [ref=e1421]
+                - button "Lưu dự đoán" [ref=e1422] [cursor=pointer]
+              - paragraph [ref=e1423]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1424]:
+              - generic [ref=e1425]:
+                - generic [ref=e1426]: "#55 · Vòng bảng · E"
+                - generic [ref=e1427]: 03:00 26-06
+              - generic [ref=e1428]:
+                - generic [ref=e1429]:
+                  - generic "Cờ Curacao" [ref=e1430]
+                  - strong [ref=e1431]: Curaçao
+                - generic "Dự đoán tỉ số" [ref=e1432]:
+                  - generic [ref=e1433]:
+                    - button "-" [ref=e1434] [cursor=pointer]
+                    - generic [ref=e1435]: "0"
+                    - button "+" [ref=e1436] [cursor=pointer]
+                  - generic [ref=e1437]:
+                    - button "-" [ref=e1438] [cursor=pointer]
+                    - generic [ref=e1439]: "0"
+                    - button "+" [ref=e1440] [cursor=pointer]
+                - generic [ref=e1441]:
+                  - generic "Cờ Cote d'Ivoire" [ref=e1442]
+                  - strong [ref=e1443]: Bờ Biển Ngà
+              - generic [ref=e1444]:
+                - button "★" [disabled] [ref=e1445]
+                - button "Lưu dự đoán" [ref=e1446] [cursor=pointer]
+              - paragraph [ref=e1447]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1448]:
+              - generic [ref=e1449]:
+                - generic [ref=e1450]: "#56 · Vòng bảng · E"
+                - generic [ref=e1451]: 03:00 26-06
+              - generic [ref=e1452]:
+                - generic [ref=e1453]:
+                  - generic "Cờ Ecuador" [ref=e1454]
+                  - strong [ref=e1455]: Ecuador
+                - generic "Dự đoán tỉ số" [ref=e1456]:
+                  - generic [ref=e1457]:
+                    - button "-" [ref=e1458] [cursor=pointer]
+                    - generic [ref=e1459]: "0"
+                    - button "+" [ref=e1460] [cursor=pointer]
+                  - generic [ref=e1461]:
+                    - button "-" [ref=e1462] [cursor=pointer]
+                    - generic [ref=e1463]: "0"
+                    - button "+" [ref=e1464] [cursor=pointer]
+                - generic [ref=e1465]:
+                  - generic "Cờ Germany" [ref=e1466]
+                  - strong [ref=e1467]: Đức
+              - generic [ref=e1468]:
+                - button "★" [disabled] [ref=e1469]
+                - button "Lưu dự đoán" [ref=e1470] [cursor=pointer]
+              - paragraph [ref=e1471]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1472]:
+              - generic [ref=e1473]:
+                - generic [ref=e1474]: "#57 · Vòng bảng · F"
+                - generic [ref=e1475]: 06:00 26-06
+              - generic [ref=e1476]:
+                - generic [ref=e1477]:
+                  - generic "Cờ Japan" [ref=e1478]
+                  - strong [ref=e1479]: Nhật Bản
+                - generic "Dự đoán tỉ số" [ref=e1480]:
+                  - generic [ref=e1481]:
+                    - button "-" [ref=e1482] [cursor=pointer]
+                    - generic [ref=e1483]: "0"
+                    - button "+" [ref=e1484] [cursor=pointer]
+                  - generic [ref=e1485]:
+                    - button "-" [ref=e1486] [cursor=pointer]
+                    - generic [ref=e1487]: "0"
+                    - button "+" [ref=e1488] [cursor=pointer]
+                - generic [ref=e1489]:
+                  - generic "Cờ Sweden" [ref=e1490]
+                  - strong [ref=e1491]: Thụy Điển
+              - generic [ref=e1492]:
+                - button "★" [disabled] [ref=e1493]
+                - button "Lưu dự đoán" [ref=e1494] [cursor=pointer]
+              - paragraph [ref=e1495]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1496]:
+              - generic [ref=e1497]:
+                - generic [ref=e1498]: "#58 · Vòng bảng · F"
+                - generic [ref=e1499]: 06:00 26-06
+              - generic [ref=e1500]:
+                - generic [ref=e1501]:
+                  - generic "Cờ Tunisia" [ref=e1502]
+                  - strong [ref=e1503]: Tunisia
+                - generic "Dự đoán tỉ số" [ref=e1504]:
+                  - generic [ref=e1505]:
+                    - button "-" [ref=e1506] [cursor=pointer]
+                    - generic [ref=e1507]: "0"
+                    - button "+" [ref=e1508] [cursor=pointer]
+                  - generic [ref=e1509]:
+                    - button "-" [ref=e1510] [cursor=pointer]
+                    - generic [ref=e1511]: "0"
+                    - button "+" [ref=e1512] [cursor=pointer]
+                - generic [ref=e1513]:
+                  - generic "Cờ Netherlands" [ref=e1514]
+                  - strong [ref=e1515]: Hà Lan
+              - generic [ref=e1516]:
+                - button "★" [disabled] [ref=e1517]
+                - button "Lưu dự đoán" [ref=e1518] [cursor=pointer]
+              - paragraph [ref=e1519]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e1520]:
+          - generic [ref=e1521]:
+            - heading "Thứ 6, 26/06" [level=3] [ref=e1522]
+            - generic [ref=e1523]: 4 trận
+          - generic [ref=e1524]:
+            - article [ref=e1525]:
+              - generic [ref=e1526]:
+                - generic [ref=e1527]: "#59 · Vòng bảng · D"
+                - generic [ref=e1528]: 09:00 26-06
+              - generic [ref=e1529]:
+                - generic [ref=e1530]:
+                  - generic "Cờ Turkey" [ref=e1531]
+                  - strong [ref=e1532]: Thổ Nhĩ Kỳ
+                - generic "Dự đoán tỉ số" [ref=e1533]:
+                  - generic [ref=e1534]:
+                    - button "-" [ref=e1535] [cursor=pointer]
+                    - generic [ref=e1536]: "0"
+                    - button "+" [ref=e1537] [cursor=pointer]
+                  - generic [ref=e1538]:
+                    - button "-" [ref=e1539] [cursor=pointer]
+                    - generic [ref=e1540]: "0"
+                    - button "+" [ref=e1541] [cursor=pointer]
+                - generic [ref=e1542]:
+                  - generic "Cờ United States" [ref=e1543]
+                  - strong [ref=e1544]: Hoa Kỳ
+              - generic [ref=e1545]:
+                - button "★" [disabled] [ref=e1546]
+                - button "Lưu dự đoán" [ref=e1547] [cursor=pointer]
+              - paragraph [ref=e1548]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1549]:
+              - generic [ref=e1550]:
+                - generic [ref=e1551]: "#60 · Vòng bảng · D"
+                - generic [ref=e1552]: 09:00 26-06
+              - generic [ref=e1553]:
+                - generic [ref=e1554]:
+                  - generic "Cờ Paraguay" [ref=e1555]
+                  - strong [ref=e1556]: Paraguay
+                - generic "Dự đoán tỉ số" [ref=e1557]:
+                  - generic [ref=e1558]:
+                    - button "-" [ref=e1559] [cursor=pointer]
+                    - generic [ref=e1560]: "0"
+                    - button "+" [ref=e1561] [cursor=pointer]
+                  - generic [ref=e1562]:
+                    - button "-" [ref=e1563] [cursor=pointer]
+                    - generic [ref=e1564]: "0"
+                    - button "+" [ref=e1565] [cursor=pointer]
+                - generic [ref=e1566]:
+                  - generic "Cờ Australia" [ref=e1567]
+                  - strong [ref=e1568]: Úc
+              - generic [ref=e1569]:
+                - button "★" [disabled] [ref=e1570]
+                - button "Lưu dự đoán" [ref=e1571] [cursor=pointer]
+              - paragraph [ref=e1572]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1573]:
+              - generic [ref=e1574]:
+                - generic [ref=e1575]: "#61 · Vòng bảng · I"
+                - generic [ref=e1576]: 02:00 27-06
+              - generic [ref=e1577]:
+                - generic [ref=e1578]:
+                  - generic "Cờ Norway" [ref=e1579]
+                  - strong [ref=e1580]: Na Uy
+                - generic "Dự đoán tỉ số" [ref=e1581]:
+                  - generic [ref=e1582]:
+                    - button "-" [ref=e1583] [cursor=pointer]
+                    - generic [ref=e1584]: "0"
+                    - button "+" [ref=e1585] [cursor=pointer]
+                  - generic [ref=e1586]:
+                    - button "-" [ref=e1587] [cursor=pointer]
+                    - generic [ref=e1588]: "0"
+                    - button "+" [ref=e1589] [cursor=pointer]
+                - generic [ref=e1590]:
+                  - generic "Cờ France" [ref=e1591]
+                  - strong [ref=e1592]: Pháp
+              - generic [ref=e1593]:
+                - button "★" [disabled] [ref=e1594]
+                - button "Lưu dự đoán" [ref=e1595] [cursor=pointer]
+              - paragraph [ref=e1596]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1597]:
+              - generic [ref=e1598]:
+                - generic [ref=e1599]: "#62 · Vòng bảng · I"
+                - generic [ref=e1600]: 02:00 27-06
+              - generic [ref=e1601]:
+                - generic [ref=e1602]:
+                  - generic "Cờ Senegal" [ref=e1603]
+                  - strong [ref=e1604]: Senegal
+                - generic "Dự đoán tỉ số" [ref=e1605]:
+                  - generic [ref=e1606]:
+                    - button "-" [ref=e1607] [cursor=pointer]
+                    - generic [ref=e1608]: "0"
+                    - button "+" [ref=e1609] [cursor=pointer]
+                  - generic [ref=e1610]:
+                    - button "-" [ref=e1611] [cursor=pointer]
+                    - generic [ref=e1612]: "0"
+                    - button "+" [ref=e1613] [cursor=pointer]
+                - generic [ref=e1614]:
+                  - generic "Cờ Iraq" [ref=e1615]
+                  - strong [ref=e1616]: Iraq
+              - generic [ref=e1617]:
+                - button "★" [disabled] [ref=e1618]
+                - button "Lưu dự đoán" [ref=e1619] [cursor=pointer]
+              - paragraph [ref=e1620]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e1621]:
+          - generic [ref=e1622]:
+            - heading "Thứ 7, 27/06" [level=3] [ref=e1623]
+            - generic [ref=e1624]: 8 trận
+          - generic [ref=e1625]:
+            - article [ref=e1626]:
+              - generic [ref=e1627]:
+                - generic [ref=e1628]: "#63 · Vòng bảng · G"
+                - generic [ref=e1629]: 10:00 27-06
+              - generic [ref=e1630]:
+                - generic [ref=e1631]:
+                  - generic "Cờ Egypt" [ref=e1632]
+                  - strong [ref=e1633]: Ai Cập
+                - generic "Dự đoán tỉ số" [ref=e1634]:
+                  - generic [ref=e1635]:
+                    - button "-" [ref=e1636] [cursor=pointer]
+                    - generic [ref=e1637]: "0"
+                    - button "+" [ref=e1638] [cursor=pointer]
+                  - generic [ref=e1639]:
+                    - button "-" [ref=e1640] [cursor=pointer]
+                    - generic [ref=e1641]: "0"
+                    - button "+" [ref=e1642] [cursor=pointer]
+                - generic [ref=e1643]:
+                  - generic "Cờ Iran" [ref=e1644]
+                  - strong [ref=e1645]: Iran
+              - generic [ref=e1646]:
+                - button "★" [disabled] [ref=e1647]
+                - button "Lưu dự đoán" [ref=e1648] [cursor=pointer]
+              - paragraph [ref=e1649]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1650]:
+              - generic [ref=e1651]:
+                - generic [ref=e1652]: "#64 · Vòng bảng · G"
+                - generic [ref=e1653]: 10:00 27-06
+              - generic [ref=e1654]:
+                - generic [ref=e1655]:
+                  - generic "Cờ New Zealand" [ref=e1656]
+                  - strong [ref=e1657]: New Zealand
+                - generic "Dự đoán tỉ số" [ref=e1658]:
+                  - generic [ref=e1659]:
+                    - button "-" [ref=e1660] [cursor=pointer]
+                    - generic [ref=e1661]: "0"
+                    - button "+" [ref=e1662] [cursor=pointer]
+                  - generic [ref=e1663]:
+                    - button "-" [ref=e1664] [cursor=pointer]
+                    - generic [ref=e1665]: "0"
+                    - button "+" [ref=e1666] [cursor=pointer]
+                - generic [ref=e1667]:
+                  - generic "Cờ Belgium" [ref=e1668]
+                  - strong [ref=e1669]: Bỉ
+              - generic [ref=e1670]:
+                - button "★" [disabled] [ref=e1671]
+                - button "Lưu dự đoán" [ref=e1672] [cursor=pointer]
+              - paragraph [ref=e1673]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1674]:
+              - generic [ref=e1675]:
+                - generic [ref=e1676]: "#65 · Vòng bảng · H"
+                - generic [ref=e1677]: 07:00 27-06
+              - generic [ref=e1678]:
+                - generic [ref=e1679]:
+                  - generic "Cờ Cabo Verde" [ref=e1680]
+                  - strong [ref=e1681]: Cabo Verde
+                - generic "Dự đoán tỉ số" [ref=e1682]:
+                  - generic [ref=e1683]:
+                    - button "-" [ref=e1684] [cursor=pointer]
+                    - generic [ref=e1685]: "0"
+                    - button "+" [ref=e1686] [cursor=pointer]
+                  - generic [ref=e1687]:
+                    - button "-" [ref=e1688] [cursor=pointer]
+                    - generic [ref=e1689]: "0"
+                    - button "+" [ref=e1690] [cursor=pointer]
+                - generic [ref=e1691]:
+                  - generic "Cờ Saudi Arabia" [ref=e1692]
+                  - strong [ref=e1693]: Ả Rập Xê Út
+              - generic [ref=e1694]:
+                - button "★" [disabled] [ref=e1695]
+                - button "Lưu dự đoán" [ref=e1696] [cursor=pointer]
+              - paragraph [ref=e1697]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1698]:
+              - generic [ref=e1699]:
+                - generic [ref=e1700]: "#66 · Vòng bảng · H"
+                - generic [ref=e1701]: 07:00 27-06
+              - generic [ref=e1702]:
+                - generic [ref=e1703]:
+                  - generic "Cờ Uruguay" [ref=e1704]
+                  - strong [ref=e1705]: Uruguay
+                - generic "Dự đoán tỉ số" [ref=e1706]:
+                  - generic [ref=e1707]:
+                    - button "-" [ref=e1708] [cursor=pointer]
+                    - generic [ref=e1709]: "0"
+                    - button "+" [ref=e1710] [cursor=pointer]
+                  - generic [ref=e1711]:
+                    - button "-" [ref=e1712] [cursor=pointer]
+                    - generic [ref=e1713]: "0"
+                    - button "+" [ref=e1714] [cursor=pointer]
+                - generic [ref=e1715]:
+                  - generic "Cờ Spain" [ref=e1716]
+                  - strong [ref=e1717]: Tây Ban Nha
+              - generic [ref=e1718]:
+                - button "★" [disabled] [ref=e1719]
+                - button "Lưu dự đoán" [ref=e1720] [cursor=pointer]
+              - paragraph [ref=e1721]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1722]:
+              - generic [ref=e1723]:
+                - generic [ref=e1724]: "#67 · Vòng bảng · L"
+                - generic [ref=e1725]: 04:00 28-06
+              - generic [ref=e1726]:
+                - generic [ref=e1727]:
+                  - generic "Cờ Panama" [ref=e1728]
+                  - strong [ref=e1729]: Panama
+                - generic "Dự đoán tỉ số" [ref=e1730]:
+                  - generic [ref=e1731]:
+                    - button "-" [ref=e1732] [cursor=pointer]
+                    - generic [ref=e1733]: "0"
+                    - button "+" [ref=e1734] [cursor=pointer]
+                  - generic [ref=e1735]:
+                    - button "-" [ref=e1736] [cursor=pointer]
+                    - generic [ref=e1737]: "0"
+                    - button "+" [ref=e1738] [cursor=pointer]
+                - generic [ref=e1739]:
+                  - generic "Cờ England" [ref=e1740]
+                  - strong [ref=e1741]: Anh
+              - generic [ref=e1742]:
+                - button "★" [disabled] [ref=e1743]
+                - button "Lưu dự đoán" [ref=e1744] [cursor=pointer]
+              - paragraph [ref=e1745]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1746]:
+              - generic [ref=e1747]:
+                - generic [ref=e1748]: "#68 · Vòng bảng · L"
+                - generic [ref=e1749]: 04:00 28-06
+              - generic [ref=e1750]:
+                - generic [ref=e1751]:
+                  - generic "Cờ Croatia" [ref=e1752]
+                  - strong [ref=e1753]: Croatia
+                - generic "Dự đoán tỉ số" [ref=e1754]:
+                  - generic [ref=e1755]:
+                    - button "-" [ref=e1756] [cursor=pointer]
+                    - generic [ref=e1757]: "0"
+                    - button "+" [ref=e1758] [cursor=pointer]
+                  - generic [ref=e1759]:
+                    - button "-" [ref=e1760] [cursor=pointer]
+                    - generic [ref=e1761]: "0"
+                    - button "+" [ref=e1762] [cursor=pointer]
+                - generic [ref=e1763]:
+                  - generic "Cờ Ghana" [ref=e1764]
+                  - strong [ref=e1765]: Ghana
+              - generic [ref=e1766]:
+                - button "★" [disabled] [ref=e1767]
+                - button "Lưu dự đoán" [ref=e1768] [cursor=pointer]
+              - paragraph [ref=e1769]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1770]:
+              - generic [ref=e1771]:
+                - generic [ref=e1772]: "#71 · Vòng bảng · K"
+                - generic [ref=e1773]: 06:30 28-06
+              - generic [ref=e1774]:
+                - generic [ref=e1775]:
+                  - generic "Cờ Colombia" [ref=e1776]
+                  - strong [ref=e1777]: Colombia
+                - generic "Dự đoán tỉ số" [ref=e1778]:
+                  - generic [ref=e1779]:
+                    - button "-" [ref=e1780] [cursor=pointer]
+                    - generic [ref=e1781]: "0"
+                    - button "+" [ref=e1782] [cursor=pointer]
+                  - generic [ref=e1783]:
+                    - button "-" [ref=e1784] [cursor=pointer]
+                    - generic [ref=e1785]: "0"
+                    - button "+" [ref=e1786] [cursor=pointer]
+                - generic [ref=e1787]:
+                  - generic "Cờ Portugal" [ref=e1788]
+                  - strong [ref=e1789]: Bồ Đào Nha
+              - generic [ref=e1790]:
+                - button "★" [disabled] [ref=e1791]
+                - button "Lưu dự đoán" [ref=e1792] [cursor=pointer]
+              - paragraph [ref=e1793]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1794]:
+              - generic [ref=e1795]:
+                - generic [ref=e1796]: "#72 · Vòng bảng · K"
+                - generic [ref=e1797]: 06:30 28-06
+              - generic [ref=e1798]:
+                - generic [ref=e1799]:
+                  - generic "Cờ Congo DR" [ref=e1800]
+                  - strong [ref=e1801]: CHDC Congo
+                - generic "Dự đoán tỉ số" [ref=e1802]:
+                  - generic [ref=e1803]:
+                    - button "-" [ref=e1804] [cursor=pointer]
+                    - generic [ref=e1805]: "0"
+                    - button "+" [ref=e1806] [cursor=pointer]
+                  - generic [ref=e1807]:
+                    - button "-" [ref=e1808] [cursor=pointer]
+                    - generic [ref=e1809]: "0"
+                    - button "+" [ref=e1810] [cursor=pointer]
+                - generic [ref=e1811]:
+                  - generic "Cờ Uzbekistan" [ref=e1812]
+                  - strong [ref=e1813]: Uzbekistan
+              - generic [ref=e1814]:
+                - button "★" [disabled] [ref=e1815]
+                - button "Lưu dự đoán" [ref=e1816] [cursor=pointer]
+              - paragraph [ref=e1817]: Kèo tủ chỉ mở đúng ngày thi đấu.
+        - generic [ref=e1818]:
+          - generic [ref=e1819]:
+            - heading "CN, 28/06" [level=3] [ref=e1820]
+            - generic [ref=e1821]: 2 trận
+          - generic [ref=e1822]:
+            - article [ref=e1823]:
+              - generic [ref=e1824]:
+                - generic [ref=e1825]: "#69 · Vòng bảng · J"
+                - generic [ref=e1826]: 09:00 28-06
+              - generic [ref=e1827]:
+                - generic [ref=e1828]:
+                  - generic "Cờ Algeria" [ref=e1829]
+                  - strong [ref=e1830]: Algérie
+                - generic "Dự đoán tỉ số" [ref=e1831]:
+                  - generic [ref=e1832]:
+                    - button "-" [ref=e1833] [cursor=pointer]
+                    - generic [ref=e1834]: "0"
+                    - button "+" [ref=e1835] [cursor=pointer]
+                  - generic [ref=e1836]:
+                    - button "-" [ref=e1837] [cursor=pointer]
+                    - generic [ref=e1838]: "0"
+                    - button "+" [ref=e1839] [cursor=pointer]
+                - generic [ref=e1840]:
+                  - generic "Cờ Austria" [ref=e1841]
+                  - strong [ref=e1842]: Áo
+              - generic [ref=e1843]:
+                - button "★" [disabled] [ref=e1844]
+                - button "Lưu dự đoán" [ref=e1845] [cursor=pointer]
+              - paragraph [ref=e1846]: Kèo tủ chỉ mở đúng ngày thi đấu.
+            - article [ref=e1847]:
+              - generic [ref=e1848]:
+                - generic [ref=e1849]: "#70 · Vòng bảng · J"
+                - generic [ref=e1850]: 09:00 28-06
+              - generic [ref=e1851]:
+                - generic [ref=e1852]:
+                  - generic "Cờ Jordan" [ref=e1853]
+                  - strong [ref=e1854]: Jordan
+                - generic "Dự đoán tỉ số" [ref=e1855]:
+                  - generic [ref=e1856]:
+                    - button "-" [ref=e1857] [cursor=pointer]
+                    - generic [ref=e1858]: "0"
+                    - button "+" [ref=e1859] [cursor=pointer]
+                  - generic [ref=e1860]:
+                    - button "-" [ref=e1861] [cursor=pointer]
+                    - generic [ref=e1862]: "0"
+                    - button "+" [ref=e1863] [cursor=pointer]
+                - generic [ref=e1864]:
+                  - generic "Cờ Argentina" [ref=e1865]
+                  - strong [ref=e1866]: Argentina
+              - generic [ref=e1867]:
+                - button "★" [disabled] [ref=e1868]
+                - button "Lưu dự đoán" [ref=e1869] [cursor=pointer]
+              - paragraph [ref=e1870]: Kèo tủ chỉ mở đúng ngày thi đấu.
+    - region "Top dự đoán" [ref=e1871]:
+      - generic [ref=e1872]:
+        - heading "Top dự đoán hôm nay" [level=2] [ref=e1873]
+        - generic [ref=e1874]: 🏆
+      - generic [ref=e1875]:
+        - article [ref=e1876]:
+          - generic [ref=e1877]: "1"
+          - generic [ref=e1878]: 🍄
+          - generic [ref=e1879]:
+            - strong [ref=e1880]: Minh Anh
+            - generic [ref=e1881]: 1.250 điểm
+        - article [ref=e1882]:
+          - generic [ref=e1883]: "2"
+          - generic [ref=e1884]: 👦
+          - generic [ref=e1885]:
+            - strong [ref=e1886]: Hoàng Nam
+            - generic [ref=e1887]: 1.120 điểm
+        - article [ref=e1888]:
+          - generic [ref=e1889]: "3"
+          - generic [ref=e1890]: 👧
+          - generic [ref=e1891]:
+            - strong [ref=e1892]: Phương Linh
+            - generic [ref=e1893]: 980 điểm
+    - generic [ref=e1894]:
+      - generic [ref=e1895]: 🎁
+      - strong [ref=e1896]: Dự đoán đúng - Nhận quà khủng!
+      - button "Xem thể lệ →" [ref=e1897] [cursor=pointer]
+  - navigation "Điều hướng" [ref=e1898]:
+    - button "Trang chủ" [ref=e1899] [cursor=pointer]:
+      - generic [ref=e1900]: ⌂
+      - generic [ref=e1901]: Trang chủ
+    - button "Trận đấu" [ref=e1902] [cursor=pointer]:
+      - generic [ref=e1903]: ⚽
+      - generic [ref=e1904]: Trận đấu
+    - button "Dự đoán" [ref=e1905] [cursor=pointer]:
+      - generic [ref=e1906]: ●
+      - generic [ref=e1907]: Dự đoán
+    - button "Bảng xếp hạng" [ref=e1908] [cursor=pointer]:
+      - generic [ref=e1909]: ♕
+      - generic [ref=e1910]: BXH
+    - button "Lịch sử" [ref=e1911] [cursor=pointer]:
+      - generic [ref=e1912]: ↺
+      - generic [ref=e1913]: Lịch sử
+  - contentinfo [ref=e1914]:
+    - generic [ref=e1915]: "Dữ liệu lịch: FIFA match schedule, crawlable mirror via MatchTimes"
+    - link "FIFA" [ref=e1916] [cursor=pointer]:
+      - /url: https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/articles/match-schedule-fixtures-results-teams-stadiums
+    - generic [ref=e1917]: "BXH FIFA: 2026-04-01"
+    - link "Ranking" [ref=e1918] [cursor=pointer]:
+      - /url: https://inside.fifa.com/fifa-world-ranking/men
