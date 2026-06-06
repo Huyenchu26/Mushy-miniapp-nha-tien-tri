@@ -3260,9 +3260,9 @@ main,
 }
 
 .prediction-history-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   width: 100%;
   min-height: 42px;
@@ -3276,6 +3276,13 @@ main,
   text-align: left;
 }
 
+.history-row-main {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .prediction-history-row b {
   color: var(--wc-primary);
 }
@@ -3284,6 +3291,84 @@ main,
   color: var(--wc-primary);
   font-size: 13px;
   white-space: nowrap;
+}
+
+.room-activity-list {
+  display: grid;
+  gap: 7px;
+}
+
+.room-activity-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) minmax(48px, auto);
+  align-items: center;
+  gap: 9px;
+  border-radius: 14px;
+  padding: 8px 9px;
+  background: #ffffff;
+  box-shadow: 0 7px 16px rgba(35, 35, 42, 0.05);
+}
+
+.room-activity-item i {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fff1f3, #ffe1e7);
+  color: var(--wc-primary);
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.room-activity-item span {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.room-activity-item b,
+.room-activity-item small,
+.room-activity-item strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-activity-item b {
+  color: var(--wc-ink);
+  font-size: 12.5px;
+  font-weight: 950;
+}
+
+.room-activity-item small {
+  color: var(--wc-muted);
+  font-size: 10.5px;
+  font-weight: 850;
+}
+
+.room-activity-item strong {
+  justify-self: end;
+  max-width: 180px;
+  border-radius: 999px;
+  padding: 5px 8px;
+  background: rgba(245, 54, 87, 0.08);
+  color: var(--wc-primary);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.room-activity-item.comment strong,
+.room-activity-item.challenge strong {
+  max-width: 220px;
+  background: var(--wc-strong);
+  color: var(--wc-ink);
+}
+
+.room-more-btn {
+  margin-top: 0;
 }
 
 .member-prediction-list article {
@@ -3431,9 +3516,22 @@ main,
 
 .room-chat {
   display: grid;
-  grid-template-rows: auto auto minmax(240px, 1fr) auto;
+  grid-template-rows: auto auto auto minmax(240px, 1fr) auto auto;
   gap: 10px;
   min-height: 420px;
+}
+
+.room-realtime-chip {
+  justify-self: start;
+  margin: 0;
+  border: 1px solid rgba(8, 127, 91, 0.14);
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: rgba(8, 127, 91, 0.08);
+  color: var(--wc-green);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .reaction-row {
@@ -3454,10 +3552,13 @@ main,
 .reaction-row button {
   min-width: 42px;
   min-height: 40px;
+  padding: 0 10px;
   font-size: 20px;
 }
 
 .reaction-row .challenge-btn {
+  flex: 1 1 112px;
+  min-width: 112px;
   padding: 0 14px;
   background: linear-gradient(135deg, #ff4164, #ef2449);
   color: #ffffff;
@@ -3468,6 +3569,7 @@ main,
   display: grid;
   gap: 8px;
   align-content: end;
+  min-width: 0;
   min-height: 240px;
   max-height: 420px;
   overflow: auto;
@@ -3499,6 +3601,7 @@ main,
 
 .chat-message p {
   max-width: min(520px, 86%);
+  overflow-wrap: anywhere;
   margin: 0;
   border-radius: 15px;
   padding: 9px 11px;
@@ -3533,7 +3636,7 @@ main,
 
 .chat-compose {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(78px, auto);
   gap: 8px;
 }
 
@@ -3550,14 +3653,17 @@ main,
 }
 
 .chat-compose button {
+  min-width: 78px;
   min-height: 44px;
   padding: 0 18px;
   background: var(--wc-primary);
   color: #ffffff;
 }
 
-.chat-compose button:disabled {
+.chat-compose button:disabled,
+.reaction-row button:disabled {
   opacity: 0.48;
+  transform: none;
 }
 
 .room-empty,
@@ -3859,7 +3965,7 @@ main,
 
   .room-chat {
     min-height: 390px;
-    grid-template-rows: auto auto minmax(220px, 1fr) auto;
+    grid-template-rows: auto auto auto minmax(220px, 1fr) auto auto;
   }
 
   .chat-feed {
@@ -3869,6 +3975,20 @@ main,
 
   .member-prediction-list article {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .prediction-history-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .room-activity-item {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+
+  .room-activity-item strong {
+    grid-column: 2;
+    justify-self: start;
+    max-width: 100%;
   }
 
   .member-prediction-list small {
@@ -3892,7 +4012,7 @@ main,
   }
 
   .chat-compose {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) 78px;
   }
 
   .quick-tabs {

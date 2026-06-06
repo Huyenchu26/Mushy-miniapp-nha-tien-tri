@@ -14,11 +14,18 @@ import { computeStandings, dailyPoints, isFinished, matchBasePoints, matchScoreB
 import Select from './components/Select.jsx';
 import { getContext } from './lib/context.js';
 import { listMembers } from './lib/members.js';
+import { subscribeToTable } from './lib/realtime.js';
 import { db } from './lib/supabase.js';
 import './App.css';
 
 const DEFAULT_TAB = 'matches';
 const LIVE_SCORE_POLL_MS = 120000;
+const LIVE_SCORE_IDLE_CHECK_MS = 900000;
+const LIVE_SCORE_PREMATCH_MS = 2 * 60 * 60 * 1000;
+const LIVE_SCORE_POSTMATCH_MS = 4 * 60 * 60 * 1000;
+const ROOM_POLL_FALLBACK_MS = 30000;
+const CHAT_REPEAT_WINDOW_MS = 45000;
+const CHAT_REPEAT_LIMIT = 2;
 const TABS = [
   { id: 'matches', label: 'Trang chủ', shortLabel: 'Trang chủ', icon: '⌂' },
   { id: 'results', label: 'Trận đấu', shortLabel: 'Trận đấu', icon: '⚽' },
@@ -77,6 +84,7 @@ const ROAST_COPY = {
 
 export default function App() {
   const localSimulation = isLocalSimulationEnabled();
+  const forceLocalMock = isForcedLocalMockEnabled();
   const [ctx, setCtx] = useState(null);
   const [ctxError, setCtxError] = useState('');
   const [activeTab, setActiveTab] = useState(DEFAULT_TAB);
@@ -87,6 +95,7 @@ export default function App() {
   const [roomMessages, setRoomMessages] = useState([]);
   const [roomLoading, setRoomLoading] = useState(false);
   const [roomError, setRoomError] = useState('');
+  const [roomRealtimeState, setRoomRealtimeState] = useState('idle');
   const [spamBlockedUntil, setSpamBlockedUntil] = useState(0);
   const [liveScores, setLiveScores] = useState([]);
   const [liveSync, setLiveSync] = useState({ source: '', fetchedAt: '', error: '' });
@@ -98,6 +107,7 @@ export default function App() {
   const [error, setError] = useState('');
   const refreshGestureRef = useRef({ startY: 0, scrollY: 0 });
   const chatSendTimesRef = useRef([]);
+  const chatRepeatRef = useRef([]);
   const scope = useMemo(
     () => (ctx?.workspaceId ? { workspaceId: ctx.workspaceId, label: ctx.workspaceSlug || 'Mushy' } : null),
     [ctx?.workspaceId, ctx?.workspaceSlug]
@@ -105,6 +115,11 @@ export default function App() {
 
   useEffect(() => {
     try {
+      if (forceLocalMock) {
+        setCtx(createMockContext());
+        setNotice('DEV mock: forced local simulation is running.');
+        return;
+      }
       const nextCtx = getContext();
       if (!nextCtx?.userId || !nextCtx?.workspaceId || !nextCtx?.token) {
         if (localSimulation) {
@@ -124,7 +139,7 @@ export default function App() {
       }
       setCtxError(err.message || 'Không đọc được Mushy context.');
     }
-  }, [localSimulation]);
+  }, [forceLocalMock, localSimulation]);
 
   useEffect(() => {
     if (!ctx?.userId || !scope?.workspaceId) return;
@@ -135,18 +150,46 @@ export default function App() {
   useEffect(() => {
     if (!roomMatch || !scope?.workspaceId) return;
     loadRoomMessages(roomMatch.matchNo);
+    setRoomRealtimeState(localSimulation && isMockContext(ctx) ? 'mock-live' : 'listening');
+    let unsubscribe = null;
+    if (!(localSimulation && isMockContext(ctx))) {
+      unsubscribe = subscribeToTable('match_room_messages', scope.workspaceId, (payload) => {
+        const nextRow = payload?.new || payload?.old;
+        if (Number(nextRow?.match_no) !== Number(roomMatch.matchNo)) return;
+        setRoomRealtimeState('live');
+        setRoomMessages((rows) => mergeRoomRealtimePayload(rows, payload));
+      });
+    }
     const interval = window.setInterval(() => {
       loadRoomMessages(roomMatch.matchNo, { silent: true });
-    }, 5000);
-    return () => window.clearInterval(interval);
+    }, ROOM_POLL_FALLBACK_MS);
+    return () => {
+      if (unsubscribe) unsubscribe();
+      window.clearInterval(interval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomMatch?.matchNo, scope?.workspaceId]);
+  }, [roomMatch?.matchNo, scope?.workspaceId, ctx?.userId, localSimulation]);
 
   useEffect(() => {
     if (!ctx?.token || !scope?.workspaceId) return undefined;
 
     let cancelled = false;
+    let timer = null;
     async function syncLiveScores() {
+      const syncPlan = getLiveScoreSyncPlan(MATCHES, Date.now());
+      if (!localSimulation && !syncPlan.shouldFetch) {
+        if (!cancelled) {
+          setLiveSync({
+            source: 'schedule',
+            fetchedAt: '',
+            nextMatchAt: syncPlan.nextMatchAt,
+            nextFetchAt: syncPlan.nextFetchAt,
+            error: '',
+          });
+        }
+        return syncPlan.waitMs;
+      }
+
       try {
         const payload = await fetchLiveScores(ctx.token, scope.workspaceId, { useMock: localSimulation });
         if (cancelled) return;
@@ -155,6 +198,8 @@ export default function App() {
           source: payload.source || '',
           fetchedAt: payload.fetchedAt || '',
           fallbackReason: payload.fallbackReason || '',
+          nextMatchAt: syncPlan.nextMatchAt,
+          nextFetchAt: syncPlan.nextFetchAt,
           error: '',
         });
       } catch (err) {
@@ -164,16 +209,31 @@ export default function App() {
           error: err.message || 'Không đồng bộ được tỉ số live.',
         }));
       }
+      return localSimulation ? MOCK_SCORE_STEP_MS : LIVE_SCORE_POLL_MS;
     }
 
-    syncLiveScores();
-    const interval = window.setInterval(() => {
-      if (document.visibilityState !== 'hidden') syncLiveScores();
-    }, localSimulation ? MOCK_SCORE_STEP_MS : LIVE_SCORE_POLL_MS);
+    async function scheduleSync() {
+      if (cancelled) return;
+      const waitMs = document.visibilityState === 'hidden'
+        ? LIVE_SCORE_IDLE_CHECK_MS
+        : await syncLiveScores();
+      if (cancelled) return;
+      timer = window.setTimeout(scheduleSync, waitMs || LIVE_SCORE_POLL_MS);
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'hidden') return;
+      if (timer) window.clearTimeout(timer);
+      scheduleSync();
+    }
+
+    scheduleSync();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       cancelled = true;
-      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (timer) window.clearTimeout(timer);
     };
   }, [ctx?.token, scope?.workspaceId, localSimulation]);
 
@@ -439,10 +499,19 @@ export default function App() {
     }
     setRoomMatch(match);
     setRoomError('');
+    if (localSimulation && isMockContext(ctx)) {
+      setRoomMessages(createMockRoomMessages({ match, members, ctx, workspaceId: scope?.workspaceId }));
+      setRoomRealtimeState('mock-live');
+    }
   }
 
   async function loadRoomMessages(matchNo, { silent = false } = {}) {
     if (!scope?.workspaceId) return;
+    if (localSimulation && isMockContext(ctx)) {
+      if (!silent) setRoomLoading(false);
+      setRoomError('');
+      return;
+    }
     if (!silent) setRoomLoading(true);
     setRoomError('');
     try {
@@ -458,6 +527,18 @@ export default function App() {
   async function handleSendRoomMessage({ kind = 'chat', body = '', emoji = null }) {
     if (!roomMatch || !scope?.workspaceId || !ctx?.userId) return false;
     const now = Date.now();
+    const cleanBody = String(body || '').trim().replace(/\s+/g, ' ').slice(0, 280);
+    if (!cleanBody) return false;
+    const repeatKey = `${kind}:${normalizeChatRepeatKey(cleanBody)}`;
+    const recentRepeats = chatRepeatRef.current.filter((item) => now - item.time <= CHAT_REPEAT_WINDOW_MS);
+    const sameRepeatCount = recentRepeats.filter((item) => item.key === repeatKey).length;
+    if (sameRepeatCount >= CHAT_REPEAT_LIMIT) {
+      const blockedUntil = now + 15000;
+      chatRepeatRef.current = recentRepeats;
+      setSpamBlockedUntil(blockedUntil);
+      setRoomError('Một câu giống hệt chỉ được lặp tối đa 2 lần trong phòng. Đổi câu cà khịa rồi gửi tiếp nhé.');
+      return false;
+    }
     if (spamBlockedUntil > now) {
       setRoomError(`Bạn gửi hơi sung. Chờ ${Math.ceil((spamBlockedUntil - now) / 1000)}s rồi cà khịa tiếp.`);
       return false;
@@ -472,9 +553,6 @@ export default function App() {
       return false;
     }
 
-    const cleanBody = String(body || '').trim().replace(/\s+/g, ' ').slice(0, 280);
-    if (!cleanBody) return false;
-
     const optimisticMessage = {
       id: `local-${ctx.userId}-${roomMatch.matchNo}-${now}`,
       workspaceId: scope.workspaceId,
@@ -488,8 +566,22 @@ export default function App() {
     };
 
     chatSendTimesRef.current = [...recent, now];
+    chatRepeatRef.current = [...recentRepeats, { key: repeatKey, time: now }];
     setRoomMessages((rows) => [...rows, optimisticMessage]);
     setRoomError('');
+
+    if (localSimulation && isMockContext(ctx)) {
+      const saved = {
+        ...optimisticMessage,
+        id: `mock-room-${roomMatch.matchNo}-${now}`,
+        optimistic: false,
+      };
+      window.setTimeout(() => {
+        setRoomRealtimeState('mock-live');
+        setRoomMessages((rows) => rows.map((row) => (row.id === optimisticMessage.id ? saved : row)));
+      }, 120);
+      return true;
+    }
 
     try {
       const saved = await insertMatchRoomMessage({
@@ -541,12 +633,14 @@ export default function App() {
             messages={roomMessages}
             loading={roomLoading}
             error={roomError}
+            realtimeState={roomRealtimeState}
             spamBlockedUntil={spamBlockedUntil}
             currentUserId={ctx?.userId}
             onBack={() => {
               setRoomMatch(null);
               setRoomMessages([]);
               setRoomError('');
+              setRoomRealtimeState('idle');
             }}
             onSend={handleSendRoomMessage}
           />
@@ -904,6 +998,11 @@ function MatchesScreen({
 }
 
 function LiveSyncStatus({ liveSync }) {
+  if (liveSync?.source === 'schedule') {
+    const nextLabel = liveSync.nextMatchAt ? formatDateTime(liveSync.nextMatchAt) : '';
+    return <p className="live-sync muted">Live score đang nghỉ, sẽ bật lại trước trận tiếp theo{nextLabel ? `: ${nextLabel}` : ''}.</p>;
+  }
+
   if (!liveSync?.source && !liveSync?.error) {
     return <p className="live-sync muted">Live score sẽ tự đồng bộ mỗi 2 phút.</p>;
   }
@@ -923,6 +1022,7 @@ function LiveSyncStatus({ liveSync }) {
 
 function LiveScorePanel({ liveScores, liveSync }) {
   const scores = Array.isArray(liveScores) ? liveScores : [];
+  const waitingForSchedule = liveSync?.source === 'schedule';
   const activeCount = scores.filter(isLiveInProgress).length;
   const finishedCount = scores.filter((score) => score.status === 'finished').length;
   const fetchedLabel = liveSync?.fetchedAt ? formatRelativeSyncTime(liveSync.fetchedAt) : 'đang kết nối';
@@ -930,12 +1030,17 @@ function LiveScorePanel({ liveScores, liveSync }) {
   const statusClass = liveSync?.error ? 'error' : activeCount > 0 ? 'active' : scores.length > 0 ? 'ready' : 'muted';
   const headline = liveSync?.error
     ? 'Chưa kết nối được nguồn tỉ số'
-    : activeCount > 0
+    : waitingForSchedule
+      ? 'Chờ trận tiếp theo'
+      : activeCount > 0
       ? `${activeCount} trận đang live`
       : scores.length > 0
         ? `${scores.length} trận đã đồng bộ`
         : 'Đang chờ dữ liệu trận';
 
+  const syncDetail = waitingForSchedule
+    ? `Không gọi API ngoài giờ trận · bật lại ${liveSync?.nextFetchAt ? formatRelativeSyncTime(liveSync.nextFetchAt) : 'trước trận'}`
+    : `Nguồn miễn phí: ${source}${liveSync?.fallbackReason ? ' · ESPN fallback' : ''} · ${fetchedLabel}`;
   return (
     <section className={`live-score-panel ${statusClass}`} aria-label="Trạng thái live score">
       <div className="live-score-main">
@@ -943,10 +1048,7 @@ function LiveScorePanel({ liveScores, liveSync }) {
         <div>
           <p className="eyebrow">Live score</p>
           <h2>{headline}</h2>
-          <p>
-            Nguồn miễn phí: {source}
-            {liveSync?.fallbackReason ? ' · ESPN fallback' : ''} · {fetchedLabel}
-          </p>
+          <p>{syncDetail}</p>
         </div>
       </div>
       <div className="live-score-metrics" aria-label="Thống kê live score">
@@ -1142,14 +1244,17 @@ function PredictionRoomScreen({
   messages = [],
   loading,
   error,
+  realtimeState,
   spamBlockedUntil,
   currentUserId,
   onBack,
   onSend,
 }) {
   const [draft, setDraft] = useState('');
+  const [sending, setSending] = useState(false);
   const [predictionFaction, setPredictionFaction] = useState('mine');
   const [showPredictionSheet, setShowPredictionSheet] = useState(false);
+  const [activityLimit, setActivityLimit] = useState(4);
   const chatFeedRef = useRef(null);
   const matchPredictions = useMemo(
     () => predictions
@@ -1177,7 +1282,17 @@ function PredictionRoomScreen({
   const sameFactionCount = myFaction === 'all'
     ? 0
     : matchPredictions.filter((item) => predictedOutcomeKey(item) === myFaction).length;
+  const roomActivityItems = useMemo(
+    () => buildRoomActivityItems({ match, predictions: matchPredictions, messages, memberMap }),
+    [match, matchPredictions, messages, memberMap]
+  );
+  const visibleActivityItems = roomActivityItems.slice(0, activityLimit);
+  const canExpandActivity = activityLimit < Math.min(roomActivityItems.length, 6);
   const cooldownLeft = Math.max(0, Math.ceil((Number(spamBlockedUntil || 0) - Date.now()) / 1000));
+
+  useEffect(() => {
+    setActivityLimit(4);
+  }, [match.matchNo]);
 
   useEffect(() => {
     const feed = chatFeedRef.current;
@@ -1186,11 +1301,18 @@ function PredictionRoomScreen({
   }, [messages.length]);
 
   async function sendChat() {
-    const ok = await onSend({ kind: 'chat', body: draft });
-    if (ok) setDraft('');
+    if (sending || cooldownLeft > 0) return;
+    setSending(true);
+    try {
+      const ok = await onSend({ kind: 'chat', body: draft });
+      if (ok) setDraft('');
+    } finally {
+      setSending(false);
+    }
   }
 
   function sendChallenge() {
+    if (cooldownLeft > 0) return;
     const score = prediction ? `${prediction.homePred}-${prediction.awayPred}` : 'kèo này';
     onSend({
       kind: 'challenge',
@@ -1245,9 +1367,28 @@ function PredictionRoomScreen({
             <span>{prediction ? `Bạn: ${prediction.homePred}-${prediction.awayPred}` : 'Chưa có kèo'}</span>
           </div>
           <button type="button" className="prediction-history-row" onClick={() => setShowPredictionSheet(true)}>
-            <span>Cùng phe: <b>{sameFactionCount}</b> người</span>
-            <strong>Xem</strong>
+            <span className="history-row-main">Cùng phe: <b>{sameFactionCount}</b> người</span>
+            <strong>Xem danh sách</strong>
           </button>
+          <div className="room-activity-list" aria-label="Dự đoán và comment gần nhất">
+            {visibleActivityItems.length === 0 ? (
+              <p className="room-empty compact">Chưa có hoạt động trong phòng.</p>
+            ) : visibleActivityItems.map((item) => (
+              <article key={item.id} className={`room-activity-item ${item.type}`}>
+                <i title={item.name}>{item.initials}</i>
+                <span>
+                  <b>{item.name}</b>
+                  <small>{item.label} · {formatRoomTime(item.createdAt)}</small>
+                </span>
+                <strong>{item.body}</strong>
+              </article>
+            ))}
+          </div>
+          {canExpandActivity ? (
+            <button type="button" className="show-more-predictions room-more-btn" onClick={() => setActivityLimit(6)}>
+              Hiện thêm
+            </button>
+          ) : null}
         </div>
 
         <div className="room-chat">
@@ -1256,13 +1397,14 @@ function PredictionRoomScreen({
             <span>{loading ? 'Đang tải...' : `${messages.length} tin`}</span>
           </div>
 
+          <p className="room-realtime-chip">{roomRealtimeLabel(realtimeState)}</p>
           <div className="reaction-row" aria-label="Thả cảm xúc nhanh">
             {['😂', '🔥', '😭', '🤝'].map((emoji) => (
-              <button key={emoji} type="button" onClick={() => onSend({ kind: 'reaction', body: emoji, emoji })}>
+              <button key={emoji} type="button" disabled={cooldownLeft > 0} onClick={() => onSend({ kind: 'reaction', body: emoji, emoji })}>
                 {emoji}
               </button>
             ))}
-            <button type="button" className="challenge-btn" onClick={sendChallenge}>Thách kèo</button>
+            <button type="button" className="challenge-btn" disabled={cooldownLeft > 0} onClick={sendChallenge}>Thách kèo</button>
           </div>
 
           <div className="chat-feed" ref={chatFeedRef}>
@@ -1290,7 +1432,9 @@ function PredictionRoomScreen({
                 if (event.key === 'Enter') sendChat();
               }}
             />
-            <button type="button" disabled={!draft.trim() || cooldownLeft > 0} onClick={sendChat}>Gửi</button>
+            <button type="button" disabled={!draft.trim() || cooldownLeft > 0 || sending} onClick={sendChat}>
+              {sending ? '...' : 'Gửi'}
+            </button>
           </div>
         </div>
         {showPredictionSheet && (
@@ -1310,10 +1454,12 @@ function PredictionRoomScreen({
 
 function PredictionHistorySheet({ match, memberMap, predictions, factionTabs, initialFaction, currentUserId, onClose }) {
   const [activeFaction, setActiveFaction] = useState(initialFaction || 'all');
+  const [visibleLimit, setVisibleLimit] = useState(6);
   const activeLabel = factionTabs.find((tab) => tab.key === activeFaction)?.label || 'Tất cả';
   const visiblePredictions = activeFaction === 'all'
     ? predictions
     : predictions.filter((item) => predictedOutcomeKey(item) === activeFaction);
+  const limitedPredictions = visiblePredictions.slice(0, visibleLimit);
 
   return (
     <div className="prediction-sheet-backdrop" role="presentation" onMouseDown={(event) => {
@@ -1333,7 +1479,10 @@ function PredictionHistorySheet({ match, memberMap, predictions, factionTabs, in
               key={tab.key}
               type="button"
               className={activeFaction === tab.key ? 'active' : ''}
-              onClick={() => setActiveFaction(tab.key)}
+              onClick={() => {
+                setActiveFaction(tab.key);
+                setVisibleLimit(6);
+              }}
             >
               {tab.label}
               <b>{tab.count}</b>
@@ -1341,7 +1490,7 @@ function PredictionHistorySheet({ match, memberMap, predictions, factionTabs, in
           ))}
         </div>
         <div className="prediction-sheet-list">
-          {visiblePredictions.map((item) => (
+          {limitedPredictions.map((item) => (
             <article key={`${item.createdBy}-${item.matchNo}-sheet`} className={item.createdBy === currentUserId ? 'mine' : ''}>
               <span>{memberDisplayName(memberMap, item.createdBy)}</span>
               <b>{item.homePred}-{item.awayPred}</b>
@@ -1349,6 +1498,15 @@ function PredictionHistorySheet({ match, memberMap, predictions, factionTabs, in
             </article>
           ))}
         </div>
+        {visibleLimit < visiblePredictions.length ? (
+          <button
+            type="button"
+            className="show-more-predictions"
+            onClick={() => setVisibleLimit((value) => Math.min(value + 6, visiblePredictions.length))}
+          >
+            Hiện thêm
+          </button>
+        ) : null}
       </section>
     </div>
   );
@@ -2124,6 +2282,98 @@ function memberDisplayName(memberMap, userId) {
   return member?.full_name || member?.email || `Người chơi ${String(userId || '').slice(0, 4)}`;
 }
 
+function buildRoomActivityItems({ match, predictions = [], messages = [], memberMap = new Map() }) {
+  const predictionItems = predictions.map((prediction) => {
+    const name = memberDisplayName(memberMap, prediction.createdBy);
+    return {
+      id: `prediction-${prediction.createdBy}-${prediction.matchNo}`,
+      type: 'prediction',
+      userId: prediction.createdBy,
+      name,
+      initials: initialsFromName(name),
+      label: 'Dự đoán',
+      body: `${prediction.homePred}-${prediction.awayPred}`,
+      createdAt: prediction.updatedAt || prediction.createdAt,
+      sortAt: prediction.updatedAt || prediction.createdAt,
+    };
+  });
+
+  const messageItems = messages
+    .filter((message) => !message.failed)
+    .map((message) => {
+      const name = memberDisplayName(memberMap, message.createdBy);
+      return {
+        id: `message-${message.id}`,
+        type: message.kind === 'challenge' ? 'challenge' : message.kind === 'reaction' ? 'reaction' : 'comment',
+        userId: message.createdBy,
+        name,
+        initials: initialsFromName(name),
+        label: message.kind === 'challenge' ? 'Thách kèo' : message.kind === 'reaction' ? 'Reaction' : 'Comment',
+        body: message.kind === 'reaction' ? (message.emoji || message.body) : message.body,
+        createdAt: message.createdAt,
+        sortAt: message.createdAt,
+      };
+    });
+
+  return [...predictionItems, ...messageItems]
+    .filter((item) => Number.isFinite(new Date(item.sortAt).getTime()))
+    .sort((a, b) => new Date(b.sortAt).getTime() - new Date(a.sortAt).getTime())
+    .map((item) => ({
+      ...item,
+      body: String(item.body || predictionOutcomeLabel(match, item)).slice(0, 42),
+    }));
+}
+
+function initialsFromName(name) {
+  const parts = String(name || '')
+    .trim()
+    .split(/\s+/)
+    .map((part) => part.replace(/[^\p{L}\p{N}]/gu, ''))
+    .filter(Boolean);
+  if (!parts.length) return '?';
+  const letters = parts.length === 1
+    ? parts[0].slice(0, 2)
+    : `${parts[0][0] || ''}${parts[parts.length - 1][0] || ''}`;
+  return letters.toUpperCase();
+}
+
+function createMockRoomMessages({ match, members = [], ctx, workspaceId }) {
+  const now = Date.now();
+  const fallbackMembers = [
+    { user_id: ctx?.userId, full_name: 'Bạn' },
+    { user_id: 'mock-lan', full_name: 'Lan Exact' },
+    { user_id: 'mock-minh', full_name: 'Minh Chill' },
+    { user_id: 'mock-bao', full_name: 'Bao Upset' },
+  ];
+  const uniqueMembers = [];
+  const seen = new Set();
+  for (const member of [...members, ...fallbackMembers]) {
+    const userId = member?.user_id;
+    if (!userId || seen.has(userId)) continue;
+    seen.add(userId);
+    uniqueMembers.push(member);
+    if (uniqueMembers.length >= 4) break;
+  }
+
+  const sampleBodies = [
+    'Tỉ số này thơm quá.',
+    'Phe này đang đông dần rồi.',
+    'Chờ VAR chốt số phận.',
+    'Ai ngược cửa vào đây nói chuyện.',
+  ];
+
+  return uniqueMembers.map((member, index) => ({
+    id: `mock-room-${match.matchNo}-${member.user_id}`,
+    workspaceId,
+    createdBy: member.user_id,
+    matchNo: match.matchNo,
+    kind: 'chat',
+    body: sampleBodies[index] || 'Có mặt trong phòng.',
+    emoji: null,
+    createdAt: new Date(now - (uniqueMembers.length - index) * 45000).toISOString(),
+  }));
+}
+
 function formatRoomTime(value) {
   if (!value) return '';
   return new Intl.DateTimeFormat('vi-VN', {
@@ -2303,6 +2553,49 @@ function normalizeLiveScorePayload(payload) {
   };
 }
 
+function getLiveScoreSyncPlan(matches = [], nowMs = Date.now()) {
+  const windows = matches
+    .map((match) => {
+      const kickoffMs = new Date(match.kickoffAt).getTime();
+      if (!Number.isFinite(kickoffMs)) return null;
+      return {
+        matchAt: match.kickoffAt,
+        startsAt: kickoffMs - LIVE_SCORE_PREMATCH_MS,
+        endsAt: kickoffMs + LIVE_SCORE_POSTMATCH_MS,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.startsAt - b.startsAt);
+
+  const activeWindow = windows.find((windowItem) => nowMs >= windowItem.startsAt && nowMs <= windowItem.endsAt);
+  if (activeWindow) {
+    return {
+      shouldFetch: true,
+      waitMs: LIVE_SCORE_POLL_MS,
+      nextMatchAt: activeWindow.matchAt,
+      nextFetchAt: new Date(nowMs + LIVE_SCORE_POLL_MS).toISOString(),
+    };
+  }
+
+  const nextWindow = windows.find((windowItem) => nowMs < windowItem.startsAt);
+  if (!nextWindow) {
+    return {
+      shouldFetch: false,
+      waitMs: LIVE_SCORE_IDLE_CHECK_MS,
+      nextMatchAt: '',
+      nextFetchAt: '',
+    };
+  }
+
+  const waitUntilWindow = Math.max(60000, nextWindow.startsAt - nowMs);
+  return {
+    shouldFetch: false,
+    waitMs: Math.min(waitUntilWindow, LIVE_SCORE_IDLE_CHECK_MS),
+    nextMatchAt: nextWindow.matchAt,
+    nextFetchAt: new Date(nextWindow.startsAt).toISOString(),
+  };
+}
+
 async function fetchPredictions(workspaceId) {
   const { data, error } = await db
     .from('group_predictions')
@@ -2453,6 +2746,43 @@ function toRoomMessage(row) {
     emoji: row.emoji || null,
     createdAt: row.created_at,
   };
+}
+
+function normalizeChatRepeatKey(body) {
+  return String(body || '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function mergeRoomRealtimePayload(rows, payload) {
+  const eventType = String(payload?.eventType || '').toUpperCase();
+  const nextRow = payload?.new ? toRoomMessage(payload.new) : null;
+  const oldRow = payload?.old ? toRoomMessage(payload.old) : null;
+  const targetId = nextRow?.id || oldRow?.id;
+  if (!targetId) return rows;
+
+  if (eventType === 'DELETE') {
+    return rows.filter((row) => row.id !== targetId);
+  }
+
+  if (!nextRow) return rows;
+  const withoutLocalEcho = rows.filter((row) => {
+    const sameUser = row.createdBy === nextRow.createdBy;
+    const sameBody = normalizeChatRepeatKey(row.body) === normalizeChatRepeatKey(nextRow.body);
+    const sameKind = row.kind === nextRow.kind;
+    const sameMatch = Number(row.matchNo) === Number(nextRow.matchNo);
+    return !(row.optimistic && sameUser && sameBody && sameKind && sameMatch);
+  });
+  const found = withoutLocalEcho.some((row) => row.id === targetId);
+  const merged = found
+    ? withoutLocalEcho.map((row) => (row.id === targetId ? nextRow : row))
+    : [...withoutLocalEcho, nextRow];
+  return merged.sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+}
+
+function roomRealtimeLabel(state) {
+  if (state === 'live') return 'Realtime vừa cập nhật';
+  if (state === 'listening') return 'Realtime đang nghe';
+  if (state === 'mock-live') return 'Realtime mock';
+  return 'Polling dự phòng';
 }
 
 function upsertLocalPrediction(rows, draft) {
@@ -2732,6 +3062,10 @@ function formatTime(value) {
   }).format(new Date(value));
 }
 
+function formatDateTime(value) {
+  return formatTime(value);
+}
+
 function formatRelativeSyncTime(value) {
   return new Intl.DateTimeFormat('vi-VN', {
     hour: '2-digit',
@@ -2799,6 +3133,11 @@ function isLocalSimulationEnabled() {
   const params = new URLSearchParams(window.location.search);
   const value = params.get('mock');
   return value !== '0' && value !== 'false';
+}
+
+function isForcedLocalMockEnabled() {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).get('mock') === 'force';
 }
 
 function isAuthError(error) {
