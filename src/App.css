@@ -3059,6 +3059,18 @@ main,
   white-space: nowrap;
 }
 
+.room-team small {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--wc-muted);
+  font-size: 10.5px;
+  font-weight: 850;
+  line-height: 1.2;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .room-team-flag {
   display: grid;
   place-items: center;

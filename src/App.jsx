@@ -1254,7 +1254,7 @@ function PredictionRoomScreen({
   const [sending, setSending] = useState(false);
   const [predictionFaction, setPredictionFaction] = useState('mine');
   const [showPredictionSheet, setShowPredictionSheet] = useState(false);
-  const [activityLimit, setActivityLimit] = useState(4);
+  const [activityLimit, setActivityLimit] = useState(3);
   const chatFeedRef = useRef(null);
   const matchPredictions = useMemo(
     () => predictions
@@ -1283,15 +1283,16 @@ function PredictionRoomScreen({
     ? 0
     : matchPredictions.filter((item) => predictedOutcomeKey(item) === myFaction).length;
   const roomActivityItems = useMemo(
-    () => buildRoomActivityItems({ match, predictions: matchPredictions, messages, memberMap }),
-    [match, matchPredictions, messages, memberMap]
+    () => buildRoomPredictionItems({ match, predictions: matchPredictions, memberMap }),
+    [match, matchPredictions, memberMap]
   );
   const visibleActivityItems = roomActivityItems.slice(0, activityLimit);
-  const canExpandActivity = activityLimit < Math.min(roomActivityItems.length, 6);
+  const canExpandActivity = activityLimit < roomActivityItems.length;
+  const canCollapseActivity = !canExpandActivity && activityLimit > 3;
   const cooldownLeft = Math.max(0, Math.ceil((Number(spamBlockedUntil || 0) - Date.now()) / 1000));
 
   useEffect(() => {
-    setActivityLimit(4);
+    setActivityLimit(3);
   }, [match.matchNo]);
 
   useEffect(() => {
@@ -1370,9 +1371,9 @@ function PredictionRoomScreen({
             <span className="history-row-main">Cùng phe: <b>{sameFactionCount}</b> người</span>
             <strong>Xem danh sách</strong>
           </button>
-          <div className="room-activity-list" aria-label="Dự đoán và comment gần nhất">
+          <div className="room-activity-list" aria-label="Dự đoán tỉ số gần nhất">
             {visibleActivityItems.length === 0 ? (
-              <p className="room-empty compact">Chưa có hoạt động trong phòng.</p>
+              <p className="room-empty compact">Chưa có dự đoán trong phòng.</p>
             ) : visibleActivityItems.map((item) => (
               <article key={item.id} className={`room-activity-item ${item.type}`}>
                 <i title={item.name}>{item.initials}</i>
@@ -1385,8 +1386,16 @@ function PredictionRoomScreen({
             ))}
           </div>
           {canExpandActivity ? (
-            <button type="button" className="show-more-predictions room-more-btn" onClick={() => setActivityLimit(6)}>
+            <button
+              type="button"
+              className="show-more-predictions room-more-btn"
+              onClick={() => setActivityLimit((value) => Math.min(value + 4, roomActivityItems.length))}
+            >
               Hiện thêm
+            </button>
+          ) : canCollapseActivity ? (
+            <button type="button" className="show-more-predictions room-more-btn" onClick={() => setActivityLimit(3)}>
+              Đóng hết
             </button>
           ) : null}
         </div>
@@ -1520,6 +1529,8 @@ function MatchRoomStatus({ match }) {
   const awayScore = finished ? match.awayScore : liveScore?.awayScore;
   const status = finished ? finalStatusLabel(match) : liveInProgress ? liveLabel(liveScore) : 'Chưa bắt đầu';
   const hasStarted = finished || liveInProgress;
+  const homeScorers = teamScorersText(match, 'home', homeScore, hasStarted);
+  const awayScorers = teamScorersText(match, 'away', awayScore, hasStarted);
 
   return (
     <div className="room-scoreboard">
@@ -1528,6 +1539,7 @@ function MatchRoomStatus({ match }) {
         <div className="room-team home">
           <TeamFlag team={match.homeTeam} className="room-team-flag" />
           <strong>{displayTeamName(match.homeTeam)}</strong>
+          <small>Ghi bàn: {homeScorers}</small>
         </div>
         <div className="room-score">
           <b>{homeScore ?? '-'}</b>
@@ -1537,6 +1549,7 @@ function MatchRoomStatus({ match }) {
         <div className="room-team away">
           <TeamFlag team={match.awayTeam} className="room-team-flag" />
           <strong>{displayTeamName(match.awayTeam)}</strong>
+          <small>Ghi bàn: {awayScorers}</small>
         </div>
       </div>
       {hasStarted ? (
@@ -1549,6 +1562,53 @@ function MatchRoomStatus({ match }) {
       )}
     </div>
   );
+}
+
+function teamScorersText(match, side, score, hasStarted) {
+  const scorers = extractTeamScorers(match, side);
+  if (scorers.length > 0) return scorers.join(', ');
+  if (!hasStarted) return 'chờ trận';
+  if (Number(score || 0) > 0) return 'chưa cập nhật';
+  return 'chưa ghi bàn';
+}
+
+function extractTeamScorers(match, side) {
+  const sideKeys = side === 'home'
+    ? ['homeScorers', 'homeGoalScorers']
+    : ['awayScorers', 'awayGoalScorers'];
+  const direct = sideKeys.flatMap((key) => normalizeScorerList(match?.[key] || match?.liveScore?.[key]));
+  if (direct.length > 0) return direct;
+
+  const teamName = side === 'home' ? match?.homeTeam : match?.awayTeam;
+  const goals = [
+    ...(Array.isArray(match?.goals) ? match.goals : []),
+    ...(Array.isArray(match?.goalScorers) ? match.goalScorers : []),
+    ...(Array.isArray(match?.liveScore?.goals) ? match.liveScore.goals : []),
+    ...(Array.isArray(match?.liveScore?.goalScorers) ? match.liveScore.goalScorers : []),
+  ];
+  return goals
+    .filter((goal) => {
+      const goalSide = String(goal?.side || goal?.homeAway || goal?.teamSide || '').toLowerCase();
+      const goalTeam = String(goal?.team || goal?.teamName || '').toLowerCase();
+      return goalSide === side || canonicalTeamName(goalTeam) === canonicalTeamName(teamName);
+    })
+    .map(formatGoalScorer)
+    .filter(Boolean);
+}
+
+function normalizeScorerList(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.map(formatGoalScorer).filter(Boolean);
+  return String(value).split(/[,;]+/).map((item) => item.trim()).filter(Boolean);
+}
+
+function formatGoalScorer(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return value.trim();
+  const name = value.name || value.player || value.scorer || value.playerName || '';
+  const minute = value.minute || value.time || value.clock || '';
+  if (!name) return '';
+  return minute ? `${name} ${minute}'` : String(name);
 }
 
 function MatchTeam({ team, score = null }) {
@@ -2282,8 +2342,8 @@ function memberDisplayName(memberMap, userId) {
   return member?.full_name || member?.email || `Người chơi ${String(userId || '').slice(0, 4)}`;
 }
 
-function buildRoomActivityItems({ match, predictions = [], messages = [], memberMap = new Map() }) {
-  const predictionItems = predictions.map((prediction) => {
+function buildRoomPredictionItems({ match, predictions = [], memberMap = new Map() }) {
+  return predictions.map((prediction) => {
     const name = memberDisplayName(memberMap, prediction.createdBy);
     return {
       id: `prediction-${prediction.createdBy}-${prediction.matchNo}`,
@@ -2296,26 +2356,7 @@ function buildRoomActivityItems({ match, predictions = [], messages = [], member
       createdAt: prediction.updatedAt || prediction.createdAt,
       sortAt: prediction.updatedAt || prediction.createdAt,
     };
-  });
-
-  const messageItems = messages
-    .filter((message) => !message.failed)
-    .map((message) => {
-      const name = memberDisplayName(memberMap, message.createdBy);
-      return {
-        id: `message-${message.id}`,
-        type: message.kind === 'challenge' ? 'challenge' : message.kind === 'reaction' ? 'reaction' : 'comment',
-        userId: message.createdBy,
-        name,
-        initials: initialsFromName(name),
-        label: message.kind === 'challenge' ? 'Thách kèo' : message.kind === 'reaction' ? 'Reaction' : 'Comment',
-        body: message.kind === 'reaction' ? (message.emoji || message.body) : message.body,
-        createdAt: message.createdAt,
-        sortAt: message.createdAt,
-      };
-    });
-
-  return [...predictionItems, ...messageItems]
+  })
     .filter((item) => Number.isFinite(new Date(item.sortAt).getTime()))
     .sort((a, b) => new Date(b.sortAt).getTime() - new Date(a.sortAt).getTime())
     .map((item) => ({
