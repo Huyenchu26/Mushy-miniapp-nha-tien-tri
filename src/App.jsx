@@ -661,7 +661,9 @@ export default function App() {
             {activeTab === 'matches' && (
               <MatchesScreen
                 matches={filteredMatches}
+                allMatches={matchesWithLiveScores}
                 predictionMap={predictionMap}
+                answerMap={answerMap}
                 dailyDoubleDownMap={dailyDoubleDownMap}
                 groupFilter={groupFilter}
                 query={query}
@@ -669,6 +671,8 @@ export default function App() {
                 onQuery={setQuery}
                 onSave={handleSavePrediction}
                 onOpenRoom={handleOpenPredictionRoom}
+                onOpenDaily={() => setActiveTab('daily')}
+                onOpenLeaderboard={() => setActiveTab('leaderboard')}
                 liveSync={liveSync}
               />
             )}
@@ -879,7 +883,9 @@ function SetupScreen({ error }) {
 
 function MatchesScreen({
   matches,
+  allMatches,
   predictionMap,
+  answerMap,
   dailyDoubleDownMap,
   groupFilter,
   query,
@@ -887,6 +893,8 @@ function MatchesScreen({
   onQuery,
   onSave,
   onOpenRoom,
+  onOpenDaily,
+  onOpenLeaderboard,
   liveSync,
 }) {
   const grouped = useMemo(() => groupByDate(matches), [matches]);
@@ -905,6 +913,16 @@ function MatchesScreen({
 
   return (
     <section className="screen">
+      <TodayChecklist
+        matches={allMatches || matches}
+        predictionMap={predictionMap}
+        answerMap={answerMap}
+        dailyDoubleDownMap={dailyDoubleDownMap}
+        onGroupFilter={onGroupFilter}
+        onOpenDaily={onOpenDaily}
+        onOpenLeaderboard={onOpenLeaderboard}
+      />
+
       <div className="screen-heading">
         <div>
           <p className="eyebrow">Dự đoán tỉ số</p>
@@ -994,6 +1012,145 @@ function MatchesScreen({
         ))}
       </div>
     </section>
+  );
+}
+
+function TodayChecklist({
+  matches = [],
+  predictionMap = new Map(),
+  answerMap = new Map(),
+  dailyDoubleDownMap = new Map(),
+  onGroupFilter,
+  onOpenDaily,
+  onOpenLeaderboard,
+}) {
+  const today = getLocalDateKey();
+  const todayMatches = useMemo(
+    () => matches
+      .filter((match) => match.matchDay === today && !hasUnknownTeam(match))
+      .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime()),
+    [matches, today]
+  );
+  const openTodayMatches = todayMatches.filter((match) => Date.now() < new Date(match.kickoffAt).getTime());
+  const predictedToday = todayMatches.filter((match) => predictionMap.has(Number(match.matchNo)));
+  const pendingMatches = openTodayMatches.filter((match) => !predictionMap.has(Number(match.matchNo)));
+  const nextLockMatch = openTodayMatches[0] || null;
+  const nextActionMatch = pendingMatches[0] || null;
+  const nextScheduleMatch = matches
+    .filter((match) => !hasUnknownTeam(match) && Date.now() < new Date(match.kickoffAt).getTime())
+    .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime())[0] || null;
+  const todayQuestion = DAILY_QUESTIONS.find((question) => question.date === today);
+  const dailyAnswered = todayQuestion ? answerMap.has(todayQuestion.key) : false;
+  const dailyLocked = todayQuestion ? Date.now() >= new Date(todayQuestion.closesAt).getTime() || !!todayQuestion.correctAnswer : false;
+  const doubleDownUsed = !!dailyDoubleDownMap.get(today);
+  const hasMatchesToday = todayMatches.length > 0;
+  const noTasksToday = !hasMatchesToday && !todayQuestion;
+  const allMatchesDone = hasMatchesToday && pendingMatches.length === 0;
+  const checklistDone = (!hasMatchesToday || allMatchesDone)
+    && (doubleDownUsed || !openTodayMatches.length)
+    && (!todayQuestion || dailyAnswered || dailyLocked);
+
+  const primaryLabel = nextActionMatch
+    ? pendingMatches.length > 1
+      ? `Dự tiếp ${pendingMatches.length} trận`
+      : 'Dự trận gần nhất'
+    : todayQuestion && !dailyAnswered && !dailyLocked
+      ? 'Trả lời câu hỏi'
+      : noTasksToday
+        ? 'Xem lịch trận'
+      : checklistDone
+        ? 'Xem BXH'
+        : 'Xem trận hôm nay';
+
+  function scrollToMatch(match) {
+    if (!match) return;
+    onGroupFilter?.('all');
+    window.requestAnimationFrame(() => {
+      document.getElementById(`match-card-${match.matchNo}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    });
+  }
+
+  function handlePrimaryAction() {
+    if (nextActionMatch) {
+      scrollToMatch(nextActionMatch);
+      return;
+    }
+
+    if (todayQuestion && !dailyAnswered && !dailyLocked) {
+      onOpenDaily?.();
+      return;
+    }
+
+    if (checklistDone) {
+      if (noTasksToday) {
+        scrollToMatch(nextScheduleMatch);
+        return;
+      }
+      onOpenLeaderboard?.();
+      return;
+    }
+
+    scrollToMatch(todayMatches[0] || nextScheduleMatch);
+  }
+
+  return (
+    <section className={`today-checklist ${checklistDone && !noTasksToday ? 'done' : ''}`} aria-label="Checklist hôm nay">
+      <div className="today-checklist-head">
+        <div>
+          <p className="eyebrow">Checklist hôm nay</p>
+          <h2>{noTasksToday ? 'Chưa có nhiệm vụ hôm nay' : checklistDone ? 'Xong việc hôm nay rồi' : hasMatchesToday ? `${pendingMatches.length} việc cần xử lý` : 'Chưa có trận hôm nay'}</h2>
+        </div>
+        <span>{predictedToday.length}/{todayMatches.length || 0} đã dự</span>
+      </div>
+
+      <div className="today-checklist-items">
+        <ChecklistItem
+          icon="✓"
+          tone={hasMatchesToday && allMatchesDone ? 'ok' : 'todo'}
+          label={hasMatchesToday ? `Đã dự ${predictedToday.length}/${todayMatches.length} trận hôm nay` : 'Hôm nay chưa có trận cần dự'}
+        />
+        <ChecklistItem
+          icon="⏰"
+          tone={nextLockMatch && timeUntilMs(nextLockMatch.kickoffAt) <= 60 * 60 * 1000 ? 'warn' : 'neutral'}
+          label={nextLockMatch
+            ? `${displayTeamName(nextLockMatch.homeTeam)} - ${displayTeamName(nextLockMatch.awayTeam)} khóa sau ${formatTimeUntil(nextLockMatch.kickoffAt)}`
+            : hasMatchesToday ? 'Các trận hôm nay đã khóa hoặc đã xong' : 'Trận gần nhất sẽ hiện khi tới ngày thi đấu'}
+        />
+        <ChecklistItem
+          icon="★"
+          tone={doubleDownUsed ? 'ok' : openTodayMatches.length ? 'todo' : 'neutral'}
+          label={doubleDownUsed ? 'Kèo tủ x2: Đã dùng' : openTodayMatches.length ? 'Kèo tủ x2: Chưa dùng' : 'Kèo tủ x2: Chưa mở hôm nay'}
+        />
+        <ChecklistItem
+          icon="?"
+          tone={!todayQuestion || dailyAnswered || dailyLocked ? 'ok' : 'todo'}
+          label={!todayQuestion ? 'Câu hỏi ngày: Chưa có' : dailyAnswered ? 'Câu hỏi ngày: Đã trả lời' : dailyLocked ? 'Câu hỏi ngày: Đã khóa' : 'Câu hỏi ngày: Chưa trả lời'}
+        />
+      </div>
+
+      <div className="today-checklist-actions">
+        <button type="button" className="primary-btn small" onClick={handlePrimaryAction}>
+          {primaryLabel}
+        </button>
+        {todayQuestion && !dailyAnswered && !dailyLocked && nextActionMatch ? (
+          <button type="button" className="secondary-btn" onClick={onOpenDaily}>
+            Câu hỏi ngày
+          </button>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function ChecklistItem({ icon, label, tone = 'neutral' }) {
+  return (
+    <div className={`today-checklist-item ${tone}`}>
+      <span aria-hidden="true">{icon}</span>
+      <strong>{label}</strong>
+    </div>
   );
 }
 
@@ -1123,6 +1280,7 @@ function MatchCardPrototype({ match, prediction, roastText, dailyDoubleMatchNo, 
 
   return (
     <article
+      id={`match-card-${match.matchNo}`}
       className={`match-card match-card--prototype ${canOpenRoom ? 'has-room' : ''}`}
       role="button"
       tabIndex={0}
@@ -3105,6 +3263,21 @@ function formatTime(value) {
 
 function formatDateTime(value) {
   return formatTime(value);
+}
+
+function timeUntilMs(value) {
+  return new Date(value).getTime() - Date.now();
+}
+
+function formatTimeUntil(value) {
+  const diffMs = Math.max(0, timeUntilMs(value));
+  const totalMinutes = Math.max(1, Math.ceil(diffMs / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours <= 0) return `${minutes} phút`;
+  if (minutes === 0) return `${hours} giờ`;
+  return `${hours} giờ ${minutes} phút`;
 }
 
 function formatRelativeSyncTime(value) {
