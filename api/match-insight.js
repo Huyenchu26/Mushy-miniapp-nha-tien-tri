@@ -49,7 +49,7 @@ export default async function handler(req, res) {
 
   let generated;
   try {
-    generated = await generateInsight(prompt, playersToMention);
+    generated = await generateInsight(prompt, playersToMention, match);
   } catch {
     return res.status(502).json({ error: 'ai_generation_failed' });
   }
@@ -125,7 +125,7 @@ function formatInsight(row, cached) {
   };
 }
 
-async function generateInsight(prompt, playersToMention) {
+async function generateInsight(prompt, playersToMention, match) {
   const messages = [
     {
       role: 'system',
@@ -142,11 +142,11 @@ async function generateInsight(prompt, playersToMention) {
   let lastError = null;
   for (const model of MATCH_INSIGHT_MODELS) {
     try {
-      return await callOpenRouter(messages, playersToMention, model, true);
+      return await callOpenRouter(messages, playersToMention, match, model, true);
     } catch (err) {
       if (err.status === 400) {
         try {
-          return await callOpenRouter(messages, playersToMention, model, false);
+          return await callOpenRouter(messages, playersToMention, match, model, false);
         } catch (retryError) {
           lastError = retryError;
           continue;
@@ -158,7 +158,7 @@ async function generateInsight(prompt, playersToMention) {
   throw lastError || new Error('openrouter_no_model_available');
 }
 
-async function callOpenRouter(messages, playersToMention, model, useJsonFormat) {
+async function callOpenRouter(messages, playersToMention, match, model, useJsonFormat) {
   const body = {
     model,
     messages,
@@ -195,7 +195,7 @@ async function callOpenRouter(messages, playersToMention, model, useJsonFormat) 
 
   const content = payload?.choices?.[0]?.message?.content || '';
   const summary = parseMatchInsightResponse(content);
-  const validation = validateMatchInsightSummary(summary, playersToMention);
+  const validation = validateMatchInsightSummary(summary, playersToMention, { match });
   if (!validation.ok) throw new Error(`invalid_ai_summary:${validation.reason}`);
 
   return {
