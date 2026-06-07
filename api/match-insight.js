@@ -139,17 +139,28 @@ async function generateInsight(prompt, playersToMention) {
     { role: 'user', content: prompt },
   ];
 
-  try {
-    return await callOpenRouter(messages, playersToMention, true);
-  } catch (err) {
-    if (err.status === 400) return await callOpenRouter(messages, playersToMention, false);
-    throw err;
+  let lastError = null;
+  for (const model of MATCH_INSIGHT_MODELS) {
+    try {
+      return await callOpenRouter(messages, playersToMention, model, true);
+    } catch (err) {
+      if (err.status === 400) {
+        try {
+          return await callOpenRouter(messages, playersToMention, model, false);
+        } catch (retryError) {
+          lastError = retryError;
+          continue;
+        }
+      }
+      lastError = err;
+    }
   }
+  throw lastError || new Error('openrouter_no_model_available');
 }
 
-async function callOpenRouter(messages, playersToMention, useJsonFormat) {
+async function callOpenRouter(messages, playersToMention, model, useJsonFormat) {
   const body = {
-    models: MATCH_INSIGHT_MODELS,
+    model,
     messages,
     max_tokens: 180,
     temperature: 0.75,
@@ -189,6 +200,6 @@ async function callOpenRouter(messages, playersToMention, useJsonFormat) {
 
   return {
     summary: validation.summary,
-    model: payload?.model || MATCH_INSIGHT_MODELS[0],
+    model: payload?.model || model,
   };
 }
