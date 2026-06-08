@@ -2382,7 +2382,7 @@ function ScoreHistoryMatchLabel({ item }) {
       <TeamFlag team={item.homeTeam} className="score-history-flag" />
       <span>{displayTeamName(item.homeTeam)}</span>
       <span className="score-history-result">
-        {item.status === 'saved' ? 'vs' : `${item.homeScore}-${item.awayScore}`}
+        {item.status === 'saved' ? '-' : `${item.homeScore}-${item.awayScore}`}
       </span>
       <TeamFlag team={item.awayTeam} className="score-history-flag" />
       <span>{displayTeamName(item.awayTeam)}</span>

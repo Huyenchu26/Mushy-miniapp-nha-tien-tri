@@ -1812,6 +1812,44 @@ main {
   font-size: 16px;
 }
 
+.score-history-row.zero {
+  opacity: 0.65;
+}
+
+.score-history-row b.zero-pts {
+  color: var(--wc-muted);
+  font-size: 13px;
+}
+
+.score-history-row.saved {
+  background: rgba(8, 127, 91, 0.06);
+  border: 1px solid rgba(8, 127, 91, 0.12);
+}
+
+.score-history-section-label {
+  margin: 12px 0 4px;
+  color: var(--wc-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.score-history-section-label:first-child {
+  margin-top: 4px;
+}
+
+.score-history-pending-badge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: rgba(8, 127, 91, 0.12);
+  color: var(--wc-green);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .leader-modes {
   display: flex;
   gap: 6px;
