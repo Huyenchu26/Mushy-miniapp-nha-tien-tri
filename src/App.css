@@ -816,6 +816,38 @@ main {
   grid-template-columns: 46px minmax(0, 1fr);
 }
 
+.compact-actions .save-prediction-btn {
+  display: none !important;
+}
+
+.room-action-btn {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.room-action-btn.room-ready {
+  background: var(--wc-ink);
+}
+
+.room-action-btn.dirty {
+  background: var(--wc-primary);
+}
+
+.match-social-line {
+  min-height: 18px;
+  margin: 8px 0 0;
+  color: var(--wc-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 750;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.match-card--prototype .double-hint:not(.double-hint-clean) {
+  display: none;
+}
+
 .star-btn {
   min-width: 46px;
   padding: 0;

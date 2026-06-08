@@ -726,6 +726,7 @@ export default function App() {
               <MatchesScreen
                 matches={filteredMatches}
                 allMatches={matchesWithLiveScores}
+                predictions={predictions}
                 predictionMap={predictionMap}
                 answerMap={answerMap}
                 dailyDoubleDownMap={dailyDoubleDownMap}
@@ -951,6 +952,7 @@ function SetupScreen({ error }) {
 function MatchesScreen({
   matches,
   allMatches,
+  predictions,
   predictionMap,
   answerMap,
   dailyDoubleDownMap,
@@ -972,6 +974,14 @@ function MatchesScreen({
     () => buildRoastMap(matches, predictionMap),
     [matches, predictionMap]
   );
+  const predictionCountByMatch = useMemo(() => {
+    const map = new Map();
+    for (const prediction of predictions || []) {
+      const matchNo = Number(prediction.matchNo);
+      map.set(matchNo, (map.get(matchNo) || 0) + 1);
+    }
+    return map;
+  }, [predictions]);
   const [showExtraGroups, setShowExtraGroups] = useState(false);
   const extraActive = EXTRA_GROUP_FILTERS.includes(groupFilter);
   const knockoutActive = KNOCKOUT_FILTERS.some((round) => round.id === groupFilter);
@@ -1071,6 +1081,7 @@ function MatchesScreen({
                   key={match.matchNo}
                   match={match}
                   prediction={predictionMap.get(match.matchNo)}
+                  predictionCount={predictionCountByMatch.get(Number(match.matchNo)) || 0}
                   roastText={roastMap.get(Number(match.matchNo))}
                   dailyDoubleMatchNo={dailyDoubleDownMap.get(match.matchDay)}
                   aiInsightsEnabled={aiInsightsEnabled}
@@ -1176,7 +1187,7 @@ function TodayChecklist({
           <p className="eyebrow">Checklist hôm nay</p>
           <h2>{noTasksToday ? 'Chưa có nhiệm vụ hôm nay' : checklistDone ? 'Xong việc hôm nay rồi' : hasMatchesToday ? `${pendingMatches.length} việc cần xử lý` : 'Chưa có trận hôm nay'}</h2>
         </div>
-        <span>{predictedToday.length}/{todayMatches.length || 0} đã dự</span>
+        <span>{predictedToday.length}/{todayMatches.length || 0} đã dự đoán</span>
       </div>
 
       <div className="today-checklist-items">
@@ -1293,6 +1304,7 @@ function LiveScorePanel({ liveScores, liveSync }) {
 function MatchCardPrototype({
   match,
   prediction,
+  predictionCount = 0,
   roastText,
   dailyDoubleMatchNo,
   aiInsightsEnabled,
@@ -1333,6 +1345,32 @@ function MatchCardPrototype({
     && Number(prediction.homePred) === homeScore
     && Number(prediction.awayPred) === awayScore
     && !!prediction.doubleDown === !!doubleDown;
+  const predictionButtonLabel = saving
+    ? 'Đang lưu...'
+    : prediction && draftIsSaved
+      ? 'Vào phòng dự đoán'
+      : prediction
+        ? 'Cập nhật dự đoán'
+        : 'Lưu dự đoán';
+  const socialLine = buildMatchSocialLine({
+    prediction,
+    predictionCount,
+    homeScore,
+    awayScore,
+    doubleDown,
+    draftIsSaved,
+    locked,
+    teamsKnown,
+  });
+  const doubleHintText = !teamsKnown
+    ? 'Chờ xác định đội.'
+    : locked
+      ? 'Đã khóa dự đoán.'
+      : doubleDownReserved
+        ? `Kèo tủ x2 đã dùng ở trận #${dailyDoubleMatchNo}.`
+        : isTodayMatchDay
+          ? 'Mỗi ngày chỉ 1 kèo tủ.'
+          : 'Kèo tủ chỉ mở đúng ngày thi đấu.';
 
   function bumpScore(side, delta) {
     if (locked) return;
@@ -1349,6 +1387,14 @@ function MatchCardPrototype({
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handlePrimaryActionClick() {
+    if (prediction && draftIsSaved) {
+      onOpenRoom?.(match);
+      return;
+    }
+    await handleSaveClick();
   }
 
   function handleCardOpen(event) {
@@ -1418,6 +1464,7 @@ function MatchCardPrototype({
               </>
             )}
           </div>
+          <p className="match-social-line">{socialLine}</p>
         </>
       ) : (
         <>
@@ -1470,6 +1517,19 @@ function MatchCardPrototype({
               {saving ? 'Đang lưu...' : draftIsSaved ? 'Đã lưu' : 'Lưu dự đoán'}
             </button>
           </div>
+          <button
+            type="button"
+            className={`primary-btn small room-action-btn ${draftIsSaved ? 'room-ready' : prediction ? 'dirty' : ''}`}
+            disabled={saving || (!draftIsSaved && locked)}
+            onClick={(event) => {
+              event.stopPropagation();
+              handlePrimaryActionClick();
+            }}
+          >
+            {predictionButtonLabel}
+          </button>
+          <p className="match-social-line">{socialLine}</p>
+          <p className="double-hint double-hint-clean">{doubleHintText}</p>
           <p className="double-hint">
             {!teamsKnown
               ? 'Chờ xác định đội.'
@@ -2566,6 +2626,37 @@ function predictionDoneTone(base) {
   if (base === 5) return 'exact';
   if (base > 0) return 'good';
   return 'zero';
+}
+
+function buildMatchSocialLine({
+  prediction,
+  predictionCount = 0,
+  homeScore,
+  awayScore,
+  doubleDown,
+  draftIsSaved,
+  locked,
+  teamsKnown,
+}) {
+  const countLabel = `${predictionCount} người đã dự đoán`;
+  if (!teamsKnown) return `${countLabel} · Chờ xác định đội`;
+  if (!prediction) {
+    return locked
+      ? `Đã khóa dự đoán · ${countLabel}`
+      : `${countLabel} · Lưu dự đoán để xem phe`;
+  }
+
+  const savedScore = `${prediction.homePred}-${prediction.awayPred}`;
+  const draftScore = `${homeScore}-${awayScore}`;
+  if (!draftIsSaved) {
+    const doubleChanged = !!prediction.doubleDown !== !!doubleDown;
+    const changeLabel = savedScore === draftScore && doubleChanged
+      ? 'Đang đổi kèo tủ'
+      : `Đang sửa từ ${savedScore} sang ${draftScore}`;
+    return `${changeLabel} · ${countLabel}`;
+  }
+
+  return `Bạn đã lưu ${savedScore}${prediction.doubleDown ? ' · kèo tủ x2' : ''} · ${countLabel}`;
 }
 
 function predictionRoast(base, match, prediction) {
