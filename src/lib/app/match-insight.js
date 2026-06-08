@@ -11,6 +11,22 @@ export const MATCH_INSIGHT_MODELS = Object.freeze([
   'qwen/qwen3.7-plus',
 ]);
 
+export function selectInsightWarmupMatches(matches, now = Date.now(), limit = 3) {
+  const safeLimit = Math.max(0, Math.min(10, Number(limit) || 0));
+  return [...(matches || [])]
+    .filter((match) => {
+      const kickoffAt = Date.parse(match?.kickoffAt || '');
+      return Number.isFinite(kickoffAt)
+        && kickoffAt > now
+        && match?.homeTeam
+        && match?.awayTeam
+        && match.homeTeam !== 'Unknown'
+        && match.awayTeam !== 'Unknown';
+    })
+    .sort((left, right) => Date.parse(left.kickoffAt) - Date.parse(right.kickoffAt))
+    .slice(0, safeLimit);
+}
+
 const BANNED_PATTERNS = [
   /\b\d+\s*[-:]\s*\d+\b/,
   /\bkeo\s*tu\b/i,
