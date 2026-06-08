@@ -2303,43 +2303,71 @@ function LeaderboardScreen({
 }
 
 function ScoreHistoryPanel({ items, rank, total, predictedCount, isOpen, onToggle }) {
+  const pendingItems = items.filter((item) => item.status === 'saved');
+  const scoredItems = items.filter((item) => item.status !== 'saved');
+  const totalItems = items.length;
+
   return (
-    <section className="score-history-panel" aria-label="Lịch sử cộng điểm">
+    <section className="score-history-panel" aria-label="Dự đoán của tôi">
       <div className="score-history-head">
         <div>
-          <p className="section-label">Lịch sử cộng điểm</p>
+          <p className="section-label">Dự đoán của tôi</p>
           <h3>{total}đ</h3>
         </div>
         <div className="score-history-metrics" aria-label="Tóm tắt điểm">
           <span>{rank ? `#${rank}` : '-'}</span>
           <span>{predictedCount} đã dự</span>
-          <span>{items.length} mục</span>
+          <span>{pendingItems.length} chờ kết quả</span>
         </div>
       </div>
 
       <button className="secondary-btn score-history-toggle" type="button" onClick={onToggle} aria-expanded={isOpen}>
-        {isOpen ? 'Ẩn lịch sử' : 'Xem lịch sử cộng điểm'}
+        {isOpen ? 'Ẩn danh sách' : 'Xem tất cả dự đoán'}
       </button>
 
       {isOpen && (
-        items.length === 0 ? (
-          <p className="empty-state compact">Chưa có điểm cộng nào. Khi admin chốt kết quả, lịch sử sẽ hiện tại đây.</p>
+        totalItems === 0 ? (
+          <p className="empty-state compact">Chưa có dự đoán nào. Hãy vào Trang chủ để đặt kèo trận nào đó đi!</p>
         ) : (
           <div className="score-history-list">
-            {items.map((item) => (
-              <article key={item.key} className="score-history-row">
-                <span className="score-history-type">{item.type}</span>
-                <span className="score-history-copy">
-                  {item.kind === 'match' ? (
-                    <ScoreHistoryMatchLabel item={item} />
-                  ) : (
-                    <strong>{item.label}</strong>
-                  )}
-                  <small>{item.detail}</small>
-                </span>
-                <b>+{item.points}đ</b>
-              </article>
-            ))}
+            {pendingItems.length > 0 && (
+              <>
+                <p className="score-history-section-label">Chờ kết quả ({pendingItems.length} trận)</p>
+                {pendingItems.map((item) => (
+                  <article key={item.key} className="score-history-row saved">
+                    <span className="score-history-type">{item.type}</span>
+                    <span className="score-history-copy">
+                      {item.kind === 'match' ? (
+                        <ScoreHistoryMatchLabel item={item} />
+                      ) : (
+                        <strong>{item.label}</strong>
+                      )}
+                      <small>{item.detail}</small>
+                    </span>
+                    <span className="score-history-pending-badge">Chờ</span>
+                  </article>
+                ))}
+              </>
+            )}
+            {scoredItems.length > 0 && (
+              <>
+                <p className="score-history-section-label">Đã tính điểm ({scoredItems.length} mục)</p>
+                {scoredItems.map((item) => (
+                  <article key={item.key} className={`score-history-row ${item.status === 'zero' ? 'zero' : ''}`}>
+                    <span className="score-history-type">{item.type}</span>
+                    <span className="score-history-copy">
+                      {item.kind === 'match' ? (
+                        <ScoreHistoryMatchLabel item={item} />
+                      ) : (
+                        <strong>{item.label}</strong>
+                      )}
+                      <small>{item.detail}</small>
+                    </span>
+                    <b className={item.points > 0 ? '' : 'zero-pts'}>{item.points > 0 ? `+${item.points}đ` : '+0đ'}</b>
+                  </article>
+                ))}
+              </>
+            )}
           </div>
         )
       )}
@@ -2353,7 +2381,9 @@ function ScoreHistoryMatchLabel({ item }) {
       <span className="score-history-match-no">#{item.matchNo}</span>
       <TeamFlag team={item.homeTeam} className="score-history-flag" />
       <span>{displayTeamName(item.homeTeam)}</span>
-      <span className="score-history-result">{item.homeScore}-{item.awayScore}</span>
+      <span className="score-history-result">
+        {item.status === 'saved' ? 'vs' : `${item.homeScore}-${item.awayScore}`}
+      </span>
       <TeamFlag team={item.awayTeam} className="score-history-flag" />
       <span>{displayTeamName(item.awayTeam)}</span>
     </strong>
@@ -2406,16 +2436,21 @@ function buildScoreHistory({ predictions = [], answers = [], matches = [], curre
         return {
           key: `notify-saved-match-${prediction.matchNo}`,
           sortKey: prediction.updatedAt || prediction.createdAt || match.kickoffAt,
-          icon: '✅',
-          label: 'Đã lưu dự đoán',
-          detail: `#${match.matchNo} ${displayTeamName(match.homeTeam)} - ${displayTeamName(match.awayTeam)} · Bạn dự ${prediction.homePred}-${prediction.awayPred}${prediction.doubleDown ? ' · kèo tủ x2' : ''}`,
-          points: 0,
+          kind: 'match',
           status: 'saved',
+          type: formatDate(match.matchDay || match.kickoffAt),
+          matchNo: match.matchNo,
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          homeScore: prediction.homePred,
+          awayScore: prediction.awayPred,
+          label: 'Đã lưu dự đoán',
+          detail: `Bạn dự ${prediction.homePred}-${prediction.awayPred}${prediction.doubleDown ? ' · kèo tủ x2' : ''}`,
+          points: 0,
         };
       }
 
       const breakdown = matchScoreBreakdown(prediction, match);
-      if (breakdown.total <= 0) return null;
 
       const upsetPoints = breakdown.upsetBonus * breakdown.multiplier;
       const detailParts = [
@@ -2429,6 +2464,7 @@ function buildScoreHistory({ predictions = [], answers = [], matches = [], curre
         key: `match-${prediction.matchNo}`,
         sortKey: match.kickoffAt,
         kind: 'match',
+        status: breakdown.total > 0 ? 'scored' : 'zero',
         type: formatDate(match.matchDay || match.kickoffAt),
         matchNo: match.matchNo,
         homeTeam: match.homeTeam,
