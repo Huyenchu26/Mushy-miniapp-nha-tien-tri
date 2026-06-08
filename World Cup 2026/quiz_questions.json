@@ -1,0 +1,510 @@
+{
+  "meta": {
+    "total": 50,
+    "version": "1.0",
+    "last_updated": "2026-06-08",
+    "description": "Bộ câu hỏi đố vui World Cup 2026 – random hàng ngày"
+  },
+  "questions": [
+    {
+      "id": 1,
+      "category": "Lịch sử World Cup",
+      "difficulty": "easy",
+      "question": "Quốc gia nào vô địch World Cup nhiều nhất lịch sử?",
+      "options": ["Argentina", "Germany", "Brazil", "Italy"],
+      "answer": "Brazil",
+      "explanation": "Brazil vô địch 5 lần: 1958, 1962, 1970, 1994, 2002. Không ai qua được Selecao đâu nha!",
+      "taunt_wrong": "Ôi trời ơi... câu này mà cũng sai? Đi xem bóng đá thêm đi bạn ơi 😂"
+    },
+    {
+      "id": 2,
+      "category": "Cầu thủ",
+      "difficulty": "easy",
+      "question": "Ai là Vua phá lưới mọi thời đại tại các kỳ World Cup?",
+      "options": ["Ronaldo (Brazil)", "Miroslav Klose", "Pele", "Gerd Müller"],
+      "answer": "Miroslav Klose",
+      "explanation": "Miroslav Klose (Đức) ghi 16 bàn trong sự nghiệp World Cup. Cỗ máy ghi bàn không tưởng!",
+      "taunt_wrong": "Chọn sai rồi! Klose mà bạn không biết thì bạn xem World Cup kiểu gì vậy? 🤣"
+    },
+    {
+      "id": 3,
+      "category": "Kỷ lục",
+      "difficulty": "medium",
+      "question": "Trận đấu có tỉ số lớn nhất lịch sử World Cup là bao nhiêu?",
+      "options": ["10-1", "9-0", "12-0", "11-0"],
+      "answer": "10-1",
+      "explanation": "Hungary đè bẹp El Salvador 10-1 năm 1982. El Salvador đi World Cup cho vui thôi chứ sao 😅",
+      "taunt_wrong": "Sai! Bạn thử tưởng tượng ngồi xem đội nhà bị ăn 10 bàn đi, đau lòng lắm đó!"
+    },
+    {
+      "id": 4,
+      "category": "World Cup 2026",
+      "difficulty": "easy",
+      "question": "World Cup 2026 được tổ chức tại mấy quốc gia?",
+      "options": ["1", "2", "3", "4"],
+      "answer": "3",
+      "explanation": "3 nước đồng đăng cai: Mỹ, Canada và Mexico. Lần đầu tiên trong lịch sử có 3 nước cùng tổ chức!",
+      "taunt_wrong": "Đây là World Cup đang diễn ra mà không biết à? Đọc báo đi bạn ơi 📰"
+    },
+    {
+      "id": 5,
+      "category": "World Cup 2026",
+      "difficulty": "easy",
+      "question": "World Cup 2026 có bao nhiêu đội tham dự?",
+      "options": ["32", "36", "48", "64"],
+      "answer": "48",
+      "explanation": "Lần đầu tiên World Cup mở rộng lên 48 đội. Cơ hội cho cả… những đội bình thường cũng được đi World Cup!",
+      "taunt_wrong": "48 đội! Con số lịch sử đó. Bạn bỏ qua tin tức này thật sao? 😏"
+    },
+    {
+      "id": 6,
+      "category": "Cầu thủ",
+      "difficulty": "medium",
+      "question": "Cầu thủ nào ghi bàn trẻ nhất lịch sử World Cup?",
+      "options": ["Pele", "Cesc Fabregas", "Rubén Marcos", "Michael Owen"],
+      "answer": "Pele",
+      "explanation": "Pele ghi bàn năm 17 tuổi tại World Cup 1958. Thuở ấy Pele đã là huyền thoại rồi!",
+      "taunt_wrong": "Pele 17 tuổi đã ghi bàn World Cup, còn bạn 17 tuổi đang làm gì? 😂"
+    },
+    {
+      "id": 7,
+      "category": "Kỷ lục",
+      "difficulty": "hard",
+      "question": "Thủ môn nào có nhiều lần tham dự World Cup nhất (5 lần)?",
+      "options": ["Gianluigi Buffon", "Manuel Neuer", "Antonio Carbajal", "Peter Shilton"],
+      "answer": "Antonio Carbajal",
+      "explanation": "Carbajal (Mexico) dự 5 kỳ World Cup từ 1950-1966. Đi nhiều nhưng Mexico vẫn chưa vô địch được lần nào 😅",
+      "taunt_wrong": "Câu này khó thật, thôi tha cho bạn lần này. Nhưng nhớ nhé!"
+    },
+    {
+      "id": 8,
+      "category": "Cà khịa",
+      "difficulty": "easy",
+      "question": "Trong lịch sử, đội tuyển Anh vô địch World Cup bao nhiêu lần?",
+      "options": ["0", "1", "2", "3"],
+      "answer": "1",
+      "explanation": "Anh vô địch duy nhất 1 lần năm 1966, và đó là lần cuối cùng Anh còn liên quan đến chung kết World Cup 😬",
+      "taunt_wrong": "Dân Anh mà không biết điều này thì... thôi rồi 😂 IT'S COMING HOME (mãi mãi về nhà thôi!)"
+    },
+    {
+      "id": 9,
+      "category": "Chiến thuật",
+      "difficulty": "medium",
+      "question": "Sơ đồ chiến thuật nào không tồn tại trong bóng đá?",
+      "options": ["4-3-3", "4-4-2", "5-5-5", "3-5-2"],
+      "answer": "5-5-5",
+      "explanation": "5+5+5 = 15 người trên sân, trong khi mỗi đội chỉ có 11 người. Toán cấp 1 đó bạn ơi!",
+      "taunt_wrong": "5-5-5? Bạn tính ra 15 người à? Đây không phải bóng đá 15 người đâu nhé 😂"
+    },
+    {
+      "id": 10,
+      "category": "Lịch sử World Cup",
+      "difficulty": "medium",
+      "question": "Nước nào đăng cai World Cup đầu tiên trong lịch sử (1930)?",
+      "options": ["Brazil", "Argentina", "Uruguay", "Italy"],
+      "answer": "Uruguay",
+      "explanation": "Uruguay đăng cai và luôn tiện vô địch World Cup 1930. Tiện tay vô địch luôn cho nhanh!",
+      "taunt_wrong": "Sai! Uruguay 1930 – nước chủ nhà đầu tiên và luôn tiện vô địch luôn. Ngầu không?"
+    },
+    {
+      "id": 11,
+      "category": "Cầu thủ",
+      "difficulty": "easy",
+      "question": "Ronaldo (CR7) vô địch World Cup bao nhiêu lần?",
+      "options": ["0", "1", "2", "5"],
+      "answer": "0",
+      "explanation": "Đau lòng nhưng là sự thật: CR7 chưa bao giờ vô địch World Cup. GOAT mà thiếu cái cúp này thì… tranh cãi mãi!",
+      "taunt_wrong": "0 lần đó bạn ơi. Fan CR7 buồn không? Messi có 1 rồi đó 😈"
+    },
+    {
+      "id": 12,
+      "category": "Cầu thủ",
+      "difficulty": "easy",
+      "question": "Messi vô địch World Cup năm nào?",
+      "options": ["2018", "2022", "2014", "Chưa bao giờ"],
+      "answer": "2022",
+      "explanation": "Argentina vô địch World Cup 2022 tại Qatar. Messi cuối cùng cũng có cúp và câu tranh luận GOAT được giải quyết... hay chưa?",
+      "taunt_wrong": "2022 tại Qatar đó! Trận chung kết đỉnh nhất lịch sử đó bạn ơi, không xem à?"
+    },
+    {
+      "id": 13,
+      "category": "Kỷ lục",
+      "difficulty": "hard",
+      "question": "Đội nào giữ kỷ lục ghi nhiều bàn nhất trong 1 kỳ World Cup (27 bàn)?",
+      "options": ["Brazil 1970", "France 1998", "Hungary 1954", "Germany 2014"],
+      "answer": "Hungary 1954",
+      "explanation": "Hungary 1954 ghi 27 bàn chỉ trong 5 trận. Nhưng vẫn thua chung kết trước Tây Đức. Ghi nhiều mà vẫn thua!",
+      "taunt_wrong": "Hungary 1954 – đội mạnh nhất không vô địch. Cuộc đời là thế đó bạn!"
+    },
+    {
+      "id": 14,
+      "category": "Cà khịa",
+      "difficulty": "easy",
+      "question": "Italy có mặt tại World Cup 2026 không?",
+      "options": ["Có, vì Italy luôn có mặt", "Không, Italy bị loại vòng loại", "Có, với tư cách chủ nhà", "Không biết"],
+      "answer": "Có, vì Italy luôn có mặt",
+      "explanation": "Italy đã vượt qua vòng loại để dự World Cup 2026. Sau thảm họa 2018 và 2022, Azzurri quay trở lại!",
+      "taunt_wrong": "Italy đã quay lại rồi! Nhớ lại WC 2018 và 2022 chưa, đau lòng lắm nhưng lần này họ trở lại 💙"
+    },
+    {
+      "id": 15,
+      "category": "World Cup 2026",
+      "difficulty": "medium",
+      "question": "Sân vận động nào sẽ tổ chức trận chung kết World Cup 2026?",
+      "options": ["Rose Bowl (Los Angeles)", "MetLife Stadium (New York/New Jersey)", "AT&T Stadium (Dallas)", "Estadio Azteca (Mexico City)"],
+      "answer": "MetLife Stadium (New York/New Jersey)",
+      "explanation": "MetLife Stadium tại New York/New Jersey sẽ tổ chức trận chung kết lịch sử của World Cup 2026!",
+      "taunt_wrong": "MetLife Stadium – New York đó! Thành phố không ngủ tổ chức trận đỉnh nhất hành tinh!"
+    },
+    {
+      "id": 16,
+      "category": "Lịch sử World Cup",
+      "difficulty": "medium",
+      "question": "Đội nào bị loại sớm nhất (vòng bảng) nhưng vẫn được coi là bất ngờ lớn nhất?",
+      "options": ["USA 1950 thắng Anh", "Senegal 2002 thắng Pháp", "Cameroon 1990 thắng Argentina", "Hàn Quốc 2002 vào bán kết"],
+      "answer": "USA 1950 thắng Anh",
+      "explanation": "Mỹ thắng Anh 1-0 năm 1950 – được xem là kết quả sốc nhất lịch sử. Anh quốc chưa hết nhục!",
+      "taunt_wrong": "USA 1950 – Mỹ không có văn hóa bóng đá mà đi thắng cả Anh quốc. Đau thật sự 😅"
+    },
+    {
+      "id": 17,
+      "category": "Cầu thủ",
+      "difficulty": "medium",
+      "question": "Ai là cầu thủ đầu tiên bị đuổi khỏi sân tại World Cup?",
+      "options": ["Zinedine Zidane", "Mario de las Casas (Peru)", "Luis Suárez", "Roy Keane"],
+      "answer": "Mario de las Casas (Peru)",
+      "explanation": "Mario de las Casas của Peru nhận thẻ đỏ đầu tiên lịch sử World Cup năm 1930. Cái tên đi vào lịch sử… theo cách buồn cười nhất!",
+      "taunt_wrong": "Mario de las Casas 1930 – người đầu tiên bị đuổi trong lịch sử World Cup. Danh hiệu không ai muốn!"
+    },
+    {
+      "id": 18,
+      "category": "Cà khịa",
+      "difficulty": "easy",
+      "question": "Pháp vô địch World Cup mấy lần?",
+      "options": ["1", "2", "3", "0"],
+      "answer": "2",
+      "explanation": "Pháp vô địch 1998 (sân nhà) và 2018 (Nga). Đội hình 2018 gồm toàn con em nhập cư – bằng chứng đa văn hóa giúp vô địch!",
+      "taunt_wrong": "2 lần! 1998 và 2018. Đội Pháp mà không biết... bạn xem bóng đá hay xem phim vậy? 😂"
+    },
+    {
+      "id": 19,
+      "category": "Chiến thuật",
+      "difficulty": "medium",
+      "question": "Thuật ngữ 'Total Football' (Bóng đá tổng lực) gắn liền với đội tuyển nào?",
+      "options": ["Germany", "Netherlands", "Brazil", "Spain"],
+      "answer": "Netherlands",
+      "explanation": "Hà Lan với Johan Cruyff phát triển Total Football những năm 1970. Họ đá đẹp như thơ nhưng không vô địch World Cup lần nào!",
+      "taunt_wrong": "Hà Lan! Đá đẹp nhất thế giới nhưng... vẫn chưa có cúp vàng nào. Kiếp hoa kiều của bóng đá thế giới 😢"
+    },
+    {
+      "id": 20,
+      "category": "World Cup 2026",
+      "difficulty": "easy",
+      "question": "Đội tuyển Việt Nam có mặt tại World Cup 2026 không?",
+      "options": ["Có, vì Đông Nam Á có suất", "Không, bị loại vòng loại", "Có với tư cách wild card", "Không, Việt Nam chưa bao giờ dự WC"],
+      "answer": "Không, bị loại vòng loại",
+      "explanation": "Việt Nam chưa vượt qua được vòng loại World Cup 2026. Nhưng chúng ta vẫn tin tưởng vào tương lai! 🇻🇳",
+      "taunt_wrong": "Đau lòng nhưng là sự thật. Việt Nam chưa vào WC 2026. Cổ vũ đội khác thôi bạn ơi!"
+    },
+    {
+      "id": 21,
+      "category": "Kỷ lục",
+      "difficulty": "medium",
+      "question": "Thủ môn nào ghi bàn tại World Cup?",
+      "options": ["Đây là điều không thể xảy ra", "Manuel Neuer", "Rogério Ceni", "Tim Howard"],
+      "answer": "Đây là điều không thể xảy ra",
+      "explanation": "Không có thủ môn nào ghi bàn tại World Cup! Ở CLB có Rogério Ceni ghi nhiều bàn nhất, nhưng World Cup thì chưa ai làm được.",
+      "taunt_wrong": "Chưa có thủ môn nào ghi bàn ở WC cả! Đó sẽ là khoảnh khắc lịch sử nếu xảy ra 😲"
+    },
+    {
+      "id": 22,
+      "category": "Lịch sử World Cup",
+      "difficulty": "hard",
+      "question": "World Cup năm nào bị hủy vì chiến tranh Thế giới?",
+      "options": ["1938 và 1942", "1942 và 1946", "1940 và 1944", "1936 và 1940"],
+      "answer": "1942 và 1946",
+      "explanation": "World Cup 1942 và 1946 bị hủy vì Thế chiến II. Bóng đá cũng phải nhường chỗ cho lịch sử.",
+      "taunt_wrong": "1942 và 1946 – hai kỳ World Cup không bao giờ diễn ra vì chiến tranh. Buồn nhưng đó là lịch sử!"
+    },
+    {
+      "id": 23,
+      "category": "Cầu thủ",
+      "difficulty": "medium",
+      "question": "Ai ghi hat-trick đầu tiên trong lịch sử World Cup?",
+      "options": ["Pele", "Bert Patenaude (USA)", "Guillermo Stábile (Argentina)", "Pedro Cea (Uruguay)"],
+      "answer": "Bert Patenaude (USA)",
+      "explanation": "Bert Patenaude (Mỹ) ghi hat-trick đầu tiên năm 1930. Mỹ lại làm điều lịch sử đầu tiên trong bóng đá – lần này theo nghĩa tốt!",
+      "taunt_wrong": "Bert Patenaude của Mỹ 1930! Người Mỹ ghi hat-trick WC đầu tiên trước cả Pele. Bất ngờ chưa?"
+    },
+    {
+      "id": 24,
+      "category": "Cà khịa",
+      "difficulty": "easy",
+      "question": "Đội nào có biệt danh 'Cỗ xe tăng' (Die Mannschaft)?",
+      "options": ["Brazil", "Germany", "France", "Spain"],
+      "answer": "Germany",
+      "explanation": "Germany = Die Mannschaft = Cỗ xe tăng. Đội bóng kỷ luật nhất, nhàm nhất nhưng hiệu quả nhất thế giới!",
+      "taunt_wrong": "Germany – Die Mannschaft! Đội bóng mà xem rất nhàm nhưng lúc nào cũng đến chung kết 😤"
+    },
+    {
+      "id": 25,
+      "category": "World Cup 2026",
+      "difficulty": "medium",
+      "question": "World Cup 2026 có bao nhiêu trận đấu tổng cộng?",
+      "options": ["64", "80", "96", "104"],
+      "answer": "104",
+      "explanation": "Với 48 đội, World Cup 2026 có tổng cộng 104 trận. Gần gấp đôi so với 64 trận của WC 32 đội!",
+      "taunt_wrong": "104 trận! Xem bóng đá cả tháng liên tục không nghỉ. Thiên đường hay địa ngục? 😂"
+    },
+    {
+      "id": 26,
+      "category": "Cầu thủ",
+      "difficulty": "hard",
+      "question": "Cầu thủ nào vô địch World Cup cả với tư cách cầu thủ lẫn huấn luyện viên?",
+      "options": ["Johan Cruyff", "Didier Deschamps", "Franz Beckenbauer", "Zinedine Zidane"],
+      "answer": "Franz Beckenbauer",
+      "explanation": "Franz Beckenbauer vô địch WC 1974 (cầu thủ) và 1990 (HLV). Didier Deschamps cũng làm được (1998 và 2018)!",
+      "taunt_wrong": "Beckenbauer VÀ Deschamps đều làm được! Cả hai đều là huyền thoại thật sự."
+    },
+    {
+      "id": 27,
+      "category": "Kỷ lục",
+      "difficulty": "medium",
+      "question": "Đội nào thắng World Cup mà không để thủng lưới ở vòng bảng?",
+      "options": ["Italy 1938", "Brazil 1970", "France 1998", "Germany 2014"],
+      "answer": "France 1998",
+      "explanation": "Pháp 1998 không thủng lưới vòng bảng và vô địch ngay trên sân nhà. Zidane 2 bàn chung kết – đỉnh!",
+      "taunt_wrong": "Pháp 1998 – vô địch sân nhà, Zidane đỉnh của đỉnh. Bạn không biết à?"
+    },
+    {
+      "id": 28,
+      "category": "Cà khịa",
+      "difficulty": "easy",
+      "question": "Meme 'You'll Never Walk Alone' nổi tiếng gắn với đội bóng nào?",
+      "options": ["Manchester United", "Liverpool", "Arsenal", "Chelsea"],
+      "answer": "Liverpool",
+      "explanation": "YNWA là bài hát truyền thống của Liverpool. Nhưng họ mãi chờ đến 2020 mới vô địch Premier League sau 30 năm!",
+      "taunt_wrong": "Liverpool! You'll Never Walk Alone – nhưng bạn walk alone 30 năm chờ Premier League đó! 😂"
+    },
+    {
+      "id": 29,
+      "category": "Chiến thuật",
+      "difficulty": "medium",
+      "question": "Trong bóng đá, 'False 9' là gì?",
+      "options": ["Thủ môn đeo số 9", "Tiền đạo chơi lùi xuống giữa sân", "Trung vệ lên tấn công", "Cách đếm điểm sai"],
+      "answer": "Tiền đạo chơi lùi xuống giữa sân",
+      "explanation": "False 9 là tiền đạo số 9 nhưng chơi lùi để tạo không gian và kéo hậu vệ đối phương ra. Messi làm cực tốt!",
+      "taunt_wrong": "False 9 – Messi làm điều này đỉnh nhất thế giới dưới thời Pep Guardiola tại Barca!"
+    },
+    {
+      "id": 30,
+      "category": "Lịch sử World Cup",
+      "difficulty": "medium",
+      "question": "Trận 'Trận chiến Santiago' năm 1962 nổi tiếng vì điều gì?",
+      "options": ["Nhiều bàn thắng nhất", "Bạo lực nhất lịch sử WC", "Mưa lớn nhất", "Khán giả nhiều nhất"],
+      "answer": "Bạo lực nhất lịch sử WC",
+      "explanation": "Chile vs Italy 1962: 2 người bị đuổi, đánh nhau liên tục. Trọng tài người Anh phải nhờ cảnh sát can thiệp!",
+      "taunt_wrong": "Trận bạo lực nhất WC! Chile vs Italy 1962. Đây là bóng đá hay boxing vậy? 🥊"
+    },
+    {
+      "id": 31,
+      "category": "Cầu thủ",
+      "difficulty": "easy",
+      "question": "Ai ghi bàn thắng 'Bàn tay của Chúa' nổi tiếng?",
+      "options": ["Pele", "Diego Maradona", "Ronaldo", "Zidane"],
+      "answer": "Diego Maradona",
+      "explanation": "Maradona dùng tay ghi bàn vào lưới Anh năm 1986, rồi nói đó là 'Bàn tay của Chúa'. Trọng tài không nhìn thấy!",
+      "taunt_wrong": "Maradona 1986! Dùng tay mà vẫn được công nhận. Trọng tài... thôi không nói nữa 😅"
+    },
+    {
+      "id": 32,
+      "category": "World Cup 2026",
+      "difficulty": "hard",
+      "question": "Đội nào được xếp hạt giống số 1 (nhóm 1) tại World Cup 2026?",
+      "options": ["Brazil", "France", "Argentina", "England"],
+      "answer": "Argentina",
+      "explanation": "Argentina, đương kim vô địch, là hạt giống số 1. Nhưng bảo vệ ngôi vô địch WC chưa bao giờ là chuyện dễ!",
+      "taunt_wrong": "Argentina – đương kim vô địch luôn là hạt giống 1! Nhưng lịch sử chứng minh rất khó bảo vệ cúp!"
+    },
+    {
+      "id": 33,
+      "category": "Cà khịa",
+      "difficulty": "easy",
+      "question": "Đội tuyển nào được gọi là 'The Three Lions' (Ba con sư tử)?",
+      "options": ["France", "England", "Spain", "Portugal"],
+      "answer": "England",
+      "explanation": "Anh = Three Lions. Ba con sư tử mà World Cup chỉ về nhà 1 lần năm 1966. 'It's coming home' mãi chỉ là mơ!",
+      "taunt_wrong": "England – Three Lions! IT'S COMING HOME đã 60 năm rồi vẫn chưa về 😂 Kiên nhẫn thật sự!"
+    },
+    {
+      "id": 34,
+      "category": "Kỷ lục",
+      "difficulty": "hard",
+      "question": "Cầu thủ nào có số lần kiến tạo nhiều nhất lịch sử World Cup?",
+      "options": ["Pele", "Maradona", "Messi", "Ronaldo (Brazil)"],
+      "answer": "Messi",
+      "explanation": "Messi là cầu thủ kiến tạo nhiều nhất lịch sử World Cup. Không chỉ ghi bàn mà còn tạo bàn cho đồng đội!",
+      "taunt_wrong": "Messi! Vừa ghi bàn nhiều, vừa kiến tạo nhiều. Bạn vẫn nói Ronaldo ngon hơn không? 😏"
+    },
+    {
+      "id": 35,
+      "category": "Chiến thuật",
+      "difficulty": "easy",
+      "question": "Trong bóng đá hiện đại, 'pressing' nghĩa là gì?",
+      "options": ["Ủi áo đấu", "Gây áp lực lên đối thủ để giành bóng", "Sút bóng mạnh", "Tấn công bằng đầu"],
+      "answer": "Gây áp lực lên đối thủ để giành bóng",
+      "explanation": "Pressing = cả đội phối hợp gây áp lực buộc đối thủ mắc sai lầm. Klopp và Guardiola là bậc thầy!",
+      "taunt_wrong": "Pressing không phải ủi áo đâu bạn! Đó là chiến thuật phức tạp đó 😄"
+    },
+    {
+      "id": 36,
+      "category": "Lịch sử World Cup",
+      "difficulty": "medium",
+      "question": "World Cup 1994 tại Mỹ nổi tiếng với điều gì buồn cười?",
+      "options": ["Không có bàn thắng", "Bị mưa suốt giải", "Khán giả Mỹ không biết luật bóng đá", "Các trận đấu lúc 12 giờ trưa vì TV"],
+      "answer": "Các trận đấu lúc 12 giờ trưa vì TV",
+      "explanation": "WC 1994 có nhiều trận đá lúc 12:30 trưa nắng chang chang ở Mỹ vì giờ TV châu Âu. Cầu thủ gần chết vì nóng!",
+      "taunt_wrong": "Đá lúc 12 giờ trưa nắng gắt ở Mỹ vì... TV châu Âu. FIFA quan tâm tiền hơn sức khỏe cầu thủ! 💸"
+    },
+    {
+      "id": 37,
+      "category": "Cầu thủ",
+      "difficulty": "medium",
+      "question": "Neymar Jr. từng phá kỷ lục chuyển nhượng với giá bao nhiêu?",
+      "options": ["150 triệu euro", "198 triệu euro", "222 triệu euro", "250 triệu euro"],
+      "answer": "222 triệu euro",
+      "explanation": "PSG mua Neymar từ Barca năm 2017 với giá 222 triệu euro. Số tiền có thể mua cả một đội bóng tử tế!",
+      "taunt_wrong": "222 triệu euro! Và Neymar vẫn không vô địch Champions League với PSG. Đầu tư… không hiệu quả 😅"
+    },
+    {
+      "id": 38,
+      "category": "Cà khịa",
+      "difficulty": "medium",
+      "question": "Brazil đã không vô địch World Cup kể từ năm nào?",
+      "options": ["1994", "1998", "2002", "2006"],
+      "answer": "2002",
+      "explanation": "Brazil vô địch lần cuối năm 2002 tại Hàn Quốc-Nhật Bản. Đã 24 năm rồi Selecao! Sốt ruột chưa?",
+      "taunt_wrong": "2002 – đã 24 năm Brazil không vô địch WC. 'O Jogo Bonito' đang đi đâu vậy? 😬"
+    },
+    {
+      "id": 39,
+      "category": "World Cup 2026",
+      "difficulty": "medium",
+      "question": "Bao nhiêu đội châu Á (AFC) tham dự World Cup 2026?",
+      "options": ["4", "6", "8", "5"],
+      "answer": "8",
+      "explanation": "Với 48 đội, AFC được 8 suất tham dự (tăng từ 4.5 trước đây). Cơ hội cho bóng đá châu Á!",
+      "taunt_wrong": "8 suất cho châu Á! Nhưng Việt Nam vẫn không có mặt… 😢"
+    },
+    {
+      "id": 40,
+      "category": "Kỷ lục",
+      "difficulty": "hard",
+      "question": "Trận chung kết World Cup nào có lượng khán giả đông nhất (khoảng 200.000 người)?",
+      "options": ["Brazil 1950 (Maracanazo)", "Germany 1974", "France 1998", "Brazil 2014"],
+      "answer": "Brazil 1950 (Maracanazo)",
+      "explanation": "Trận Brazil vs Uruguay 1950 tại Maracana ước tính 200.000 khán giả. Brazil thua và cả nước khóc. 'Maracanazo'!",
+      "taunt_wrong": "Maracanazo 1950 – Brazil thua Uruguay trước 200k khán giả ở sân nhà. Nỗi đau lịch sử!"
+    },
+    {
+      "id": 41,
+      "category": "Cầu thủ",
+      "difficulty": "easy",
+      "question": "Cầu thủ nào được gọi là 'El Pibe de Oro' (Cậu bé vàng)?",
+      "options": ["Messi", "Ronaldinho", "Diego Maradona", "Pele"],
+      "answer": "Diego Maradona",
+      "explanation": "Maradona = El Pibe de Oro. Tài năng thiên phú, cuộc đời đầy bi kịch nhưng di sản mãi trường tồn!",
+      "taunt_wrong": "Maradona – El Pibe de Oro! Biệt danh nghe là biết ngay ai rồi, sao vẫn sai? 😆"
+    },
+    {
+      "id": 42,
+      "category": "Chiến thuật",
+      "difficulty": "hard",
+      "question": "Trong bóng đá, 'Gegenpressing' là phong cách của HLV nào?",
+      "options": ["Pep Guardiola", "Jürgen Klopp", "Carlo Ancelotti", "Jose Mourinho"],
+      "answer": "Jürgen Klopp",
+      "explanation": "Klopp phát triển Gegenpressing (phản-pressing) tại Dortmund và Liverpool. Phòng thủ bằng cách tấn công ngay khi mất bóng!",
+      "taunt_wrong": "Klopp – Gegenpressing! Pressing điên cuồng ngay khi mất bóng. Phải có thể lực tốt khủng khiếp mới chơi được!"
+    },
+    {
+      "id": 43,
+      "category": "Lịch sử World Cup",
+      "difficulty": "medium",
+      "question": "World Cup 1998 tại Pháp có màn trình diễn ấn tượng của cầu thủ nào từ... Croatia?",
+      "options": ["Luka Modric", "Davor Suker", "Ivan Rakitic", "Mario Mandzukic"],
+      "answer": "Davor Suker",
+      "explanation": "Davor Suker vua phá lưới WC 1998 với 6 bàn, giúp Croatia về hạng 3. Huyền thoại của một thế hệ Croatia vàng!",
+      "taunt_wrong": "Davor Suker 1998! Croatia lần đầu dự WC đã về hạng 3 và có vua phá lưới. Kỳ tích thật sự!"
+    },
+    {
+      "id": 44,
+      "category": "Cà khịa",
+      "difficulty": "easy",
+      "question": "VAR (Video Assistant Referee) được sử dụng lần đầu tại World Cup nào?",
+      "options": ["Brazil 2014", "Russia 2018", "Qatar 2022", "Japan 2002"],
+      "answer": "Russia 2018",
+      "explanation": "VAR ra mắt WC tại Nga 2018. Kể từ đó, mọi tình huống penalty đều gây tranh cãi thêm 10 lần!",
+      "taunt_wrong": "Russia 2018 – VAR ra đời và tranh cãi bóng đá tăng lên gấp đôi. Cảm ơn công nghệ! 😅"
+    },
+    {
+      "id": 45,
+      "category": "Kỷ lục",
+      "difficulty": "medium",
+      "question": "Đội nào có chuỗi trận bất bại dài nhất tại World Cup?",
+      "options": ["Brazil", "Italy", "Germany", "Argentina"],
+      "answer": "Brazil",
+      "explanation": "Brazil từng có chuỗi 13 trận bất bại tại World Cup. Selecao của thời hoàng kim thật sự vô đối!",
+      "taunt_wrong": "Brazil – 13 trận bất bại! Đó là thời bóng đá Brazil còn là 'O Jogo Bonito' thật sự 😍"
+    },
+    {
+      "id": 46,
+      "category": "Cầu thủ",
+      "difficulty": "hard",
+      "question": "Cầu thủ nào ghi bàn tại 4 kỳ World Cup khác nhau?",
+      "options": ["Pele", "Ronaldo (Brazil)", "Miroslav Klose", "Uwe Seeler"],
+      "answer": "Uwe Seeler",
+      "explanation": "Uwe Seeler (Đức) ghi bàn tại các WC 1958, 1962, 1966, 1970. Pelé và Klose cũng làm được điều này!",
+      "taunt_wrong": "Uwe Seeler – và cả Pele, Klose! Ghi bàn tại 4 kỳ WC khác nhau, sự nghiệp vĩ đại thật sự!"
+    },
+    {
+      "id": 47,
+      "category": "World Cup 2026",
+      "difficulty": "medium",
+      "question": "Mascot chính thức của World Cup 2026 tên là gì?",
+      "options": ["Fuleco", "Zabivaka", "Pique", "Taino (dự kiến)"],
+      "answer": "Taino (dự kiến)",
+      "explanation": "Mascot WC 2026 lấy cảm hứng từ văn hóa Taino bản địa Bắc Mỹ. Mỗi kỳ WC một linh vật đặc sắc!",
+      "taunt_wrong": "Mascot WC luôn đáng yêu nhưng ít ai nhớ tên. Bạn nhớ được mascot nào không?"
+    },
+    {
+      "id": 48,
+      "category": "Cà khịa",
+      "difficulty": "medium",
+      "question": "Đội nào được mệnh danh là 'Những kẻ hay về nhì' tại World Cup (4 lần á quân)?",
+      "options": ["England", "Netherlands", "Germany", "Argentina"],
+      "answer": "Netherlands",
+      "explanation": "Hà Lan về nhì năm 1974, 1978 và 2010. Cộng thêm 1 lần nữa = 3 lần á quân. Gần mà vẫn không chạm được!",
+      "taunt_wrong": "Hà Lan – hay về nhì nhất! Đá hay, đẹp nhưng thiếu cái gì đó để vô địch. Số phận hay sao? 😔"
+    },
+    {
+      "id": 49,
+      "category": "Kỷ lục",
+      "difficulty": "hard",
+      "question": "Trận đấu World Cup nào kết thúc 0-0 sau 120 phút và phân định bằng penalty đầu tiên?",
+      "options": ["WC 1990 Tây Đức vs Pháp", "WC 1982 Tây Đức vs Pháp", "WC 1986 Pháp vs Bỉ", "WC 1978 Italy vs Brazil"],
+      "answer": "WC 1982 Tây Đức vs Pháp",
+      "explanation": "WC 1982 bán kết Tây Đức vs Pháp: trận bán kết WC đầu tiên phân định bằng penalty. Pháp thua dù dẫn 3-1!",
+      "taunt_wrong": "WC 1982 – trận bán kết huyền thoại! Pháp dẫn 3-1 rồi vẫn thua penalty. Đau không tả nổi!"
+    },
+    {
+      "id": 50,
+      "category": "Cà khịa tổng kết",
+      "difficulty": "easy",
+      "question": "Bạn đã trả lời đúng bao nhiêu câu hỏi hôm nay? Hãy tự đánh giá mình:",
+      "options": ["Huyền thoại (>40 câu)", "Tín đồ bóng đá (30-40 câu)", "Fan bình thường (20-30 câu)", "Xem bóng đá... cho vui (<20 câu)"],
+      "answer": "Huyền thoại (>40 câu)",
+      "explanation": "Cho dù điểm số thế nào – quan trọng là bạn đang chơi cùng chúng tôi! Đến ngày mai để thách đấu bạn bè nhé 🏆",
+      "taunt_wrong": "Không sao! Ngày mai có câu hỏi mới. Luyện tập thêm và cà khịa bạn bè nào! ⚽"
+    }
+  ]
+}
