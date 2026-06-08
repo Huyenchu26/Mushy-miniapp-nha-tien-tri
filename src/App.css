@@ -660,6 +660,211 @@ main {
   box-shadow: var(--wc-shadow);
 }
 
+.trivia-card {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 18px;
+  border: 1px solid rgba(230, 57, 70, 0.2);
+  border-radius: 20px;
+  padding: 20px;
+  background:
+    radial-gradient(circle at 92% 4%, rgba(230, 57, 70, 0.14), transparent 32%),
+    linear-gradient(145deg, #fff 0%, #fff8f8 100%);
+  box-shadow: 0 12px 32px rgba(111, 25, 36, 0.08);
+}
+
+.trivia-card::after {
+  position: absolute;
+  right: -22px;
+  bottom: -35px;
+  color: rgba(230, 57, 70, 0.055);
+  content: '?';
+  font-family: var(--font-display);
+  font-size: 150px;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.trivia-card.is-correct {
+  border-color: rgba(52, 199, 89, 0.35);
+  background: linear-gradient(145deg, #fff 0%, #f2fff5 100%);
+}
+
+.trivia-card.is-wrong {
+  border-color: rgba(255, 149, 0, 0.35);
+  background: linear-gradient(145deg, #fff 0%, #fff9ef 100%);
+}
+
+.trivia-card__topline,
+.trivia-card__meta,
+.trivia-card__footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+}
+
+.trivia-card__topline,
+.trivia-card__footer {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.trivia-card__label {
+  color: var(--wc-primary);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.trivia-card__points {
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: var(--wc-primary);
+  color: white;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.trivia-card__meta {
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.trivia-card__meta span {
+  border: 1px solid var(--wc-line);
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--wc-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.trivia-card h3 {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  margin: 16px 0;
+  color: var(--wc-ink);
+  font-family: var(--font-display);
+  font-size: clamp(20px, 3vw, 27px);
+  line-height: 1.25;
+}
+
+.trivia-options {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.trivia-options button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  border: 1px solid var(--wc-line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--wc-ink);
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+}
+
+.trivia-options button:hover:not(:disabled),
+.trivia-options button.is-selected {
+  border-color: var(--wc-primary);
+  background: rgba(230, 57, 70, 0.08);
+}
+
+.trivia-options button:focus-visible {
+  outline: 3px solid rgba(230, 57, 70, 0.22);
+  outline-offset: 2px;
+}
+
+.trivia-options button.is-answer {
+  border-color: #34c759;
+  background: #edfff2;
+  color: #166c2d;
+}
+
+.trivia-options button.is-missed {
+  border-color: #ff9500;
+  background: #fff5e6;
+  color: #8a4c00;
+}
+
+.trivia-options button:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.trivia-options strong {
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.trivia-card__footer {
+  margin-top: 16px;
+  color: var(--wc-muted);
+  font-size: 12px;
+}
+
+.trivia-reveal {
+  position: relative;
+  z-index: 1;
+  margin-top: 16px;
+  border-radius: 14px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.trivia-reveal strong {
+  color: var(--wc-ink);
+}
+
+.trivia-reveal p {
+  margin: 6px 0 0;
+  color: var(--wc-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+@media (max-width: 560px) {
+  .trivia-card {
+    padding: 16px;
+  }
+
+  .trivia-options {
+    grid-template-columns: 1fr;
+  }
+
+  .trivia-card__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .trivia-card__footer .primary-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trivia-options button {
+    transition: none;
+  }
+}
+
 .match-meta,
 .result-line,
 .lock-line,
