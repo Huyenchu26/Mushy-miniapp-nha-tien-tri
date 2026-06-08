@@ -1103,6 +1103,47 @@ main {
   line-height: 1.35;
 }
 
+.match-ai {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.match-ai-btn {
+  width: fit-content;
+  border: 1px solid rgba(230, 57, 70, 0.18);
+  border-radius: 12px;
+  padding: 8px 11px;
+  background: rgba(230, 57, 70, 0.08);
+  color: var(--brand);
+  font: 800 12px/1 var(--font-body);
+  cursor: pointer;
+}
+
+.match-ai-btn:hover {
+  background: rgba(230, 57, 70, 0.13);
+}
+
+.match-ai-panel {
+  border: 1px solid rgba(15, 15, 18, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+  color: var(--fg-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.match-ai-panel p {
+  margin: 0;
+}
+
+.match-ai-panel.error {
+  border-color: rgba(255, 59, 48, 0.22);
+  background: rgba(255, 59, 48, 0.06);
+  color: var(--danger-v3);
+}
+
 .primary-btn {
   min-height: 48px;
   border: 0;

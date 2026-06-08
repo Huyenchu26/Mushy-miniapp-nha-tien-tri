@@ -12,4 +12,11 @@ dist
 *.log
 npm-debug.log*
 
-.playwright-mcp
+# Local agent/browser artifacts
+.agent/
+.playwright-mcp/
+dev-server-verify.png
+
+# Superpowers local notes
+docs/superpower/
+docs/superpowers/

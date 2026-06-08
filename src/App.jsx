@@ -117,6 +117,8 @@ export default function App() {
   const [spamBlockedUntil, setSpamBlockedUntil] = useState(0);
   const [liveScores, setLiveScores] = useState([]);
   const [liveSync, setLiveSync] = useState({ source: '', fetchedAt: '', error: '' });
+  const [aiInsightsEnabled, setAiInsightsEnabled] = useState(false);
+  const [matchInsights, setMatchInsights] = useState({});
   const [members, setMembers] = useState([]);
   const [groupFilter, setGroupFilter] = useState('all');
   const [query, setQuery] = useState('');
@@ -177,6 +179,21 @@ export default function App() {
       setCtxError(err.message || 'Không đọc được Mushy context.');
     }
   }, [forceLocalMock, localSimulation]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/match-insight-status')
+      .then((response) => response.ok ? response.json() : { enabled: false })
+      .then((payload) => {
+        if (!cancelled) setAiInsightsEnabled(Boolean(payload?.enabled));
+      })
+      .catch(() => {
+        if (!cancelled) setAiInsightsEnabled(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!ctx?.userId || !scope?.workspaceId) return;
@@ -438,6 +455,53 @@ export default function App() {
     } catch (err) {
       addToast(err.message || 'Không lưu được dự đoán.', 'error');
       return false;
+    }
+  }
+
+  async function handleLoadMatchInsight(match) {
+    const matchNo = Number(match?.matchNo);
+    if (!matchNo || !ctx?.token || !scope?.workspaceId) return;
+    const current = matchInsights[matchNo];
+    if (current?.loading || current?.summary) return;
+
+    setMatchInsights((rows) => ({
+      ...rows,
+      [matchNo]: { ...(rows[matchNo] || {}), loading: true, error: '' },
+    }));
+
+    try {
+      const response = await fetch('/api/match-insight', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${ctx.token}`,
+          'X-Workspace-Id': scope.workspaceId,
+          'X-Home-Workspace-Id': ctx.workspaceId || scope.workspaceId,
+        },
+        body: JSON.stringify({ matchNo }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.error || 'match_insight_failed');
+
+      setMatchInsights((rows) => ({
+        ...rows,
+        [matchNo]: {
+          loading: false,
+          error: '',
+          summary: payload.summary || '',
+          model: payload.model || '',
+          cached: payload.cached === true,
+        },
+      }));
+    } catch {
+      setMatchInsights((rows) => ({
+        ...rows,
+        [matchNo]: {
+          ...(rows[matchNo] || {}),
+          loading: false,
+          error: 'AI đang nghỉ giải lao, thử lại sau.',
+        },
+      }));
     }
   }
 
@@ -706,6 +770,9 @@ export default function App() {
                 onOpenDaily={() => setActiveTab('daily')}
                 onOpenLeaderboard={() => setActiveTab('leaderboard')}
                 liveSync={liveSync}
+                aiInsightsEnabled={aiInsightsEnabled && !(localSimulation && isMockContext(ctx))}
+                matchInsights={matchInsights}
+                onLoadMatchInsight={handleLoadMatchInsight}
               />
             )}
             {activeTab === 'matches' && (
@@ -945,6 +1012,9 @@ function MatchesScreen({
   onOpenDaily,
   onOpenLeaderboard,
   liveSync,
+  aiInsightsEnabled,
+  matchInsights,
+  onLoadMatchInsight,
 }) {
   const grouped = useMemo(() => groupByDate(matches), [matches]);
   const roastMap = useMemo(
@@ -1061,8 +1131,11 @@ function MatchesScreen({
                   predictionCount={predictionCountByMatch.get(Number(match.matchNo)) || 0}
                   roastText={roastMap.get(Number(match.matchNo))}
                   dailyDoubleMatchNo={dailyDoubleDownMap.get(match.matchDay)}
+                  aiInsightsEnabled={aiInsightsEnabled}
+                  aiInsight={matchInsights?.[Number(match.matchNo)]}
                   onSave={onSave}
                   onOpenRoom={onOpenRoom}
+                  onLoadInsight={onLoadMatchInsight}
                 />
               ))}
             </div>
@@ -1275,7 +1348,18 @@ function LiveScorePanel({ liveScores, liveSync }) {
   );
 }
 
-function MatchCardPrototype({ match, prediction, predictionCount = 0, roastText, dailyDoubleMatchNo, onSave, onOpenRoom }) {
+function MatchCardPrototype({
+  match,
+  prediction,
+  predictionCount = 0,
+  roastText,
+  dailyDoubleMatchNo,
+  aiInsightsEnabled,
+  aiInsight,
+  onSave,
+  onOpenRoom,
+  onLoadInsight,
+}) {
   const teamsKnown = !hasUnknownTeam(match);
   const locked = Date.now() >= new Date(match.kickoffAt).getTime() || !teamsKnown;
   const finished = isFinished(match);
@@ -1288,6 +1372,7 @@ function MatchCardPrototype({ match, prediction, predictionCount = 0, roastText,
   const [awayPred, setAwayPred] = useState(prediction?.awayPred ?? 0);
   const [doubleDown, setDoubleDown] = useState(prediction?.doubleDown ?? false);
   const [saving, setSaving] = useState(false);
+  const [insightOpen, setInsightOpen] = useState(false);
   const base = matchBasePoints(prediction, match);
   const breakdown = matchScoreBreakdown(prediction, match);
   const displayHomeScore = finished ? match.homeScore : liveScore?.homeScore;
@@ -1365,9 +1450,18 @@ function MatchCardPrototype({ match, prediction, predictionCount = 0, roastText,
   }
 
   function handleCardKeyDown(event) {
+    if (event.target.closest('button')) return;
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
     onOpenRoom?.(match);
+  }
+
+  function handleInsightClick(event) {
+    event.stopPropagation();
+    setInsightOpen(true);
+    if (!aiInsight?.summary && !aiInsight?.loading) {
+      onLoadInsight?.(match);
+    }
   }
 
   return (
@@ -1496,6 +1590,26 @@ function MatchCardPrototype({ match, prediction, predictionCount = 0, roastText,
           </p>
         </>
       )}
+      {aiInsightsEnabled && teamsKnown ? (
+        <div className="match-ai">
+          <button type="button" className="match-ai-btn" onClick={handleInsightClick}>
+            Nhận định AI
+          </button>
+          {insightOpen ? (
+            <div className={`match-ai-panel ${aiInsight?.error ? 'error' : ''}`}>
+              {aiInsight?.loading ? (
+                <p>AI đang soi trận, chờ chút...</p>
+              ) : aiInsight?.error ? (
+                <p>{aiInsight.error}</p>
+              ) : aiInsight?.summary ? (
+                <p>{aiInsight.summary}</p>
+              ) : (
+                <p>Bấm để nghe AI đọc vị trận này.</p>
+              )}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </article>
   );
 }
