@@ -11,6 +11,7 @@ import {
   mergeMockPredictions,
 } from './lib/app/mock-simulation.js';
 import { computeStandings, dailyPoints, isFinished, matchBasePoints, matchScoreBreakdown, outcome } from './lib/app/scoring.js';
+import { ALL_SCORING_QUESTIONS, getTriviaQuestionForDate, triviaStreak } from './lib/app/quiz-data.js';
 import { selectInsightWarmupMatches } from './lib/app/match-insight.js';
 import Select from './components/Select.jsx';
 import { getContext } from './lib/context.js';
@@ -557,7 +558,13 @@ export default function App() {
 
   async function handleSaveAnswer(question, answer) {
     try {
-      if (Date.now() >= new Date(question.closesAt).getTime() || question.correctAnswer) {
+      const existingAnswer = answers.find(
+        (row) => row.createdBy === ctx.userId && row.questionKey === question.key
+      );
+      if (question.kind === 'trivia' && existingAnswer) {
+        throw new Error('Hỏi vui chỉ được trả lời một lần.');
+      }
+      if (Date.now() >= new Date(question.closesAt).getTime() || (question.correctAnswer && question.kind !== 'trivia')) {
         throw new Error('Câu hỏi này đã khóa.');
       }
       const cleanAnswer = String(answer || '').trim().replace(/\s+/g, ' ').slice(0, 280);
@@ -574,15 +581,16 @@ export default function App() {
         return;
       }
 
-      const { error: upsertError } = await db.from('group_daily_answers').upsert(
-        {
-          workspace_id: scope.workspaceId,
-          created_by: ctx.userId,
-          question_key: question.key,
-          answer: cleanAnswer,
-        },
-        { onConflict: 'workspace_id,created_by,question_key' }
-      );
+      const payload = {
+        workspace_id: scope.workspaceId,
+        created_by: ctx.userId,
+        question_key: question.key,
+        answer: cleanAnswer,
+      };
+      const query = question.kind === 'trivia'
+        ? db.from('group_daily_answers').insert(payload)
+        : db.from('group_daily_answers').upsert(payload, { onConflict: 'workspace_id,created_by,question_key' });
+      const { error: upsertError } = await query;
       if (upsertError) throw upsertError;
 
       setAnswers(await fetchDailyAnswers(scope.workspaceId));
@@ -834,7 +842,9 @@ export default function App() {
             {activeTab === 'daily' && (
               <DailyScreen
                 questions={DAILY_QUESTIONS}
+                triviaQuestion={getTriviaQuestionForDate(getLocalDateKey())}
                 answerMap={answerMap}
+                answers={currentUserAnswers}
                 longTermBet={longTermBet}
                 onSave={handleSaveAnswer}
                 onSaveLongTerm={handleSaveLongTermBet}
@@ -2133,12 +2143,13 @@ function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
   );
 }
 
-function DailyScreen({ questions, answerMap, longTermBet, onSave, onSaveLongTerm }) {
+function DailyScreen({ questions, triviaQuestion, answerMap, answers, longTermBet, onSave, onSaveLongTerm }) {
   const visibleQuestions = useMemo(() => {
     const today = getLocalDateKey();
     const tomorrow = getLocalDateKey(new Date(Date.now() + 24 * 60 * 60 * 1000));
     return questions.filter((question) => question.date === today || question.date === tomorrow);
   }, [questions]);
+  const streak = triviaStreak(answers, getLocalDateKey());
 
   return (
     <section className="screen">
@@ -2148,6 +2159,14 @@ function DailyScreen({ questions, answerMap, longTermBet, onSave, onSaveLongTerm
           <h2>Câu hỏi hôm nay và ngày mai</h2>
         </div>
       </div>
+      {triviaQuestion ? (
+        <TriviaCard
+          question={triviaQuestion}
+          answer={answerMap.get(triviaQuestion.key)}
+          streak={streak}
+          onSave={onSave}
+        />
+      ) : null}
       <div className="question-list">
         {visibleQuestions.length === 0 ? (
           <p className="empty-state">Chưa có câu hỏi cho hôm nay hoặc ngày mai.</p>
@@ -2157,6 +2176,62 @@ function DailyScreen({ questions, answerMap, longTermBet, onSave, onSaveLongTerm
       </div>
       <LongTermBetCard bet={longTermBet} onSave={onSaveLongTerm} />
     </section>
+  );
+}
+
+function TriviaCard({ question, answer, streak, onSave }) {
+  const [draft, setDraft] = useState(answer?.answer || '');
+  const answered = Boolean(answer);
+  const isCorrect = answered && dailyPoints(answer, question) > 0;
+  const expired = Date.now() >= new Date(question.closesAt).getTime();
+
+  useEffect(() => setDraft(answer?.answer || ''), [answer?.answer]);
+
+  return (
+    <article className={`trivia-card ${answered ? (isCorrect ? 'is-correct' : 'is-wrong') : ''}`}>
+      <div className="trivia-card__topline">
+        <span className="trivia-card__label">Hỏi vui hôm nay</span>
+        <span className="trivia-card__points">+{question.points}đ</span>
+      </div>
+      <div className="trivia-card__meta">
+        <span>{question.category}</span>
+        <span>{difficultyLabel(question.difficulty)}</span>
+        <span>Chuỗi đúng: {streak} ngày</span>
+      </div>
+      <h3>{question.prompt}</h3>
+      <div className="trivia-options" role="group" aria-label="Các đáp án hỏi vui">
+        {question.options.map((option) => {
+          const selected = draft === option;
+          const correct = answered && option === question.correctAnswer;
+          const wrong = answered && selected && !correct;
+          return (
+            <button
+              key={option}
+              type="button"
+              disabled={answered || expired}
+              className={`${selected ? 'is-selected' : ''} ${correct ? 'is-answer' : ''} ${wrong ? 'is-missed' : ''}`}
+              onClick={() => setDraft(option)}
+            >
+              <span>{option}</span>
+              {correct ? <strong>Đúng</strong> : null}
+            </button>
+          );
+        })}
+      </div>
+      {answered ? (
+        <div className="trivia-reveal" role="status">
+          <strong>{isCorrect ? `Chính xác, bạn nhận +${question.points}đ` : 'Chưa đúng rồi'}</strong>
+          <p>{isCorrect ? question.explanation : `${question.wrongCopy} ${question.explanation}`}</p>
+        </div>
+      ) : (
+        <div className="trivia-card__footer">
+          <span>{expired ? 'Câu hỏi hôm nay đã đóng' : 'Chọn kỹ nhé, không được đổi đáp án.'}</span>
+          <button type="button" className="primary-btn small" disabled={!draft || expired} onClick={() => onSave(question, draft)}>
+            Chốt đáp án
+          </button>
+        </div>
+      )}
+    </article>
   );
 }
 
@@ -2601,7 +2676,9 @@ function leaderSubtitle(row) {
 
 function buildScoreHistory({ predictions = [], answers = [], matches = [], currentStanding = null }) {
   const matchesByNo = new Map(matches.map((match) => [Number(match.matchNo), match]));
-  const questionsByKey = new Map(DAILY_QUESTIONS.map((question) => [question.key, question]));
+  const questionsByKey = new Map(
+    [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS].map((question) => [question.key, question])
+  );
 
   const matchItems = predictions
     .map((prediction) => {
@@ -2687,7 +2764,9 @@ function buildScoreHistory({ predictions = [], answers = [], matches = [], curre
 
 function buildPointNotifications({ predictions = [], answers = [], matches = [] }) {
   const matchesByNo = new Map(matches.map((match) => [Number(match.matchNo), match]));
-  const questionsByKey = new Map(DAILY_QUESTIONS.map((question) => [question.key, question]));
+  const questionsByKey = new Map(
+    [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS].map((question) => [question.key, question])
+  );
 
   const matchItems = predictions
     .map((prediction) => {
@@ -3207,7 +3286,13 @@ function buildStandings({ members, predictions, answers, matches }) {
 }
 
 function computeStandingsForUsers({ participants, predictions, dailyAnswers, matches }) {
-  return computeStandings({ participants, predictions, dailyAnswers, matches, questions: DAILY_QUESTIONS });
+  return computeStandings({
+    participants,
+    predictions,
+    dailyAnswers,
+    matches,
+    questions: [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS],
+  });
 }
 
 function ensureCurrentMember(memberRows, ctx) {
@@ -3578,6 +3663,12 @@ function formatDate(value) {
     day: '2-digit',
     month: '2-digit',
   }).format(new Date(value));
+}
+
+function difficultyLabel(value) {
+  if (value === 'hard') return 'Khó · 3đ';
+  if (value === 'medium') return 'Vừa · 2đ';
+  return 'Dễ · 1đ';
 }
 
 function formatTime(value) {
