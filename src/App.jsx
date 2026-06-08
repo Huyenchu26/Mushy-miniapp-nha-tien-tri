@@ -1114,7 +1114,7 @@ function TodayChecklist({
           <p className="eyebrow">Checklist hôm nay</p>
           <h2>{noTasksToday ? 'Chưa có nhiệm vụ hôm nay' : checklistDone ? 'Xong việc hôm nay rồi' : hasMatchesToday ? `${pendingMatches.length} việc cần xử lý` : 'Chưa có trận hôm nay'}</h2>
         </div>
-        <span>{predictedToday.length}/{todayMatches.length || 0} đã dự</span>
+        <span>{predictedToday.length}/{todayMatches.length || 0} đã dự đoán</span>
       </div>
 
       <div className="today-checklist-items">
