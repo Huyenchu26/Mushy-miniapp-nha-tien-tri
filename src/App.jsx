@@ -11,6 +11,7 @@ import {
   mergeMockPredictions,
 } from './lib/app/mock-simulation.js';
 import { computeStandings, dailyPoints, isFinished, matchBasePoints, matchScoreBreakdown, outcome } from './lib/app/scoring.js';
+import { selectInsightWarmupMatches } from './lib/app/match-insight.js';
 import Select from './components/Select.jsx';
 import { getContext } from './lib/context.js';
 import { listMembers } from './lib/members.js';
@@ -26,6 +27,9 @@ const LIVE_SCORE_POSTMATCH_MS = 4 * 60 * 60 * 1000;
 const ROOM_POLL_FALLBACK_MS = 30000;
 const CHAT_REPEAT_WINDOW_MS = 45000;
 const CHAT_REPEAT_LIMIT = 2;
+const MATCH_INSIGHT_WARMUP_DELAY_MS = 1500;
+const MATCH_INSIGHT_WARMUP_LIMIT = 3;
+
 function SoccerBallIcon({ size = 15 }) {
   return (
     <span
@@ -147,6 +151,8 @@ export default function App() {
   const refreshGestureRef = useRef({ startY: 0, scrollY: 0 });
   const chatSendTimesRef = useRef([]);
   const chatRepeatRef = useRef([]);
+  const matchInsightRequestsRef = useRef(new Map());
+  const matchInsightWarmupKeyRef = useRef('');
   const scope = useMemo(
     () => (ctx?.workspaceId ? { workspaceId: ctx.workspaceId, label: ctx.workspaceSlug || 'Mushy' } : null),
     [ctx?.workspaceId, ctx?.workspaceSlug]
@@ -200,6 +206,39 @@ export default function App() {
     loadGameData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx?.userId, scope?.workspaceId]);
+
+  useEffect(() => {
+    if (!aiInsightsEnabled || !ctx?.token || !scope?.workspaceId) return undefined;
+    if (localSimulation && isMockContext(ctx)) return undefined;
+
+    const warmupKey = `${ctx.userId}:${scope.workspaceId}`;
+    if (matchInsightWarmupKeyRef.current === warmupKey) return undefined;
+    matchInsightWarmupKeyRef.current = warmupKey;
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      const matches = selectInsightWarmupMatches(MATCHES, Date.now(), MATCH_INSIGHT_WARMUP_LIMIT);
+      for (const match of matches) {
+        if (cancelled) break;
+        try {
+          const payload = await requestMatchInsight(match.matchNo);
+          if (cancelled || !payload?.summary) continue;
+          setMatchInsights((rows) => ({
+            ...rows,
+            [Number(match.matchNo)]: toMatchInsightState(payload),
+          }));
+        } catch {
+          // Warmup is best-effort; users can retry from the match card.
+        }
+      }
+    }, MATCH_INSIGHT_WARMUP_DELAY_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiInsightsEnabled, ctx?.token, ctx?.userId, scope?.workspaceId, localSimulation]);
 
   useEffect(() => {
     if (!roomMatch || !scope?.workspaceId) return;
@@ -470,28 +509,11 @@ export default function App() {
     }));
 
     try {
-      const response = await fetch('/api/match-insight', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${ctx.token}`,
-          'X-Workspace-Id': scope.workspaceId,
-          'X-Home-Workspace-Id': ctx.workspaceId || scope.workspaceId,
-        },
-        body: JSON.stringify({ matchNo }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload?.error || 'match_insight_failed');
+      const payload = await requestMatchInsight(matchNo);
 
       setMatchInsights((rows) => ({
         ...rows,
-        [matchNo]: {
-          loading: false,
-          error: '',
-          summary: payload.summary || '',
-          model: payload.model || '',
-          cached: payload.cached === true,
-        },
+        [matchNo]: toMatchInsightState(payload),
       }));
     } catch {
       setMatchInsights((rows) => ({
@@ -503,6 +525,34 @@ export default function App() {
         },
       }));
     }
+  }
+
+  function requestMatchInsight(matchNo) {
+    const key = Number(matchNo);
+    const activeRequest = matchInsightRequestsRef.current.get(key);
+    if (activeRequest) return activeRequest;
+
+    const request = fetch('/api/match-insight', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${ctx.token}`,
+        'X-Workspace-Id': scope.workspaceId,
+        'X-Home-Workspace-Id': ctx.workspaceId || scope.workspaceId,
+      },
+      body: JSON.stringify({ matchNo: key }),
+    })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload?.error || 'match_insight_failed');
+        return payload;
+      })
+      .finally(() => {
+        matchInsightRequestsRef.current.delete(key);
+      });
+
+    matchInsightRequestsRef.current.set(key, request);
+    return request;
   }
 
   async function handleSaveAnswer(question, answer) {
@@ -1544,37 +1594,28 @@ function MatchCardPrototype({
               type="button"
               className={`double-btn star-btn ${doubleDown ? 'active' : ''}`}
               disabled={!canUseDoubleDown}
+              aria-label={doubleDown ? 'Bỏ kèo tủ x2' : 'Chọn kèo tủ x2'}
+              aria-pressed={doubleDown}
               onClick={(event) => {
                 event.stopPropagation();
                 setDoubleDown((value) => !value);
               }}
-              title="Kèo tủ x2"
+              title={`Kèo tủ x2 · ${doubleHintText}`}
             >
               ★
             </button>
             <button
               type="button"
-              className={`primary-btn small save-prediction-btn ${draftIsSaved ? 'saved' : ''}`}
-              disabled={locked || saving}
+              className={`primary-btn small room-action-btn ${draftIsSaved ? 'room-ready' : prediction ? 'dirty' : ''}`}
+              disabled={saving || (!draftIsSaved && locked)}
               onClick={(event) => {
                 event.stopPropagation();
-                handleSaveClick();
+                handlePrimaryActionClick();
               }}
             >
-              {saving ? 'Đang lưu...' : draftIsSaved ? 'Đã lưu' : 'Lưu dự đoán'}
+              {predictionButtonLabel}
             </button>
           </div>
-          <button
-            type="button"
-            className={`primary-btn small room-action-btn ${draftIsSaved ? 'room-ready' : prediction ? 'dirty' : ''}`}
-            disabled={saving || (!draftIsSaved && locked)}
-            onClick={(event) => {
-              event.stopPropagation();
-              handlePrimaryActionClick();
-            }}
-          >
-            {predictionButtonLabel}
-          </button>
           <p className="match-social-line">{socialLine}</p>
           <p className="double-hint double-hint-clean">{doubleHintText}</p>
           <p className="double-hint">
@@ -3627,6 +3668,16 @@ function sourceLabel(source) {
   if (source === 'worldcup26.ir') return 'WorldCup26';
   if (source === 'espn') return 'ESPN';
   return source || 'live';
+}
+
+function toMatchInsightState(payload) {
+  return {
+    loading: false,
+    error: '',
+    summary: payload?.summary || '',
+    model: payload?.model || '',
+    cached: payload?.cached === true,
+  };
 }
 
 function isLocalSimulationEnabled() {

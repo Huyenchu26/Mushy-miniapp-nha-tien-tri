@@ -5,6 +5,7 @@ import {
   buildMatchInsightPrompt,
   getFamousPlayersForMatch,
   parseMatchInsightResponse,
+  selectInsightWarmupMatches,
   validateMatchInsightSummary,
 } from './match-insight.js';
 
@@ -22,6 +23,21 @@ test('match insight model order uses DeepSeek Flash with Qwen fallback', () => {
     'deepseek/deepseek-v4-flash',
     'qwen/qwen3.7-plus',
   ]);
+});
+
+test('warmup selects the nearest known upcoming matches only', () => {
+  const matches = [
+    { matchNo: 4, homeTeam: 'Unknown', awayTeam: 'France', kickoffAt: '2026-06-12T20:00:00Z' },
+    { matchNo: 2, homeTeam: 'Canada', awayTeam: 'Qatar', kickoffAt: '2026-06-12T18:00:00Z' },
+    { matchNo: 1, homeTeam: 'France', awayTeam: 'Canada', kickoffAt: '2026-06-11T18:00:00Z' },
+    { matchNo: 3, homeTeam: 'Mexico', awayTeam: 'South Africa', kickoffAt: '2026-06-12T19:00:00Z' },
+    { matchNo: 5, homeTeam: 'Brazil', awayTeam: 'Morocco', kickoffAt: '2026-06-13T19:00:00Z' },
+  ];
+
+  assert.deepEqual(
+    selectInsightWarmupMatches(matches, Date.parse('2026-06-12T17:00:00Z'), 2).map((match) => match.matchNo),
+    [2, 3]
+  );
 });
 
 test('famous player lookup returns only curated players for match teams', () => {
