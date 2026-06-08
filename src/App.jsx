@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, BookOpen, ClipboardCheck, Flame, Scale, Star, Target, Trophy } from 'lucide-react';
+import { Bell, BookOpen, CalendarDays, ClipboardCheck, Flame, Home, PenLine, Scale, Star, Target, Trophy } from 'lucide-react';
 import { DAILY_QUESTIONS, DATA_SOURCE, FIFA_RANKING_SOURCE, GROUPS, MATCHES, TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS } from './lib/app/worldcup-data.js';
 import {
   MOCK_SCORE_STEP_MS,
@@ -27,11 +27,11 @@ const ROOM_POLL_FALLBACK_MS = 30000;
 const CHAT_REPEAT_WINDOW_MS = 45000;
 const CHAT_REPEAT_LIMIT = 2;
 const TABS = [
-  { id: 'matches', label: 'Trang chủ', shortLabel: 'Trang chủ', icon: '⌂' },
-  { id: 'results', label: 'Trận đấu', shortLabel: 'Trận đấu', icon: '⚽' },
-  { id: 'daily', label: 'Dự đoán', shortLabel: 'Dự đoán', icon: '●' },
-  { id: 'leaderboard', label: 'Bảng xếp hạng', shortLabel: 'BXH', icon: '♕' },
-  { id: 'rules', label: 'Luật chơi', shortLabel: 'Luật chơi', icon: '↺' },
+  { id: 'matches', label: 'Trang chủ', shortLabel: 'Trang chủ', icon: Home },
+  { id: 'results', label: 'Trận đấu', shortLabel: 'Trận đấu', icon: CalendarDays },
+  { id: 'daily', label: 'Dự đoán', shortLabel: 'Dự đoán', icon: PenLine },
+  { id: 'leaderboard', label: 'Bảng xếp hạng', shortLabel: 'BXH', icon: Trophy },
+  { id: 'rules', label: 'Luật chơi', shortLabel: 'Luật chơi', icon: BookOpen },
 ];
 const PRIMARY_GROUP_FILTERS = ['A', 'B', 'C', 'D'];
 const EXTRA_GROUP_FILTERS = Object.keys(GROUPS).filter((group) => !PRIMARY_GROUP_FILTERS.includes(group));
@@ -737,7 +737,9 @@ export default function App() {
             aria-label={tab.label}
             aria-current={activeTab === tab.id ? 'page' : undefined}
           >
-            <span className="tab-icon" aria-hidden="true">{tab.icon}</span>
+            <span className="tab-icon" aria-hidden="true">
+              <tab.icon size={15} strokeWidth={2.5} />
+            </span>
             <span className="tab-label">{tab.shortLabel}</span>
           </button>
         ))}

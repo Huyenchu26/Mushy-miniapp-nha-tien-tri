@@ -97,15 +97,19 @@ input:disabled {
 }
 
 .tab-icon {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   width: 24px;
   height: 24px;
   border-radius: 10px;
   background: var(--wc-soft);
   color: var(--wc-muted);
-  font-size: 13px;
-  line-height: 1;
+}
+
+.tab-icon svg {
+  display: block;
 }
 
 .tab-nav button.active .tab-icon {
