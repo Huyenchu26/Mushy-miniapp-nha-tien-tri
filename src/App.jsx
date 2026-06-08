@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, BookOpen, ClipboardCheck, Flame, Scale, Star, Target, Trophy } from 'lucide-react';
+import { Bell, BookOpen, CalendarDays, ClipboardCheck, Flame, Home, PenLine, Scale, Star, Target, Trophy } from 'lucide-react';
 import { DAILY_QUESTIONS, DATA_SOURCE, FIFA_RANKING_SOURCE, GROUPS, MATCHES, TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS } from './lib/app/worldcup-data.js';
 import {
   MOCK_SCORE_STEP_MS,
@@ -27,11 +27,11 @@ const ROOM_POLL_FALLBACK_MS = 30000;
 const CHAT_REPEAT_WINDOW_MS = 45000;
 const CHAT_REPEAT_LIMIT = 2;
 const TABS = [
-  { id: 'matches', label: 'Trang chủ', shortLabel: 'Trang chủ', icon: '⌂' },
-  { id: 'results', label: 'Trận đấu', shortLabel: 'Trận đấu', icon: '⚽' },
-  { id: 'daily', label: 'Dự đoán', shortLabel: 'Dự đoán', icon: '●' },
-  { id: 'leaderboard', label: 'Bảng xếp hạng', shortLabel: 'BXH', icon: '♕' },
-  { id: 'rules', label: 'Luật chơi', shortLabel: 'Luật chơi', icon: '↺' },
+  { id: 'matches', label: 'Trang chủ', shortLabel: 'Trang chủ', icon: Home },
+  { id: 'results', label: 'Trận đấu', shortLabel: 'Trận đấu', icon: CalendarDays },
+  { id: 'daily', label: 'Dự đoán', shortLabel: 'Dự đoán', icon: PenLine },
+  { id: 'leaderboard', label: 'Bảng xếp hạng', shortLabel: 'BXH', icon: Trophy },
+  { id: 'rules', label: 'Luật chơi', shortLabel: 'Luật chơi', icon: BookOpen },
 ];
 const PRIMARY_GROUP_FILTERS = ['A', 'B', 'C', 'D'];
 const EXTRA_GROUP_FILTERS = Object.keys(GROUPS).filter((group) => !PRIMARY_GROUP_FILTERS.includes(group));
@@ -103,8 +103,27 @@ export default function App() {
   const [groupFilter, setGroupFilter] = useState('all');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [notice, setNotice] = useState('');
+  const [toasts, setToasts] = useState([]);
   const [error, setError] = useState('');
+
+  const addToast = (message, type = 'success') => {
+    if (!message) return;
+    if (message.startsWith('DEV mock')) {
+      console.log(message);
+      return;
+    }
+    const id = Date.now() + Math.random().toString(36).substr(2, 9);
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3000);
+  };
+
+  const setNotice = (msg) => {
+    if (!msg) return;
+    const type = msg.includes('Bạn cần lưu dự đoán') ? 'warning' : 'success';
+    addToast(msg, type);
+  };
   const refreshGestureRef = useRef({ startY: 0, scrollY: 0 });
   const chatSendTimesRef = useRef([]);
   const chatRepeatRef = useRef([]);
@@ -336,8 +355,6 @@ export default function App() {
   }
 
   async function handleSavePrediction(match, draft) {
-    setNotice('');
-    setError('');
     try {
       const nextPrediction = {
         workspaceId: scope.workspaceId,
@@ -401,14 +418,12 @@ export default function App() {
       setNotice('Đã lưu dự đoán.');
       return true;
     } catch (err) {
-      setError(err.message || 'Không lưu được dự đoán.');
+      addToast(err.message || 'Không lưu được dự đoán.', 'error');
       return false;
     }
   }
 
   async function handleSaveAnswer(question, answer) {
-    setNotice('');
-    setError('');
     try {
       if (Date.now() >= new Date(question.closesAt).getTime() || question.correctAnswer) {
         throw new Error('Câu hỏi này đã khóa.');
@@ -441,13 +456,11 @@ export default function App() {
       setAnswers(await fetchDailyAnswers(scope.workspaceId));
       setNotice('Đã lưu câu trả lời.');
     } catch (err) {
-      setError(err.message || 'Không lưu được câu trả lời.');
+      addToast(err.message || 'Không lưu được câu trả lời.', 'error');
     }
   }
 
   async function handleSaveLongTermBet(draft) {
-    setNotice('');
-    setError('');
     try {
       const champion = String(draft.champion || '').trim();
       const topScorer = String(draft.topScorer || '').trim().replace(/\s+/g, ' ').slice(0, 80);
@@ -487,7 +500,7 @@ export default function App() {
       setLongTermBet(nextBet);
       setNotice('Đã lưu dự đoán dài hạn.');
     } catch (err) {
-      setError(err.message || 'Không lưu được dự đoán dài hạn.');
+      addToast(err.message || 'Không lưu được dự đoán dài hạn.', 'error');
     }
   }
 
@@ -619,7 +632,7 @@ export default function App() {
     loadGameData();
   }
 
-  const visibleNotice = notice && !notice.startsWith('DEV mock') ? notice : '';
+
 
   return (
     <div className="wc-app" onTouchStart={handleRefreshTouchStart} onTouchEnd={handleRefreshTouchEnd}>
@@ -652,9 +665,9 @@ export default function App() {
               totalScore={currentStanding?.total ?? 0}
             />
 
-            {(visibleNotice || error || loading) && (
+            {(error || loading) && (
               <div className={`toast-line ${error ? 'error' : ''}`} role="status">
-                {loading ? 'Đang tải dữ liệu...' : error || visibleNotice}
+                {loading ? 'Đang tải dữ liệu...' : error}
               </div>
             )}
 
@@ -724,7 +737,9 @@ export default function App() {
             aria-label={tab.label}
             aria-current={activeTab === tab.id ? 'page' : undefined}
           >
-            <span className="tab-icon" aria-hidden="true">{tab.icon}</span>
+            <span className="tab-icon" aria-hidden="true">
+              <tab.icon size={15} strokeWidth={2.5} />
+            </span>
             <span className="tab-label">{tab.shortLabel}</span>
           </button>
         ))}
@@ -736,6 +751,20 @@ export default function App() {
         <span>BXH FIFA: {FIFA_RANKING_SOURCE.lastOfficialUpdate}</span>
         <a href={FIFA_RANKING_SOURCE.officialUrl} target="_blank" rel="noreferrer">Ranking</a>
       </footer>}
+
+      {/* Toast notifications */}
+      <div className="toast-container" aria-live="assertive">
+        {toasts.map((toast) => (
+          <div key={toast.id} className={`toast-item ${toast.type}`} role="alert">
+            <span className="toast-icon">
+              {toast.type === 'success' && '✅'}
+              {toast.type === 'error' && '❌'}
+              {toast.type === 'warning' && '⚠️'}
+            </span>
+            <span className="toast-message">{toast.message}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -2276,43 +2305,71 @@ function LeaderboardScreen({
 }
 
 function ScoreHistoryPanel({ items, rank, total, predictedCount, isOpen, onToggle }) {
+  const pendingItems = items.filter((item) => item.status === 'saved');
+  const scoredItems = items.filter((item) => item.status !== 'saved');
+  const totalItems = items.length;
+
   return (
-    <section className="score-history-panel" aria-label="Lịch sử cộng điểm">
+    <section className="score-history-panel" aria-label="Dự đoán của tôi">
       <div className="score-history-head">
         <div>
-          <p className="section-label">Lịch sử cộng điểm</p>
+          <p className="section-label">Dự đoán của tôi</p>
           <h3>{total}đ</h3>
         </div>
         <div className="score-history-metrics" aria-label="Tóm tắt điểm">
           <span>{rank ? `#${rank}` : '-'}</span>
           <span>{predictedCount} đã dự</span>
-          <span>{items.length} mục</span>
+          <span>{pendingItems.length} chờ kết quả</span>
         </div>
       </div>
 
       <button className="secondary-btn score-history-toggle" type="button" onClick={onToggle} aria-expanded={isOpen}>
-        {isOpen ? 'Ẩn lịch sử' : 'Xem lịch sử cộng điểm'}
+        {isOpen ? 'Ẩn danh sách' : 'Xem tất cả dự đoán'}
       </button>
 
       {isOpen && (
-        items.length === 0 ? (
-          <p className="empty-state compact">Chưa có điểm cộng nào. Khi admin chốt kết quả, lịch sử sẽ hiện tại đây.</p>
+        totalItems === 0 ? (
+          <p className="empty-state compact">Chưa có dự đoán nào. Hãy vào Trang chủ để đặt kèo trận nào đó đi!</p>
         ) : (
           <div className="score-history-list">
-            {items.map((item) => (
-              <article key={item.key} className="score-history-row">
-                <span className="score-history-type">{item.type}</span>
-                <span className="score-history-copy">
-                  {item.kind === 'match' ? (
-                    <ScoreHistoryMatchLabel item={item} />
-                  ) : (
-                    <strong>{item.label}</strong>
-                  )}
-                  <small>{item.detail}</small>
-                </span>
-                <b>+{item.points}đ</b>
-              </article>
-            ))}
+            {pendingItems.length > 0 && (
+              <>
+                <p className="score-history-section-label">Chờ kết quả ({pendingItems.length} trận)</p>
+                {pendingItems.map((item) => (
+                  <article key={item.key} className="score-history-row saved">
+                    <span className="score-history-type">{item.type}</span>
+                    <span className="score-history-copy">
+                      {item.kind === 'match' ? (
+                        <ScoreHistoryMatchLabel item={item} />
+                      ) : (
+                        <strong>{item.label}</strong>
+                      )}
+                      <small>{item.detail}</small>
+                    </span>
+                    <span className="score-history-pending-badge">Chờ</span>
+                  </article>
+                ))}
+              </>
+            )}
+            {scoredItems.length > 0 && (
+              <>
+                <p className="score-history-section-label">Đã tính điểm ({scoredItems.length} mục)</p>
+                {scoredItems.map((item) => (
+                  <article key={item.key} className={`score-history-row ${item.status === 'zero' ? 'zero' : ''}`}>
+                    <span className="score-history-type">{item.type}</span>
+                    <span className="score-history-copy">
+                      {item.kind === 'match' ? (
+                        <ScoreHistoryMatchLabel item={item} />
+                      ) : (
+                        <strong>{item.label}</strong>
+                      )}
+                      <small>{item.detail}</small>
+                    </span>
+                    <b className={item.points > 0 ? '' : 'zero-pts'}>{item.points > 0 ? `+${item.points}đ` : '+0đ'}</b>
+                  </article>
+                ))}
+              </>
+            )}
           </div>
         )
       )}
@@ -2326,7 +2383,9 @@ function ScoreHistoryMatchLabel({ item }) {
       <span className="score-history-match-no">#{item.matchNo}</span>
       <TeamFlag team={item.homeTeam} className="score-history-flag" />
       <span>{displayTeamName(item.homeTeam)}</span>
-      <span className="score-history-result">{item.homeScore}-{item.awayScore}</span>
+      <span className="score-history-result">
+        {item.status === 'saved' ? '-' : `${item.homeScore}-${item.awayScore}`}
+      </span>
       <TeamFlag team={item.awayTeam} className="score-history-flag" />
       <span>{displayTeamName(item.awayTeam)}</span>
     </strong>
@@ -2379,16 +2438,21 @@ function buildScoreHistory({ predictions = [], answers = [], matches = [], curre
         return {
           key: `notify-saved-match-${prediction.matchNo}`,
           sortKey: prediction.updatedAt || prediction.createdAt || match.kickoffAt,
-          icon: '✅',
-          label: 'Đã lưu dự đoán',
-          detail: `#${match.matchNo} ${displayTeamName(match.homeTeam)} - ${displayTeamName(match.awayTeam)} · Bạn dự ${prediction.homePred}-${prediction.awayPred}${prediction.doubleDown ? ' · kèo tủ x2' : ''}`,
-          points: 0,
+          kind: 'match',
           status: 'saved',
+          type: formatDate(match.matchDay || match.kickoffAt),
+          matchNo: match.matchNo,
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          homeScore: prediction.homePred,
+          awayScore: prediction.awayPred,
+          label: 'Đã lưu dự đoán',
+          detail: `Bạn dự ${prediction.homePred}-${prediction.awayPred}${prediction.doubleDown ? ' · kèo tủ x2' : ''}`,
+          points: 0,
         };
       }
 
       const breakdown = matchScoreBreakdown(prediction, match);
-      if (breakdown.total <= 0) return null;
 
       const upsetPoints = breakdown.upsetBonus * breakdown.multiplier;
       const detailParts = [
@@ -2402,6 +2466,7 @@ function buildScoreHistory({ predictions = [], answers = [], matches = [], curre
         key: `match-${prediction.matchNo}`,
         sortKey: match.kickoffAt,
         kind: 'match',
+        status: breakdown.total > 0 ? 'scored' : 'zero',
         type: formatDate(match.matchDay || match.kickoffAt),
         matchNo: match.matchNo,
         homeTeam: match.homeTeam,
