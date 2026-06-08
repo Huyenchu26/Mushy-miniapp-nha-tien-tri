@@ -103,8 +103,27 @@ export default function App() {
   const [groupFilter, setGroupFilter] = useState('all');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [notice, setNotice] = useState('');
+  const [toasts, setToasts] = useState([]);
   const [error, setError] = useState('');
+
+  const addToast = (message, type = 'success') => {
+    if (!message) return;
+    if (message.startsWith('DEV mock')) {
+      console.log(message);
+      return;
+    }
+    const id = Date.now() + Math.random().toString(36).substr(2, 9);
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3000);
+  };
+
+  const setNotice = (msg) => {
+    if (!msg) return;
+    const type = msg.includes('Bạn cần lưu dự đoán') ? 'warning' : 'success';
+    addToast(msg, type);
+  };
   const refreshGestureRef = useRef({ startY: 0, scrollY: 0 });
   const chatSendTimesRef = useRef([]);
   const chatRepeatRef = useRef([]);
@@ -336,8 +355,6 @@ export default function App() {
   }
 
   async function handleSavePrediction(match, draft) {
-    setNotice('');
-    setError('');
     try {
       const nextPrediction = {
         workspaceId: scope.workspaceId,
@@ -401,14 +418,12 @@ export default function App() {
       setNotice('Đã lưu dự đoán.');
       return true;
     } catch (err) {
-      setError(err.message || 'Không lưu được dự đoán.');
+      addToast(err.message || 'Không lưu được dự đoán.', 'error');
       return false;
     }
   }
 
   async function handleSaveAnswer(question, answer) {
-    setNotice('');
-    setError('');
     try {
       if (Date.now() >= new Date(question.closesAt).getTime() || question.correctAnswer) {
         throw new Error('Câu hỏi này đã khóa.');
@@ -441,13 +456,11 @@ export default function App() {
       setAnswers(await fetchDailyAnswers(scope.workspaceId));
       setNotice('Đã lưu câu trả lời.');
     } catch (err) {
-      setError(err.message || 'Không lưu được câu trả lời.');
+      addToast(err.message || 'Không lưu được câu trả lời.', 'error');
     }
   }
 
   async function handleSaveLongTermBet(draft) {
-    setNotice('');
-    setError('');
     try {
       const champion = String(draft.champion || '').trim();
       const topScorer = String(draft.topScorer || '').trim().replace(/\s+/g, ' ').slice(0, 80);
@@ -487,7 +500,7 @@ export default function App() {
       setLongTermBet(nextBet);
       setNotice('Đã lưu dự đoán dài hạn.');
     } catch (err) {
-      setError(err.message || 'Không lưu được dự đoán dài hạn.');
+      addToast(err.message || 'Không lưu được dự đoán dài hạn.', 'error');
     }
   }
 
@@ -619,7 +632,7 @@ export default function App() {
     loadGameData();
   }
 
-  const visibleNotice = notice && !notice.startsWith('DEV mock') ? notice : '';
+
 
   return (
     <div className="wc-app" onTouchStart={handleRefreshTouchStart} onTouchEnd={handleRefreshTouchEnd}>
@@ -652,9 +665,9 @@ export default function App() {
               totalScore={currentStanding?.total ?? 0}
             />
 
-            {(visibleNotice || error || loading) && (
+            {(error || loading) && (
               <div className={`toast-line ${error ? 'error' : ''}`} role="status">
-                {loading ? 'Đang tải dữ liệu...' : error || visibleNotice}
+                {loading ? 'Đang tải dữ liệu...' : error}
               </div>
             )}
 
@@ -736,6 +749,20 @@ export default function App() {
         <span>BXH FIFA: {FIFA_RANKING_SOURCE.lastOfficialUpdate}</span>
         <a href={FIFA_RANKING_SOURCE.officialUrl} target="_blank" rel="noreferrer">Ranking</a>
       </footer>}
+
+      {/* Toast notifications */}
+      <div className="toast-container" aria-live="assertive">
+        {toasts.map((toast) => (
+          <div key={toast.id} className={`toast-item ${toast.type}`} role="alert">
+            <span className="toast-icon">
+              {toast.type === 'success' && '✅'}
+              {toast.type === 'error' && '❌'}
+              {toast.type === 'warning' && '⚠️'}
+            </span>
+            <span className="toast-message">{toast.message}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
