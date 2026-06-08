@@ -17,11 +17,10 @@ const franceCanada = {
   kickoffAt: '2026-06-12T19:00:00Z',
 };
 
-test('match insight model order starts with MiniMax and keeps configured fallbacks', () => {
+test('match insight model order uses DeepSeek Flash with Qwen fallback', () => {
   assert.deepEqual(MATCH_INSIGHT_MODELS, [
-    'minimax/minimax-m2-her',
-    'qwen/qwen3.7-plus',
     'deepseek/deepseek-v4-flash',
+    'qwen/qwen3.7-plus',
   ]);
 });
 

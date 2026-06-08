@@ -7,9 +7,8 @@ import {
 import { TEAM_META } from './worldcup-data.js';
 
 export const MATCH_INSIGHT_MODELS = Object.freeze([
-  'minimax/minimax-m2-her',
-  'qwen/qwen3.7-plus',
   'deepseek/deepseek-v4-flash',
+  'qwen/qwen3.7-plus',
 ]);
 
 const BANNED_PATTERNS = [
