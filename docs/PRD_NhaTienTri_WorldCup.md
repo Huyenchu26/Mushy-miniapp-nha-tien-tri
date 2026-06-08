@@ -483,21 +483,25 @@ Then `computeStandings` tinh tong diem, diem tran, bonus cua duoi, streak, daily
 
 ## 9. Roadmap / Viec Can Lam Tiep
 
-Muc uu tien cao:
+### Cap nhat da trien khai trong source - 2026-06-08
 
-1. Cap nhat migration `group_predictions` va `group_match_results` tu `1..72` len `1..104` neu muon cho du doan knock-out tren DB that.
-2. Them flow cap nhat doi knock-out tu `Unknown` sang doi that.
-3. Them man hinh admin/BTC hoac cong cu nhap tay ket qua khi live score khong on dinh.
-4. Hop nhat schema static-first voi bang `matches/predictions/daily_questions` neu muon van hanh lau dai.
-5. Tinh diem du doan dai han vao `computeStandings`.
+- Migration `007_tournament_operations.sql` mo prediction/result den tran 104.
+- Bang `matches` la runtime schedule + official result snapshot. Owner/admin tu dong sync lich khi mo app lan dau sau migration.
+- RLS an prediction cua nguoi khac den kickoff; trigger DB chan insert/update sau kickoff.
+- Du doan dai han khoa tai `opening_kickoff_at`, co trigger DB va duoc cham 20/10/10 vao BXH.
+- BXH `Tong`, `Theo tuan`, `Theo vong` dung ba tap du lieu tinh diem rieng.
+- Co `TournamentAdmin` cho BTC: sync lich, chot snapshot FT, cap nhat doi knock-out, chot dap an dai han, nhac deadline va gui recap.
+- Reminder chi lay danh sach user chua du qua RPC admin; notification deep-link ve dung match card.
+- Data access da tach sang `game-repository.js` va `tournament-service.js`; analytics ghi nhan cac action chinh.
 
-Muc uu tien trung binh:
+Migration phai submit qua Admin Portal Reviewer. Khong apply truc tiep bang Supabase SQL Editor.
 
-1. Lam that 2 mode BXH `Theo tuan` va `Theo vong`.
-2. Khoa du doan dai han theo gio khai mac.
-3. Them PostHog events: `prediction_saved`, `daily_answer_saved`, `long_term_saved`, `live_score_synced`.
-4. Them push notification nhac truoc deadline tran hot.
-5. Them cache/ghi nhan ket qua live score de tranh thay doi sau khi FT.
+Viec van hanh con lai:
+
+1. Submit migration 007 qua Admin Portal va verify ca schema prod/dev.
+2. Owner/admin mo app mot lan de sync 104 fixture vao runtime schedule.
+3. Theo doi nguon live score; BTC chot snapshot FT khi can override.
+4. Sau giai, archive audit log va ket qua chinh thuc.
 
 Rui ro:
 

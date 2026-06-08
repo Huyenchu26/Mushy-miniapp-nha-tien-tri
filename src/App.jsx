@@ -10,14 +10,25 @@ import {
   mergeMockMembers,
   mergeMockPredictions,
 } from './lib/app/mock-simulation.js';
-import { computeStandings, dailyPoints, isFinished, matchBasePoints, matchScoreBreakdown, outcome } from './lib/app/scoring.js';
+import { computeStandings, dailyPoints, filterCompetitionWindow, isFinished, matchBasePoints, matchScoreBreakdown, outcome } from './lib/app/scoring.js';
 import { ALL_SCORING_QUESTIONS, getTriviaQuestionForDate, triviaStreak } from './lib/app/quiz-data.js';
 import { selectInsightWarmupMatches } from './lib/app/match-insight.js';
 import Select from './components/Select.jsx';
+import TournamentAdmin from './components/TournamentAdmin.jsx';
 import { getContext } from './lib/context.js';
 import { listMembers } from './lib/members.js';
 import { subscribeToTable } from './lib/realtime.js';
 import { db } from './lib/supabase.js';
+import { track, trackScreen } from './lib/analytics.js';
+import { fetchTournamentState, syncTournamentSchedule } from './lib/app/tournament-service.js';
+import {
+  fetchDailyAnswers,
+  fetchLongTermBet,
+  fetchMatchRoomMessages,
+  fetchPredictions,
+  insertMatchRoomMessage,
+  mapRoomMessage,
+} from './lib/app/game-repository.js';
 import './App.css';
 
 const DEFAULT_TAB = 'matches';
@@ -114,6 +125,10 @@ export default function App() {
   const [predictions, setPredictions] = useState([]);
   const [answers, setAnswers] = useState([]);
   const [longTermBet, setLongTermBet] = useState(null);
+  const [allLongTermBets, setAllLongTermBets] = useState([]);
+  const [officialMatches, setOfficialMatches] = useState([]);
+  const [appConfig, setAppConfig] = useState(null);
+  const [adminOpen, setAdminOpen] = useState(false);
   const [roomMatch, setRoomMatch] = useState(null);
   const [roomMessages, setRoomMessages] = useState([]);
   const [roomLoading, setRoomLoading] = useState(false);
@@ -158,6 +173,8 @@ export default function App() {
     () => (ctx?.workspaceId ? { workspaceId: ctx.workspaceId, label: ctx.workspaceSlug || 'Mushy' } : null),
     [ctx?.workspaceId, ctx?.workspaceSlug]
   );
+  const tournamentMatches = useMemo(() => mergeTournamentMatches(MATCHES, officialMatches), [officialMatches]);
+  const canManageTournament = ctx?.role === 'owner' || ctx?.role === 'admin';
 
   useEffect(() => {
     try {
@@ -218,7 +235,7 @@ export default function App() {
 
     let cancelled = false;
     const timer = window.setTimeout(async () => {
-      const matches = selectInsightWarmupMatches(MATCHES, Date.now(), MATCH_INSIGHT_WARMUP_LIMIT);
+      const matches = selectInsightWarmupMatches(tournamentMatches, Date.now(), MATCH_INSIGHT_WARMUP_LIMIT);
       for (const match of matches) {
         if (cancelled) break;
         try {
@@ -239,7 +256,7 @@ export default function App() {
       window.clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiInsightsEnabled, ctx?.token, ctx?.userId, scope?.workspaceId, localSimulation]);
+  }, [aiInsightsEnabled, ctx?.token, ctx?.userId, scope?.workspaceId, localSimulation, tournamentMatches]);
 
   useEffect(() => {
     if (!roomMatch || !scope?.workspaceId) return;
@@ -270,7 +287,7 @@ export default function App() {
     let cancelled = false;
     let timer = null;
     async function syncLiveScores() {
-      const syncPlan = getLiveScoreSyncPlan(MATCHES, Date.now());
+      const syncPlan = getLiveScoreSyncPlan(tournamentMatches, Date.now());
       if (!localSimulation && !syncPlan.shouldFetch) {
         if (!cancelled) {
           setLiveSync({
@@ -296,6 +313,7 @@ export default function App() {
           nextFetchAt: syncPlan.nextFetchAt,
           error: '',
         });
+        track('live_score_synced', { source: payload.source || 'unknown', match_count: payload.matches?.length || 0 });
       } catch (err) {
         if (cancelled) return;
         setLiveSync((current) => ({
@@ -329,7 +347,7 @@ export default function App() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (timer) window.clearTimeout(timer);
     };
-  }, [ctx?.token, scope?.workspaceId, localSimulation]);
+  }, [ctx?.token, scope?.workspaceId, localSimulation, tournamentMatches]);
 
   const predictionMap = useMemo(
     () => new Map(predictions.filter((p) => p.createdBy === ctx?.userId).map((p) => [Number(p.matchNo), p])),
@@ -347,17 +365,39 @@ export default function App() {
     [answers, ctx?.userId]
   );
   const matchesWithOfficialScores = useMemo(
-    () => applyAutomaticScores(MATCHES, liveScores),
-    [liveScores]
+    () => applyAutomaticScores(tournamentMatches, liveScores),
+    [tournamentMatches, liveScores]
   );
   const matchesWithLiveScores = useMemo(
     () => applyLiveScores(matchesWithOfficialScores, liveScores),
     [matchesWithOfficialScores, liveScores]
   );
   const standings = useMemo(
-    () => buildStandings({ members, predictions, answers, matches: matchesWithOfficialScores }),
-    [members, predictions, answers, matchesWithOfficialScores]
+    () => buildStandings({ members, predictions, answers, matches: matchesWithOfficialScores, longTermBets: allLongTermBets, appConfig }),
+    [members, predictions, answers, matchesWithOfficialScores, allLongTermBets, appConfig]
   );
+  const standingsByMode = useMemo(() => {
+    const result = { total: standings };
+    for (const mode of ['week', 'stage']) {
+      const window = filterCompetitionWindow({
+        matches: matchesWithOfficialScores,
+        predictions,
+        answers,
+        questions: [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS],
+        mode,
+      });
+      result[mode] = buildStandings({
+        members,
+        predictions: window.predictions,
+        answers: window.answers,
+        matches: window.matches,
+        questions: window.questions,
+        longTermBets: [],
+        appConfig: null,
+      });
+    }
+    return result;
+  }, [standings, members, predictions, answers, matchesWithOfficialScores]);
   const currentStanding = standings.find((row) => row.participantId === ctx?.userId);
   const currentUserPredictions = useMemo(
     () => predictions.filter((prediction) => prediction.createdBy === ctx?.userId),
@@ -396,6 +436,9 @@ export default function App() {
       setPredictions(mergeMockPredictions([], ctx, scope.workspaceId));
       setAnswers([]);
       setLongTermBet(createMockLongTermBet(ctx, scope.workspaceId));
+      setAllLongTermBets([createMockLongTermBet(ctx, scope.workspaceId)]);
+      setOfficialMatches([]);
+      setAppConfig({ openingKickoffAt: tournamentMatches[0]?.kickoffAt, championActual: '', topScorerActual: '', shockTeamActual: '' });
       setMembers(mergeMockMembers([], ctx));
       setNotice('DEV mock: sample predictions and 6 match scores loaded.');
       setLoading(false);
@@ -403,15 +446,24 @@ export default function App() {
     }
 
     try {
-      const [predictionRows, answerRows, longTermRow, memberRows] = await Promise.all([
+      const [predictionRows, answerRows, longTermRow, memberRows, tournamentState] = await Promise.all([
         fetchPredictions(scope.workspaceId),
         fetchDailyAnswers(scope.workspaceId),
         localSimulation ? Promise.resolve(null) : fetchLongTermBet(scope.workspaceId, ctx.userId),
         listMembers(scope.workspaceId),
+        fetchTournamentState(scope.workspaceId),
       ]);
       setPredictions(localSimulation ? mergeMockPredictions(predictionRows, ctx, scope.workspaceId) : predictionRows);
       setAnswers(answerRows);
       setLongTermBet(longTermRow || (localSimulation ? createMockLongTermBet(ctx, scope.workspaceId) : null));
+      let nextTournamentState = tournamentState;
+      if ((ctx.role === 'owner' || ctx.role === 'admin') && tournamentState.matches.length === 0) {
+        await syncTournamentSchedule({ workspaceId: scope.workspaceId, userId: ctx.userId, matches: MATCHES });
+        nextTournamentState = await fetchTournamentState(scope.workspaceId);
+      }
+      setAllLongTermBets(nextTournamentState.longTermBets);
+      setOfficialMatches(nextTournamentState.matches);
+      setAppConfig(nextTournamentState.config);
       const ensuredMembers = ensureCurrentMember(memberRows, ctx);
       setMembers(localSimulation ? mergeMockMembers(ensuredMembers, ctx) : ensuredMembers);
     } catch (err) {
@@ -491,6 +543,7 @@ export default function App() {
       setPredictions((rows) => upsertLocalPrediction(rows, nextPrediction));
       setPredictions(await fetchPredictions(scope.workspaceId));
       setNotice('Đã lưu dự đoán.');
+      track('prediction_saved', { match_no: match.matchNo, double_down: nextPrediction.doubleDown });
       return true;
     } catch (err) {
       addToast(err.message || 'Không lưu được dự đoán.', 'error');
@@ -595,6 +648,7 @@ export default function App() {
 
       setAnswers(await fetchDailyAnswers(scope.workspaceId));
       setNotice('Đã lưu câu trả lời.');
+      track('daily_answer_saved', { question_key: question.key });
     } catch (err) {
       addToast(err.message || 'Không lưu được câu trả lời.', 'error');
     }
@@ -607,6 +661,10 @@ export default function App() {
       const shockTeam = String(draft.shockTeam || '').trim();
       if (!champion || !topScorer || !shockTeam) {
         throw new Error('Bạn cần chọn đủ vô địch, vua phá lưới và đội gây sốc.');
+      }
+      const openingKickoffAt = appConfig?.openingKickoffAt || tournamentMatches[0]?.kickoffAt;
+      if (openingKickoffAt && Date.now() >= new Date(openingKickoffAt).getTime()) {
+        throw new Error('Dự đoán dài hạn đã khóa khi giải bắt đầu.');
       }
 
       if (localSimulation && isMockContext(ctx)) {
@@ -638,7 +696,9 @@ export default function App() {
 
       const nextBet = await fetchLongTermBet(scope.workspaceId, ctx.userId);
       setLongTermBet(nextBet);
+      setAllLongTermBets((rows) => [...rows.filter((row) => row.createdBy !== ctx.userId), nextBet]);
       setNotice('Đã lưu dự đoán dài hạn.');
+      track('long_term_saved');
     } catch (err) {
       addToast(err.message || 'Không lưu được dự đoán dài hạn.', 'error');
     }
@@ -754,6 +814,22 @@ export default function App() {
     }
   }
 
+  useEffect(() => {
+    trackScreen(roomMatch ? 'prediction_room' : activeTab, roomMatch ? { match_no: roomMatch.matchNo } : {});
+  }, [activeTab, roomMatch?.matchNo]);
+
+  useEffect(() => {
+    if (loading) return;
+    const params = new URLSearchParams(window.location.search);
+    const screen = params.get('screen');
+    const matchNo = Number(params.get('matchNo'));
+    if (screen === 'leaderboard') setActiveTab('leaderboard');
+    if (screen === 'match' && matchNo) {
+      setActiveTab('matches');
+      window.setTimeout(() => document.getElementById(`match-card-${matchNo}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+    }
+  }, [loading]);
+
   if (ctxError) {
     return <SetupScreen error={ctxError} />;
   }
@@ -805,6 +881,10 @@ export default function App() {
               totalScore={currentStanding?.total ?? 0}
             />
 
+            {canManageTournament && (
+              <div className="admin-entry"><button type="button" className="secondary-btn" onClick={() => setAdminOpen(true)}>Điều hành giải</button></div>
+            )}
+
             {(error || loading) && (
               <div className={`toast-line ${error ? 'error' : ''}`} role="status">
                 {loading ? 'Đang tải dữ liệu...' : error}
@@ -846,6 +926,7 @@ export default function App() {
                 answerMap={answerMap}
                 answers={currentUserAnswers}
                 longTermBet={longTermBet}
+                longTermLocked={Date.now() >= new Date(appConfig?.openingKickoffAt || tournamentMatches[0]?.kickoffAt).getTime()}
                 onSave={handleSaveAnswer}
                 onSaveLongTerm={handleSaveLongTermBet}
               />
@@ -853,6 +934,7 @@ export default function App() {
             {activeTab === 'leaderboard' && (
               <LeaderboardScreen
                 standings={standings}
+                standingsByMode={standingsByMode}
                 currentParticipantId={ctx?.userId}
                 currentStanding={currentStanding}
                 predictedCount={predictionMap.size}
@@ -896,6 +978,17 @@ export default function App() {
         <span>BXH FIFA: {FIFA_RANKING_SOURCE.lastOfficialUpdate}</span>
         <a href={FIFA_RANKING_SOURCE.officialUrl} target="_blank" rel="noreferrer">Ranking</a>
       </footer>}
+
+      <TournamentAdmin
+        open={adminOpen}
+        onClose={() => setAdminOpen(false)}
+        ctx={ctx}
+        workspaceId={scope?.workspaceId}
+        matches={matchesWithOfficialScores}
+        standings={standings}
+        config={appConfig}
+        onChanged={loadGameData}
+      />
 
       {/* Toast notifications */}
       <div className="toast-container" aria-live="assertive">
@@ -2143,7 +2236,7 @@ function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
   );
 }
 
-function DailyScreen({ questions, triviaQuestion, answerMap, answers, longTermBet, onSave, onSaveLongTerm }) {
+function DailyScreen({ questions, triviaQuestion, answerMap, answers, longTermBet, longTermLocked, onSave, onSaveLongTerm }) {
   const visibleQuestions = useMemo(() => {
     const today = getLocalDateKey();
     const tomorrow = getLocalDateKey(new Date(Date.now() + 24 * 60 * 60 * 1000));
@@ -2174,7 +2267,7 @@ function DailyScreen({ questions, triviaQuestion, answerMap, answers, longTermBe
           <QuestionCard key={question.key} question={question} answer={answerMap.get(question.key)} onSave={onSave} />
         ))}
       </div>
-      <LongTermBetCard bet={longTermBet} onSave={onSaveLongTerm} />
+      <LongTermBetCard bet={longTermBet} locked={longTermLocked} onSave={onSaveLongTerm} />
     </section>
   );
 }
@@ -2273,7 +2366,7 @@ function QuestionCard({ question, answer, onSave }) {
   );
 }
 
-function LongTermBetCard({ bet, onSave }) {
+function LongTermBetCard({ bet, locked, onSave }) {
   const [champion, setChampion] = useState(bet?.champion || '');
   const [topScorer, setTopScorer] = useState(bet?.topScorer || '');
   const [shockTeam, setShockTeam] = useState(bet?.shockTeam || '');
@@ -2304,7 +2397,7 @@ function LongTermBetCard({ bet, onSave }) {
       <div className="long-term-fields">
         <label>
           <span>Vô địch</span>
-          <Select value={champion} onChange={setChampion} options={teamOptions} placeholder="Chọn đội vô địch" />
+          <Select value={champion} onChange={setChampion} options={teamOptions} placeholder="Chọn đội vô địch" disabled={locked} />
         </label>
         <label>
           <span>Vua phá lưới</span>
@@ -2314,6 +2407,7 @@ function LongTermBetCard({ bet, onSave }) {
             value={topScorer}
             onChange={(event) => setTopScorer(event.target.value)}
             placeholder="Nhập hoặc chọn cầu thủ"
+            disabled={locked}
           />
           <datalist id="top-scorer-suggestions">
             {scorerOptions.map((label) => <option key={label} value={label} />)}
@@ -2322,14 +2416,14 @@ function LongTermBetCard({ bet, onSave }) {
         <label>
           <span>Đội gây sốc</span>
           <small className="field-hint">Đội bị đánh giá thấp nhưng đi sâu hơn kỳ vọng, tạo bất ngờ lớn so với BXH FIFA và tương quan bảng đấu.</small>
-          <Select value={shockTeam} onChange={setShockTeam} options={teamOptions} placeholder="Chọn đội gây sốc" />
+          <Select value={shockTeam} onChange={setShockTeam} options={teamOptions} placeholder="Chọn đội gây sốc" disabled={locked} />
         </label>
       </div>
 
       <div className="question-footer">
-        <span>{bet ? 'Đã lưu dự đoán dài hạn' : 'Chưa lưu dự đoán dài hạn'}</span>
-        <button type="button" className="primary-btn small" onClick={() => onSave({ champion, topScorer, shockTeam })}>
-          Lưu
+        <span>{locked ? 'Đã khóa từ giờ khai mạc' : bet ? 'Đã lưu dự đoán dài hạn' : 'Chưa lưu dự đoán dài hạn'}</span>
+        <button type="button" className="primary-btn small" disabled={locked} onClick={() => onSave({ champion, topScorer, shockTeam })}>
+          {locked ? 'Đã khóa' : 'Lưu'}
         </button>
       </div>
     </article>
@@ -2483,6 +2577,7 @@ function FootballFixtureTeam({ team, side }) {
 
 function LeaderboardScreen({
   standings,
+  standingsByMode,
   currentParticipantId,
   currentStanding,
   predictedCount,
@@ -2496,14 +2591,15 @@ function LeaderboardScreen({
     () => buildScoreHistory({ predictions, answers, matches, currentStanding }),
     [predictions, answers, matches, currentStanding]
   );
-  const rows = standings;
+  const rows = standingsByMode?.[rankMode] || standings;
+  const selectedStanding = rows.find((row) => row.participantId === currentParticipantId) || currentStanding;
 
   return (
     <section className="screen">
       <ScoreHistoryPanel
         items={scoreHistory}
-        rank={currentStanding?.rank}
-        total={currentStanding?.total ?? 0}
+        rank={selectedStanding?.rank}
+        total={selectedStanding?.total ?? 0}
         predictedCount={predictedCount}
         isOpen={showHistory}
         onToggle={() => setShowHistory((value) => !value)}
@@ -2671,7 +2767,7 @@ function initials(name) {
 }
 
 function leaderSubtitle(row) {
-  return `${row.matchPts} trận · ${row.upsetPts} cửa dưới · ${row.streakPts} streak · ${row.dailyPts} vui`;
+  return `${row.matchPts} trận · ${row.upsetPts} cửa dưới · ${row.streakPts} streak · ${row.dailyPts} vui · ${row.longTermPts || 0} dài hạn`;
 }
 
 function buildScoreHistory({ predictions = [], answers = [], matches = [], currentStanding = null }) {
@@ -2756,6 +2852,23 @@ function buildScoreHistory({ predictions = [], answers = [], matches = [], curre
       label: 'Chuỗi đúng tỉ số',
       detail: 'Cứ 3 trận liên tiếp đúng tỉ số được cộng thêm 5đ.',
       points: currentStanding.streakPts,
+    });
+  }
+
+  if ((currentStanding?.longTermPts || 0) > 0) {
+    const breakdown = currentStanding.longTermBreakdown || {};
+    const hits = [
+      breakdown.champion ? 'vô địch' : '',
+      breakdown.topScorer ? 'vua phá lưới' : '',
+      breakdown.shockTeam ? 'đội gây sốc' : '',
+    ].filter(Boolean);
+    items.unshift({
+      key: 'long-term-bonus',
+      sortKey: 'zz-long-term',
+      type: 'Dài hạn',
+      label: 'Dự đoán dài hạn đã chốt',
+      detail: `Đúng ${hits.join(', ')}.`,
+      points: currentStanding.longTermPts,
     });
   }
 
@@ -3202,69 +3315,7 @@ function getLiveScoreSyncPlan(matches = [], nowMs = Date.now()) {
   };
 }
 
-async function fetchPredictions(workspaceId) {
-  const { data, error } = await db
-    .from('group_predictions')
-    .select('*')
-    .eq('workspace_id', workspaceId)
-    .order('match_no', { ascending: true });
-  if (error) throw error;
-  return (data || []).map(toPrediction);
-}
-
-async function fetchDailyAnswers(workspaceId) {
-  const { data, error } = await db
-    .from('group_daily_answers')
-    .select('*')
-    .eq('workspace_id', workspaceId)
-    .order('created_at', { ascending: true });
-  if (error) throw error;
-  return (data || []).map(toDailyAnswer);
-}
-
-async function fetchMatchRoomMessages(workspaceId, matchNo) {
-  const { data, error } = await db
-    .from('match_room_messages')
-    .select('*')
-    .eq('workspace_id', workspaceId)
-    .eq('match_no', matchNo)
-    .order('created_at', { ascending: true })
-    .limit(80);
-  if (error) throw error;
-  return (data || []).map(toRoomMessage);
-}
-
-async function insertMatchRoomMessage({ workspaceId, createdBy, matchNo, kind, body, emoji }) {
-  const { data, error } = await db
-    .from('match_room_messages')
-    .insert({
-      workspace_id: workspaceId,
-      created_by: createdBy,
-      match_no: matchNo,
-      kind,
-      body,
-      emoji,
-    })
-    .select('*')
-    .single();
-  if (error) throw error;
-  return toRoomMessage(data);
-}
-
-async function fetchLongTermBet(workspaceId, userId) {
-  if (!workspaceId || !userId) return null;
-  const { data, error } = await db
-    .from('long_term_bets')
-    .select('*')
-    .eq('workspace_id', workspaceId)
-    .eq('created_by', userId)
-    .maybeSingle();
-  if (error?.code === '42P01' || /long_term_bets|does not exist/i.test(error?.message || '')) return null;
-  if (error) throw error;
-  return data ? toLongTermBet(data) : null;
-}
-
-function buildStandings({ members, predictions, answers, matches }) {
+function buildStandings({ members, predictions, answers, matches, questions = [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS], longTermBets = [], appConfig = null }) {
   const memberMap = new Map(members.map((member) => [member.user_id, member]));
   const userIds = new Set([
     ...members.map((member) => member.user_id),
@@ -3282,16 +3333,36 @@ function buildStandings({ members, predictions, answers, matches }) {
     predictions: predictions.map((prediction) => ({ ...prediction, participantId: prediction.createdBy })),
     dailyAnswers: answers.map((answer) => ({ ...answer, participantId: answer.createdBy })),
     matches,
+    questions,
+    longTermBets: longTermBets.map((bet) => ({ ...bet, participantId: bet.createdBy })),
+    appConfig,
   });
 }
 
-function computeStandingsForUsers({ participants, predictions, dailyAnswers, matches }) {
+function computeStandingsForUsers({ participants, predictions, dailyAnswers, matches, questions = [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS], longTermBets = [], appConfig = null }) {
   return computeStandings({
     participants,
     predictions,
     dailyAnswers,
     matches,
-    questions: [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS],
+    questions,
+    longTermBets,
+    appConfig,
+  });
+}
+
+function mergeTournamentMatches(staticMatches, persistedMatches) {
+  const persistedByNo = new Map((persistedMatches || []).map((match) => [Number(match.matchNo), match]));
+  return staticMatches.map((match) => {
+    const persisted = persistedByNo.get(Number(match.matchNo));
+    if (!persisted) return match;
+    return {
+      ...match,
+      ...persisted,
+      group: persisted.group || match.group,
+      stageLabel: match.stageLabel,
+      matchDay: String(persisted.kickoffAt || match.kickoffAt).slice(0, 10),
+    };
   });
 }
 
@@ -3307,67 +3378,14 @@ function ensureCurrentMember(memberRows, ctx) {
   ];
 }
 
-function toPrediction(row) {
-  return {
-    id: row.id,
-    workspaceId: row.workspace_id,
-    createdBy: row.created_by,
-    matchNo: row.match_no,
-    matchDay: row.match_day,
-    homePred: row.home_pred,
-    awayPred: row.away_pred,
-    doubleDown: row.double_down,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
-
-function toDailyAnswer(row) {
-  return {
-    id: row.id,
-    workspaceId: row.workspace_id,
-    createdBy: row.created_by,
-    questionKey: row.question_key,
-    answer: row.answer,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
-
-function toLongTermBet(row) {
-  return {
-    id: row.id,
-    workspaceId: row.workspace_id,
-    createdBy: row.created_by,
-    champion: row.champion || '',
-    topScorer: row.top_scorer || '',
-    shockTeam: row.shock_team || '',
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
-
-function toRoomMessage(row) {
-  return {
-    id: row.id,
-    workspaceId: row.workspace_id,
-    createdBy: row.created_by,
-    matchNo: row.match_no,
-    kind: row.kind || 'chat',
-    body: row.body || '',
-    emoji: row.emoji || null,
-    createdAt: row.created_at,
-  };
-}
-
 function normalizeChatRepeatKey(body) {
   return String(body || '').trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
 function mergeRoomRealtimePayload(rows, payload) {
   const eventType = String(payload?.eventType || '').toUpperCase();
-  const nextRow = payload?.new ? toRoomMessage(payload.new) : null;
-  const oldRow = payload?.old ? toRoomMessage(payload.old) : null;
+  const nextRow = payload?.new ? mapRoomMessage(payload.new) : null;
+  const oldRow = payload?.old ? mapRoomMessage(payload.old) : null;
   const targetId = nextRow?.id || oldRow?.id;
   if (!targetId) return rows;
 
