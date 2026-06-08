@@ -26,9 +26,27 @@ const LIVE_SCORE_POSTMATCH_MS = 4 * 60 * 60 * 1000;
 const ROOM_POLL_FALLBACK_MS = 30000;
 const CHAT_REPEAT_WINDOW_MS = 45000;
 const CHAT_REPEAT_LIMIT = 2;
+function SoccerBallIcon({ size = 15 }) {
+  return (
+    <span
+      style={{
+        fontSize: `${size}px`,
+        lineHeight: 1,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: `${size}px`,
+        height: `${size}px`,
+      }}
+    >
+      ⚽
+    </span>
+  );
+}
+
 const TABS = [
   { id: 'matches', label: 'Trang chủ', shortLabel: 'Trang chủ', icon: Home },
-  { id: 'results', label: 'Trận đấu', shortLabel: 'Trận đấu', icon: CalendarDays },
+  { id: 'results', label: 'Trận đấu', shortLabel: 'Trận đấu', icon: SoccerBallIcon },
   { id: 'daily', label: 'Dự đoán', shortLabel: 'Dự đoán', icon: PenLine },
   { id: 'leaderboard', label: 'Bảng xếp hạng', shortLabel: 'BXH', icon: Trophy },
   { id: 'rules', label: 'Luật chơi', shortLabel: 'Luật chơi', icon: BookOpen },
