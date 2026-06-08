@@ -1,0 +1,319 @@
+{
+  "meta": {
+    "version": "2.0",
+    "last_updated": "2026-06-08",
+    "description": "Template câu hỏi gắn với trận đấu thực tế – app điền placeholder theo lịch mỗi ngày",
+    "placeholders": {
+      "{team_A}": "Tên đội 1 (thường là đội được xếp tên trước trong lịch)",
+      "{team_B}": "Tên đội 2",
+      "{player_A1}": "Cầu thủ ngôi sao số 1 của đội A (từ squad data)",
+      "{player_A2}": "Cầu thủ ngôi sao số 2 của đội A",
+      "{player_B1}": "Cầu thủ ngôi sao số 1 của đội B",
+      "{player_B2}": "Cầu thủ ngôi sao số 2 của đội B",
+      "{coach_A}": "HLV trưởng đội A",
+      "{coach_B}": "HLV trưởng đội B",
+      "{venue}": "Tên sân vận động",
+      "{match_time}": "Giờ đá (giờ Việt Nam)",
+      "{score_A}": "Số bàn đội A ghi được (chỉ điền sau trận)",
+      "{score_B}": "Số bàn đội B ghi được (chỉ điền sau trận)",
+      "{winner}": "Đội thắng (chỉ điền sau trận)",
+      "{first_scorer}": "Cầu thủ ghi bàn đầu tiên (chỉ điền sau trận)",
+      "{total_goals}": "Tổng bàn thắng cả trận (chỉ điền sau trận)",
+      "{yellow_cards}": "Tổng thẻ vàng cả trận (chỉ điền sau trận)",
+      "{motm}": "Cầu thủ xuất sắc nhất trận (chỉ điền sau trận)"
+    },
+    "answer_data_source": {
+      "pre_match": "Người chơi chọn – so sánh với kết quả thật sau trận",
+      "post_match": "Lấy từ match stats API sau khi trận kết thúc"
+    }
+  },
+
+  "pre_match": {
+    "description": "Câu hỏi mở TRƯỚC trận – user dự đoán, chấm điểm sau trận",
+    "unlock_condition": "Mở khi lịch thi đấu ngày hôm đó được publish, đóng khi trận kick-off",
+    "templates": [
+
+      {
+        "id": "PRE_01",
+        "category": "Kết quả",
+        "difficulty": "easy",
+        "points": 10,
+        "question": "Trận {team_A} vs {team_B} có thẻ vàng không?",
+        "options": ["Có, ít nhất 1 thẻ vàng", "Không, trận sạch bóng"],
+        "answer_key": "has_yellow_card",
+        "taunt": "Chọn đi! Đừng ngồi chờ Google chỉ đường 😏",
+        "reveal_taunt_wrong": "Sai bét! Lần sau đừng theo tim, hãy theo não nhé 🧠"
+      },
+
+      {
+        "id": "PRE_02",
+        "category": "Bàn thắng",
+        "difficulty": "easy",
+        "points": 15,
+        "question": "Trận {team_A} vs {team_B} có bao nhiêu bàn thắng?",
+        "options": ["0–1 bàn", "2–3 bàn", "4–5 bàn", "6 bàn trở lên"],
+        "answer_key": "total_goals_range",
+        "taunt": "Dự đoán tổng bàn – câu này tưởng dễ mà cay lắm đó!",
+        "reveal_taunt_wrong": "{total_goals} bàn đấy! Tính toán của bạn đi đâu vậy? 😅"
+      },
+
+      {
+        "id": "PRE_03",
+        "category": "Bàn thắng",
+        "difficulty": "medium",
+        "points": 25,
+        "question": "Ai ghi bàn đầu tiên trong trận {team_A} vs {team_B}?",
+        "options": ["{player_A1}", "{player_A2}", "{player_B1}", "{player_B2}", "Cầu thủ khác / Phản lưới"],
+        "answer_key": "first_scorer",
+        "taunt": "Bàn thắng đầu tiên định hình cả trận đấu đó. Chọn cẩn thận!",
+        "reveal_taunt_wrong": "{first_scorer} ghi bàn đầu tiên! Bạn chọn sai người rồi 😂"
+      },
+
+      {
+        "id": "PRE_05",
+        "category": "Thẻ phạt",
+        "difficulty": "easy",
+        "points": 10,
+        "question": "Trận {team_A} vs {team_B} có thẻ đỏ không?",
+        "options": ["Có, ít nhất 1 thẻ đỏ", "Không, trận sạch bóng"],
+        "answer_key": "has_red_card",
+        "taunt": "Trận nào cũng có lúc mất bình tĩnh. Bạn nghĩ trận này thế nào?",
+        "reveal_taunt_wrong": "Bạn đoán sai! Thẻ đỏ (hoặc không) đã quyết định cục diện trận này đó!"
+      },
+
+      {
+        "id": "PRE_06",
+        "category": "Hiệp đấu",
+        "difficulty": "medium",
+        "points": 20,
+        "question": "{team_A} vs {team_B}: Đội nào dẫn bàn lúc nghỉ giữa hiệp?",
+        "options": ["{team_A} dẫn", "{team_B} dẫn", "Hòa 0-0", "Hòa có bàn thắng"],
+        "answer_key": "halftime_leader",
+        "taunt": "Kết quả hiệp 1 và hiệp 2 hay khác nhau lắm đó. Bạn theo hiệp nào?",
+        "reveal_taunt_wrong": "Hiệp 1 kết thúc và bạn đã sai ngay từ đầu rồi! 😂"
+      },
+
+      {
+        "id": "PRE_07",
+        "category": "Cầu thủ",
+        "difficulty": "medium",
+        "points": 20,
+        "question": "{player_A1} có ghi bàn trong trận hôm nay không?",
+        "options": ["Có, ghi ít nhất 1 bàn", "Không ghi bàn"],
+        "answer_key": "player_A1_scored",
+        "taunt": "{player_A1} đang trong phong độ thế nào? Bạn có theo dõi không?",
+        "reveal_taunt_wrong": "Và {player_A1} đã... {player_A1_result}. Bạn đoán sai rồi!"
+      },
+
+      {
+        "id": "PRE_08",
+        "category": "Penalty",
+        "difficulty": "medium",
+        "points": 20,
+        "question": "Trận {team_A} vs {team_B} có penalty không?",
+        "options": ["Có penalty", "Không có penalty"],
+        "answer_key": "has_penalty",
+        "taunt": "VAR thời nay nhìn penalty như soi gương. Cơ hội 50-50 đó!",
+        "reveal_taunt_wrong": "Penalty {has_penalty_result}! VAR đã quyết định (hoặc không). Bạn đoán sai 😏"
+      },
+
+      {
+        "id": "PRE_09",
+        "category": "Kết quả",
+        "difficulty": "hard",
+        "points": 40,
+        "question": "{team_A} vs {team_B} – Trận này có extra time hoặc penalty shootout không?",
+        "options": ["Có, đấu thêm giờ hoặc penalty shootout", "Không, phân định trong 90 phút"],
+        "answer_key": "goes_to_extra",
+        "taunt": "Câu này chỉ dùng ở vòng knock-out. Căng thẳng lắm đó!",
+        "reveal_taunt_wrong": "Và trận này đã {extra_result}. Ai mà ngồi xem đến tận phút chót?"
+      },
+
+      {
+        "id": "PRE_10",
+        "category": "Bàn thắng",
+        "difficulty": "easy",
+        "points": 10,
+        "question": "Trận {team_A} vs {team_B}: Cả hai đội đều ghi bàn không? (Both teams to score)",
+        "options": ["Cả hai đội đều ghi bàn", "Ít nhất một đội không ghi được bàn nào"],
+        "answer_key": "btts",
+        "taunt": "BTTS – câu kinh điển của dân cá độ chuyên nghiệp. Bạn thế nào?",
+        "reveal_taunt_wrong": "BTTS: {btts_result}. Hàng thủ hôm nay chơi {defense_quality}!"
+      },
+
+      {
+        "id": "PRE_12",
+        "category": "Cầu thủ",
+        "difficulty": "hard",
+        "points": 35,
+        "question": "Ai là cầu thủ xuất sắc nhất trận (Man of the Match) trong trận {team_A} vs {team_B}?",
+        "options": ["{player_A1}", "{player_A2}", "{player_B1}", "{player_B2}", "Cầu thủ khác"],
+        "answer_key": "motm",
+        "taunt": "Man of the Match – vinh quang thuộc về ai? Đặt cược uy tín của bạn vào đây!",
+        "reveal_taunt_wrong": "MOTM là {motm}! Bạn chọn sai người tỏa sáng rồi 🌟"
+      },
+
+      {
+        "id": "PRE_13",
+        "category": "Cà khịa",
+        "difficulty": "easy",
+        "points": 5,
+        "question": "Bạn TIN VÀO ĐỘI NÀO hơn trong trận {team_A} vs {team_B}?",
+        "options": ["{team_A} – tim tôi đặt cược", "{team_B} – linh cảm mách bảo", "Tôi... không dám đoán"],
+        "answer_key": "gut_feeling",
+        "scoring": "Không chấm điểm theo kết quả – chấm điểm tham gia",
+        "taunt": "Câu hỏi không phán xét, chỉ để cà khịa nhau thôi. Dám không? 😈",
+        "reveal_taunt_wrong": "Kết quả đã có rồi. Fan {winner} đang cười người chọn {loser} kìa! 😂"
+      },
+
+      {
+        "id": "PRE_14",
+        "category": "Hiệp đấu",
+        "difficulty": "medium",
+        "points": 25,
+        "question": "Bàn thắng đầu tiên trận {team_A} vs {team_B} rơi vào phút thứ mấy?",
+        "options": ["Phút 1–15", "Phút 16–30", "Phút 31–45", "Phút 46–60", "Phút 61–90+", "Không có bàn thắng"],
+        "answer_key": "first_goal_minute_range",
+        "taunt": "Timing quan trọng lắm! Mở bàn sớm hay muộn quyết định cả chiến thuật đó.",
+        "reveal_taunt_wrong": "Bàn mở tỉ số phút {first_goal_minute}! Bạn đoán {player_first_goal_range} – sai rồi 😤"
+      },
+
+      {
+        "id": "PRE_15",
+        "category": "Kết quả",
+        "difficulty": "hard",
+        "points": 50,
+        "question": "SIÊU DỰ ĐOÁN: Tỉ số CHÍNH XÁC hiệp 1 của {team_A} vs {team_B}?",
+        "options": ["0-0", "1-0", "0-1", "1-1", "2-0", "0-2", "Khác"],
+        "answer_key": "exact_halftime_score",
+        "points_note": "Đúng hoàn toàn: 50 điểm. Đúng winner hiệp 1: 15 điểm",
+        "taunt": "50 điểm nếu đúng! Nhưng xác suất để đúng thì... chúc may mắn 🤣",
+        "reveal_taunt_wrong": "Hiệp 1 kết thúc {ht_score_A}-{ht_score_B}. Ai đoán đúng vừa flex rồi đó!"
+      },
+
+      {
+        "id": "PRE_16",
+        "category": "Thống kê",
+        "difficulty": "medium",
+        "points": 20,
+        "question": "Trận {team_A} vs {team_B}: Đội nào có nhiều cú sút hơn?",
+        "options": ["{team_A} sút nhiều hơn", "{team_B} sút nhiều hơn", "Hai đội sút bằng nhau"],
+        "answer_key": "more_shots_team",
+        "taunt": "Sút nhiều chưa chắc thắng, nhưng bạn nghĩ đội nào active hơn hôm nay?",
+        "reveal_taunt_wrong": "{more_shots_team} sút nhiều hơn! Nhưng bóng đá không phải môn bắn cung 🎯"
+      },
+
+      {
+        "id": "PRE_17",
+        "category": "Cầu thủ",
+        "difficulty": "medium",
+        "points": 25,
+        "question": "{player_B1} có ghi bàn hoặc kiến tạo trong trận hôm nay không?",
+        "options": ["Có ghi bàn hoặc kiến tạo", "Không đóng góp trực tiếp"],
+        "answer_key": "player_B1_goal_assist",
+        "taunt": "{player_B1} đang trong trạng thái thế nào? Form xịn hay đang lao dốc?",
+        "reveal_taunt_wrong": "{player_B1} kết thúc trận với {player_B1_stats}. Đúng chưa?"
+      },
+
+      {
+        "id": "PRE_18",
+        "category": "Penalty",
+        "difficulty": "hard",
+        "points": 35,
+        "question": "VÒNG KNOCK-OUT: {team_A} vs {team_B} – Nếu đá penalty shootout, ai thắng?",
+        "options": ["{team_A} thắng penalty", "{team_B} thắng penalty"],
+        "answer_key": "penalty_shootout_winner",
+        "unlock_condition": "Chỉ xuất hiện ở vòng knock-out",
+        "taunt": "Penalty shootout là trò may rủi nhưng ai chọn đúng thì tự hào lắm đó!",
+        "reveal_taunt_wrong": "{penalty_shootout_winner} thắng penalty! Người chọn đúng đang ăn mừng kìa 🎉"
+      },
+
+      {
+        "id": "PRE_19",
+        "category": "Cà khịa",
+        "difficulty": "easy",
+        "points": 10,
+        "question": "Sau trận {team_A} vs {team_B} hôm nay, HLV nào sẽ bị báo chí 'hỏi thăm' nhiều hơn?",
+        "options": ["{coach_A} – chiến thuật đáng ngờ", "{coach_B} – thay người sai thời điểm", "Cả hai đều ổn"],
+        "answer_key": "subjective_community_vote",
+        "scoring": "Vote cộng đồng – ai nhiều phiếu nhất là đúng theo cộng đồng",
+        "taunt": "Sau mỗi trận luôn có HLV bị đổ lỗi. Bạn nghĩ ai hôm nay? 🤔",
+        "reveal_taunt_wrong": "Cộng đồng bình chọn: {community_coach_answer}! Bạn đồng ý không?"
+      },
+
+      {
+        "id": "PRE_20",
+        "category": "Bàn thắng",
+        "difficulty": "medium",
+        "points": 20,
+        "question": "Trận {team_A} vs {team_B}: Có bàn thắng nào trong 15 phút cuối (phút 76-90+) không?",
+        "options": ["Có, có bàn thắng những phút cuối", "Không, kết quả được định đoạt trước đó"],
+        "answer_key": "late_goal",
+        "taunt": "Những phút cuối hay tạo ra điên rồ nhất. Bạn tin vào kịch bản nào?",
+        "reveal_taunt_wrong": "15 phút cuối: {late_goal_result}! Bóng đá hay ở chỗ không bao giờ kết thúc cho đến khi kết thúc!"
+      },
+
+      {
+        "id": "PRE_21",
+        "category": "Thống kê",
+        "difficulty": "hard",
+        "points": 30,
+        "question": "Tổng số phút bù giờ của 2 hiệp trong trận {team_A} vs {team_B} là bao nhiêu?",
+        "options": ["Dưới 8 phút", "8–12 phút", "13–18 phút", "Trên 18 phút"],
+        "answer_key": "total_stoppage_time_range",
+        "taunt": "Từ WC 2022, bù giờ nhiều kinh khủng. Trọng tài hôm nay sẽ bù bao lâu?",
+        "reveal_taunt_wrong": "Bù giờ tổng: {total_stoppage} phút! WC 2026 vẫn bù nhiều như Qatar 2022 không nhỉ?"
+      },
+
+      {
+        "id": "PRE_22",
+        "category": "Cà khịa",
+        "difficulty": "easy",
+        "points": 10,
+        "question": "Trận {team_A} vs {team_B} – Bạn sẽ xem cùng ai?",
+        "options": ["Một mình – tôi cần tập trung", "Cùng bạn bè – cà khịa cho vui", "Ngủ quên mất rồi xem highlight sau", "Bỏ qua, không quan tâm"],
+        "answer_key": "social_engagement",
+        "scoring": "Không chấm điểm kết quả – ghi nhận engagement",
+        "taunt": "Xem cùng bạn bè mới thấy World Cup thật sự ý nghĩa! 🍺",
+        "reveal_taunt_wrong": "Dù bạn xem cách nào – quan trọng là đã chơi cùng chúng tôi! 🎉"
+      },
+
+      {
+        "id": "PRE_23",
+        "category": "Kết quả",
+        "difficulty": "medium",
+        "points": 25,
+        "question": "{team_A} vs {team_B}: Đội nào giữ sạch lưới (clean sheet)?",
+        "options": ["{team_A} không thủng lưới", "{team_B} không thủng lưới", "Cả hai đều bị thủng lưới", "Hòa 0-0 – cả hai đều sạch"],
+        "answer_key": "clean_sheet_team",
+        "taunt": "Hàng thủ nào vững hơn hôm nay? Không thủng lưới là chiến thắng của thủ môn!",
+        "reveal_taunt_wrong": "Clean sheet thuộc về {clean_sheet_result}! Thủ môn {goalkeeper} đêm nay xuất sắc!"
+      },
+
+      {
+        "id": "PRE_24",
+        "category": "Cầu thủ",
+        "difficulty": "hard",
+        "points": 40,
+        "question": "Ai bị thẻ vàng ĐẦU TIÊN trong trận {team_A} vs {team_B}?",
+        "options": ["{player_A1}", "{player_A2}", "{player_B1}", "{player_B2}", "Cầu thủ khác"],
+        "answer_key": "first_yellow_card_player",
+        "taunt": "Ai nổi nóng trước? Câu này cần biết tính cách từng cầu thủ mới đoán được 😏",
+        "reveal_taunt_wrong": "{first_yellow_player} nhận thẻ vàng đầu tiên! Bạn đoán sai người hay sai tính cách?"
+      },
+
+      {
+        "id": "PRE_25",
+        "category": "Cà khịa",
+        "difficulty": "medium",
+        "points": 15,
+        "question": "Sau trận {team_A} vs {team_B}, màn ăn mừng nào sẽ xuất hiện?",
+        "options": ["Ăn mừng bình thường (chạy, la hét)", "Ăn mừng cực kỳ drama (lăn ra sân, khóc)", "Cầu thủ quỳ cảm ơn", "Xịt keo tóc – tóc vẫn đẹp"],
+        "answer_key": "community_vote",
+        "scoring": "Vote cộng đồng sau trận",
+        "taunt": "Ăn mừng bàn thắng đôi khi còn hay hơn bàn thắng. Bạn đoán kiểu nào? 🎭",
+        "reveal_taunt_wrong": "Xem lại clip ăn mừng đi – đẹp hay drama? Cộng đồng đã chọn rồi!"
+      }
+    ]
+  }
+}
