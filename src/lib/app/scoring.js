@@ -12,6 +12,9 @@ export const SCORE_RULES = {
   drawUpsetBonus: 1,
   streakEvery: 3,
   streakBonus: 5,
+  champion: 20,
+  topScorer: 10,
+  shockTeam: 10,
 };
 
 export function outcome(home, away) {
@@ -115,17 +118,48 @@ export function dailyPoints(answer, question) {
   return Number(question.points || 2);
 }
 
+export function longTermPoints(bet, config) {
+  if (!bet || !config) return { total: 0, champion: 0, topScorer: 0, shockTeam: 0 };
+  const champion = matchesAnswer(bet.champion, config.championActual) ? SCORE_RULES.champion : 0;
+  const topScorer = matchesAnswer(bet.topScorer, config.topScorerActual) ? SCORE_RULES.topScorer : 0;
+  const shockTeam = matchesAnswer(bet.shockTeam, config.shockTeamActual) ? SCORE_RULES.shockTeam : 0;
+  return { total: champion + topScorer + shockTeam, champion, topScorer, shockTeam };
+}
+
+export function filterCompetitionWindow({ matches = MATCHES, predictions = [], answers = [], questions = DAILY_QUESTIONS, mode = 'total', now = new Date() } = {}) {
+  if (mode === 'total') return { matches, predictions, answers, questions };
+
+  const selectedMatches = matches.filter((match) => mode === 'week'
+    ? isSameIsoWeek(new Date(match.kickoffAt), now)
+    : normalizeStage(match.stage) === currentStage(matches, now));
+  const matchNos = new Set(selectedMatches.map((match) => Number(match.matchNo)));
+  const selectedQuestions = mode === 'week'
+    ? questions.filter((question) => isSameIsoWeek(new Date(question.date || question.closesAt), now))
+    : [];
+  const questionKeys = new Set(selectedQuestions.map((question) => question.key));
+  return {
+    matches: selectedMatches,
+    predictions: predictions.filter((prediction) => matchNos.has(Number(prediction.matchNo))),
+    answers: answers.filter((answer) => questionKeys.has(answer.questionKey)),
+    questions: selectedQuestions,
+  };
+}
+
 export function computeStandings({
   participants = [],
   predictions = [],
   dailyAnswers = [],
   matches = MATCHES,
   questions = DAILY_QUESTIONS,
+  longTermBets = [],
+  appConfig = null,
+  includeLongTerm = true,
 } = {}) {
   const matchesByNo = new Map(matches.map((match) => [Number(match.matchNo), match]));
   const questionsByKey = new Map(questions.map((question) => [question.key, question]));
   const predictionsByParticipant = groupBy(predictions, (prediction) => prediction.participantId);
   const answersByParticipant = groupBy(dailyAnswers, (answer) => answer.participantId);
+  const betsByParticipant = new Map(longTermBets.map((bet) => [bet.participantId, bet]));
 
   const rows = participants.map((participant) => {
     const participantPredictions = predictionsByParticipant.get(participant.id) || [];
@@ -155,15 +189,20 @@ export function computeStandings({
       const question = questionsByKey.get(answer.questionKey);
       return sum + dailyPoints(answer, question);
     }, 0);
+    const longTerm = includeLongTerm
+      ? longTermPoints(betsByParticipant.get(participant.id), appConfig)
+      : { total: 0, champion: 0, topScorer: 0, shockTeam: 0 };
 
     return {
       participantId: participant.id,
       displayName: participant.displayName,
-      total: matchPts + streakPts + dailyPts,
+      total: matchPts + streakPts + dailyPts + longTerm.total,
       matchPts,
       upsetPts,
       streakPts,
       dailyPts,
+      longTermPts: longTerm.total,
+      longTermBreakdown: longTerm,
       predictedCount: participantPredictions.length,
       exactCount,
       finishedPredicted,
@@ -179,6 +218,37 @@ export function computeStandings({
       return String(a.displayName).localeCompare(String(b.displayName), 'vi');
     })
     .map((row, index) => ({ ...row, rank: index + 1 }));
+}
+
+function matchesAnswer(value, actual) {
+  return !!normalizeAnswer(actual) && normalizeAnswer(value) === normalizeAnswer(actual);
+}
+
+function normalizeStage(stage) {
+  return ({ r32: 'round32', r16: 'round16', qf: 'quarter', sf: 'semi' })[stage] || stage;
+}
+
+function currentStage(matches, now) {
+  const started = matches
+    .filter((match) => new Date(match.kickoffAt).getTime() <= now.getTime())
+    .sort((a, b) => new Date(b.kickoffAt) - new Date(a.kickoffAt));
+  return normalizeStage(started[0]?.stage || 'group');
+}
+
+function isSameIsoWeek(left, right) {
+  if (Number.isNaN(left.getTime()) || Number.isNaN(right.getTime())) return false;
+  const a = isoWeekKey(left);
+  const b = isoWeekKey(right);
+  return a === b;
+}
+
+function isoWeekKey(date) {
+  const value = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const day = value.getUTCDay() || 7;
+  value.setUTCDate(value.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(value.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((value - yearStart) / 86400000) + 1) / 7);
+  return `${value.getUTCFullYear()}-${week}`;
 }
 
 export function isFinished(match) {

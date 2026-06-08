@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { computeStandings, dailyPoints, matchBasePoints, matchPoints, matchUpsetBonus, streakBonus } from './scoring.js';
+import { computeStandings, dailyPoints, filterCompetitionWindow, longTermPoints, matchBasePoints, matchPoints, matchUpsetBonus, streakBonus } from './scoring.js';
 import { validateWorldCupData } from './data-validation.js';
 import { DAILY_QUESTIONS, MATCHES } from './worldcup-data.js';
 import { buildMockLiveScorePayload, createMockMembers, createMockPredictions } from './mock-simulation.js';
+import { buildDailyRecap, nearestReminderMatch } from './engagement.js';
 
 const finishedMatch = {
   matchNo: 1,
@@ -83,6 +84,25 @@ test('daily points compare answers case-insensitively', () => {
   assert.equal(dailyPoints({ answer: 'khong' }, { correctAnswer: 'Co', points: 2 }), 0);
 });
 
+test('long-term picks score only after matching answers are configured', () => {
+  assert.deepEqual(longTermPoints({ champion: 'France', topScorer: 'Mbappe', shockTeam: 'Canada' }, {
+    championActual: 'france', topScorerActual: 'Mbappe', shockTeamActual: '',
+  }), { total: 30, champion: 20, topScorer: 10, shockTeam: 0 });
+});
+
+test('weekly and stage windows filter matches and predictions for real leaderboard modes', () => {
+  const matches = [
+    { matchNo: 1, stage: 'group', kickoffAt: '2026-06-12T10:00:00Z' },
+    { matchNo: 2, stage: 'group', kickoffAt: '2026-06-20T10:00:00Z' },
+    { matchNo: 73, stage: 'round32', kickoffAt: '2026-06-29T10:00:00Z' },
+  ];
+  const predictions = matches.map((match) => ({ matchNo: match.matchNo }));
+  const weekly = filterCompetitionWindow({ matches, predictions, mode: 'week', now: new Date('2026-06-12T12:00:00Z') });
+  assert.deepEqual(weekly.matches.map((match) => match.matchNo), [1]);
+  const stage = filterCompetitionWindow({ matches, predictions, mode: 'stage', now: new Date('2026-06-30T12:00:00Z') });
+  assert.deepEqual(stage.matches.map((match) => match.matchNo), [73]);
+});
+
 test('computeStandings ranks by total, exact count, then predicted count', () => {
   const matches = [
     { matchNo: 1, status: 'finished', homeScore: 2, awayScore: 1 },
@@ -135,6 +155,17 @@ test('static World Cup data is internally consistent', () => {
   const result = validateWorldCupData({ matches: MATCHES, questions: DAILY_QUESTIONS });
   assert.deepEqual(result.errors, []);
   assert.equal(result.ok, true);
+});
+
+test('engagement helpers choose the nearest future match and build a data-backed recap', () => {
+  const reminder = nearestReminderMatch([
+    { matchNo: 2, homeTeam: 'France', awayTeam: 'Canada', kickoffAt: '2026-06-12T12:00:00Z' },
+    { matchNo: 1, homeTeam: 'Mexico', awayTeam: 'South Africa', kickoffAt: '2026-06-11T12:00:00Z' },
+  ], Date.parse('2026-06-10T12:00:00Z'));
+  assert.equal(reminder.matchNo, 1);
+  assert.match(buildDailyRecap([{ displayName: 'Lan', total: 12, exactCount: 2 }], [
+    { status: 'finished', matchDay: '2026-06-11' },
+  ], '2026-06-11'), /Lan đang dẫn đầu với 12đ/);
 });
 
 function applyMockFinishedScores(matches, liveScores) {
