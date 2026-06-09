@@ -59,22 +59,34 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
   }
 
   function handleSync() {
-    return run('sync', async () => {
+    return dialog.confirm(
+      'Đồng bộ lịch 104 trận?',
+      'Thao tác này ghi lịch static vào bảng runtime để bật privacy, knock-out và snapshot.',
+      { confirmLabel: 'Đồng bộ', cancelLabel: 'Huỷ' }
+    ).then((ok) => ok && run('sync', async () => {
       await syncTournamentSchedule({ workspaceId, userId: ctx.userId, matches });
       track('tournament_schedule_synced', { match_count: matches.length });
-    }, 'Đã đồng bộ lịch 104 trận và mốc khóa giải.');
+    }, 'Đã đồng bộ lịch 104 trận và mốc khóa giải.'));
   }
 
   function handleResult() {
     if (!selected || homeScore === '' || awayScore === '') return dialog.error('Thiếu tỷ số', 'Nhập đủ tỷ số hai đội.');
-    return run('result', async () => {
+    return dialog.confirm(
+      `Chốt kết quả trận #${selected.matchNo}?`,
+      `${homeTeam} ${homeScore}-${awayScore} ${awayTeam}. Kết quả này sẽ trở thành snapshot chính thức để chấm điểm.`,
+      { danger: true, confirmLabel: 'Chốt FT', cancelLabel: 'Huỷ' }
+    ).then((ok) => ok && run('result', async () => {
       await saveOfficialMatch({ workspaceId, userId: ctx.userId, match: selected, result: { homeTeam, awayTeam, homeScore, awayScore } });
       track('official_result_saved', { match_no: selected.matchNo });
-    }, `Đã chốt kết quả trận #${selected.matchNo}.`);
+    }, `Đã chốt kết quả trận #${selected.matchNo}.`));
   }
 
   function handleConfig() {
-    return run('config', async () => {
+    return dialog.confirm(
+      'Lưu đáp án dài hạn?',
+      'Các đáp án này sẽ được dùng để chấm điểm vô địch, vua phá lưới và đội gây sốc.',
+      { danger: true, confirmLabel: 'Lưu đáp án', cancelLabel: 'Huỷ' }
+    ).then((ok) => ok && run('config', async () => {
       await saveTournamentConfig({ workspaceId, userId: ctx.userId, config: {
         openingKickoffAt: config?.openingKickoffAt || matches[0]?.kickoffAt,
         championActual, topScorerActual, shockTeamActual,
@@ -82,12 +94,16 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
         remindersEnabled: true,
       } });
       track('tournament_answers_saved');
-    }, 'Đã lưu đáp án dài hạn và cấu hình giải.');
+    }, 'Đã lưu đáp án dài hạn và cấu hình giải.'));
   }
 
   function handleReminder() {
     if (!upcoming) return dialog.info('Không có trận sắp tới', 'Hiện chưa có trận hợp lệ để nhắc.');
-    return run('reminder', async () => {
+    return dialog.confirm(
+      `Nhắc người chưa dự trận #${upcoming.matchNo}?`,
+      `Push chỉ gửi tới thành viên chưa dự ${upcoming.homeTeam} - ${upcoming.awayTeam}.`,
+      { confirmLabel: 'Gửi nhắc', cancelLabel: 'Huỷ' }
+    ).then((ok) => ok && run('reminder', async () => {
       const userIds = await fetchMissingPredictionUserIds(workspaceId, upcoming.matchNo);
       if (!userIds.length) throw new Error('Mọi thành viên đã dự trận gần nhất.');
       await mushyApi.push({
@@ -97,19 +113,23 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
         data: { appSlug: 'nha-tien-tri', kind: 'deadline_reminder', screen: 'match', matchNo: String(upcoming.matchNo) },
       });
       track('deadline_reminder_sent', { match_no: upcoming.matchNo, recipient_count: userIds.length });
-    }, `Đã nhắc người chưa dự trận #${upcoming.matchNo}.`);
+    }, `Đã nhắc người chưa dự trận #${upcoming.matchNo}.`));
   }
 
   function handleRecap() {
     const dateKey = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date());
     const body = buildDailyRecap(standings, matches, dateKey);
-    return run('recap', async () => {
+    return dialog.confirm(
+      'Gửi recap ngày?',
+      body,
+      { confirmLabel: 'Gửi recap', cancelLabel: 'Huỷ' }
+    ).then((ok) => ok && run('recap', async () => {
       await mushyApi.push({
         title: 'Tổng kết Nhà Tiên Tri', body,
         data: { appSlug: 'nha-tien-tri', kind: 'daily_recap', screen: 'leaderboard' },
       });
       track('daily_recap_sent');
-    }, 'Đã gửi tổng kết ngày tới workspace.');
+    }, 'Đã gửi tổng kết ngày tới workspace.'));
   }
 
   return (
