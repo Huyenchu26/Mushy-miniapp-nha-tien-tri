@@ -1802,7 +1802,7 @@ function MatchCardPrototype({
             <small>Bạn dự <b>{prediction.homePred}-{prediction.awayPred}</b>{prediction.doubleDown ? ' · kèo tủ x2' : ''}</small>
             <strong>Chờ trận đấu diễn ra</strong>
           </div>
-          <div className="match-actions compact-actions">
+          <div className="match-actions compact-actions saved-actions">
             <button
               type="button"
               className="secondary-btn small"

@@ -3340,6 +3340,18 @@ main,
   margin-top: 8px;
 }
 
+.compact-actions.saved-actions {
+  grid-template-columns: minmax(112px, 0.72fr) minmax(150px, 1fr);
+}
+
+.saved-actions .secondary-btn.small,
+.saved-actions .primary-btn.small {
+  width: 100%;
+  min-width: 0;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
 .star-btn,
 .primary-btn.small {
   min-height: 44px;
