@@ -1021,10 +1021,31 @@ export default function App() {
 
 function NotificationBell({ notifications = [], totalScore = 0 }) {
   const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
   const countLabel = notifications.length > 9 ? '9+' : String(notifications.length);
 
+  useEffect(() => {
+    if (!open) return undefined;
+
+    function handlePointerDown(event) {
+      if (wrapRef.current?.contains(event.target)) return;
+      setOpen(false);
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setOpen(false);
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open]);
+
   return (
-    <div className="hero-notification" aria-label="Thông báo">
+    <div ref={wrapRef} className="hero-notification" aria-label="Thông báo">
       <button
         className="notify-btn"
         type="button"
@@ -1538,6 +1559,7 @@ function MatchCardPrototype({
   const [doubleDown, setDoubleDown] = useState(prediction?.doubleDown ?? false);
   const [saving, setSaving] = useState(false);
   const [insightOpen, setInsightOpen] = useState(false);
+  const insightWrapRef = useRef(null);
   const base = matchBasePoints(prediction, match);
   const breakdown = matchScoreBreakdown(prediction, match);
   const displayHomeScore = finished ? match.homeScore : liveScore?.homeScore;
@@ -1548,6 +1570,26 @@ function MatchCardPrototype({
     setAwayPred(prediction?.awayPred ?? 0);
     setDoubleDown(prediction?.doubleDown ?? false);
   }, [prediction?.homePred, prediction?.awayPred, prediction?.doubleDown]);
+
+  useEffect(() => {
+    if (!insightOpen) return undefined;
+
+    function handlePointerDown(event) {
+      if (insightWrapRef.current?.contains(event.target)) return;
+      setInsightOpen(false);
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setInsightOpen(false);
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [insightOpen]);
 
   const homeScore = normalizeDraftScore(homePred);
   const awayScore = normalizeDraftScore(awayPred);
@@ -1748,7 +1790,7 @@ function MatchCardPrototype({
         </>
       )}
       {aiInsightsEnabled && teamsKnown ? (
-        <div className="match-ai">
+        <div ref={insightWrapRef} className="match-ai">
           <button type="button" className="match-ai-btn" aria-expanded={insightOpen} onClick={handleInsightClick}>
             {insightOpen ? 'Ẩn nhận định AI' : 'Nhận định AI'}
           </button>
