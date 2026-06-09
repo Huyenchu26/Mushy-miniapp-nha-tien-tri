@@ -36,6 +36,8 @@ const LIVE_SCORE_POLL_MS = 120000;
 const LIVE_SCORE_IDLE_CHECK_MS = 900000;
 const LIVE_SCORE_PREMATCH_MS = 2 * 60 * 60 * 1000;
 const LIVE_SCORE_POSTMATCH_MS = 4 * 60 * 60 * 1000;
+const APP_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+const PREDICTION_LOCK_BEFORE_MS = 15 * 60 * 1000;
 const ROOM_POLL_FALLBACK_MS = 30000;
 const CHAT_REPEAT_WINDOW_MS = 45000;
 const CHAT_REPEAT_LIMIT = 2;
@@ -174,7 +176,7 @@ export default function App() {
     [ctx?.workspaceId, ctx?.workspaceSlug]
   );
   const tournamentMatches = useMemo(() => mergeTournamentMatches(MATCHES, officialMatches), [officialMatches]);
-  const canManageTournament = ctx?.role === 'owner' || ctx?.role === 'admin';
+  const canManageTournament = isMushyAdmin(ctx);
 
   useEffect(() => {
     try {
@@ -457,7 +459,7 @@ export default function App() {
       setAnswers(answerRows);
       setLongTermBet(longTermRow || (localSimulation ? createMockLongTermBet(ctx, scope.workspaceId) : null));
       let nextTournamentState = tournamentState;
-      if ((ctx.role === 'owner' || ctx.role === 'admin') && tournamentState.matches.length === 0) {
+      if (isMushyAdmin(ctx) && tournamentState.matches.length === 0) {
         await syncTournamentSchedule({ workspaceId: scope.workspaceId, userId: ctx.userId, matches: MATCHES });
         nextTournamentState = await fetchTournamentState(scope.workspaceId);
       }
@@ -493,8 +495,8 @@ export default function App() {
         doubleDown: draft.doubleDown === true,
       };
 
-      if (Date.now() >= new Date(match.kickoffAt).getTime()) {
-        throw new Error('Trận này đã khóa dự đoán.');
+      if (isPredictionLocked(match)) {
+        throw new Error('Trận này đã khóa dự đoán trước giờ bóng lăn 15 phút.');
       }
 
       if (draft.doubleDown) {
@@ -882,7 +884,16 @@ export default function App() {
             />
 
             {canManageTournament && (
-              <div className="admin-entry"><button type="button" className="secondary-btn" onClick={() => setAdminOpen(true)}>Điều hành giải</button></div>
+              <div className="admin-entry">
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  aria-expanded={adminOpen}
+                  onClick={() => setAdminOpen((value) => !value)}
+                >
+                  Điều hành giải
+                </button>
+              </div>
             )}
 
             {(error || loading) && (
@@ -987,6 +998,7 @@ export default function App() {
         matches={matchesWithOfficialScores}
         standings={standings}
         config={appConfig}
+        canManage={canManageTournament}
         onChanged={loadGameData}
       />
 
@@ -1315,13 +1327,13 @@ function TodayChecklist({
       .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime()),
     [matches, today]
   );
-  const openTodayMatches = todayMatches.filter((match) => Date.now() < new Date(match.kickoffAt).getTime());
+  const openTodayMatches = todayMatches.filter((match) => !isPredictionLocked(match));
   const predictedToday = todayMatches.filter((match) => predictionMap.has(Number(match.matchNo)));
   const pendingMatches = openTodayMatches.filter((match) => !predictionMap.has(Number(match.matchNo)));
   const nextLockMatch = openTodayMatches[0] || null;
   const nextActionMatch = pendingMatches[0] || null;
   const nextScheduleMatch = matches
-    .filter((match) => !hasUnknownTeam(match) && Date.now() < new Date(match.kickoffAt).getTime())
+    .filter((match) => !hasUnknownTeam(match) && !isPredictionLocked(match))
     .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime())[0] || null;
   const todayQuestion = DAILY_QUESTIONS.find((question) => question.date === today);
   const dailyAnswered = todayQuestion ? answerMap.has(todayQuestion.key) : false;
@@ -1398,9 +1410,9 @@ function TodayChecklist({
         />
         <ChecklistItem
           icon="⏰"
-          tone={nextLockMatch && timeUntilMs(nextLockMatch.kickoffAt) <= 60 * 60 * 1000 ? 'warn' : 'neutral'}
+          tone={nextLockMatch && timeUntilMs(getPredictionLockAt(nextLockMatch)) <= 60 * 60 * 1000 ? 'warn' : 'neutral'}
           label={nextLockMatch
-            ? `${displayTeamName(nextLockMatch.homeTeam)} - ${displayTeamName(nextLockMatch.awayTeam)} khóa sau ${formatTimeUntil(nextLockMatch.kickoffAt)}`
+            ? `${displayTeamName(nextLockMatch.homeTeam)} - ${displayTeamName(nextLockMatch.awayTeam)} khóa sau ${formatTimeUntil(getPredictionLockAt(nextLockMatch))}`
             : hasMatchesToday ? 'Các trận hôm nay đã khóa hoặc đã xong' : 'Trận gần nhất sẽ hiện khi tới ngày thi đấu'}
         />
         <ChecklistItem
@@ -1514,7 +1526,7 @@ function MatchCardPrototype({
   onLoadInsight,
 }) {
   const teamsKnown = !hasUnknownTeam(match);
-  const locked = Date.now() >= new Date(match.kickoffAt).getTime() || !teamsKnown;
+  const locked = isPredictionLocked(match) || !teamsKnown;
   const finished = isFinished(match);
   const liveScore = shouldShowLiveScore(match) ? match.liveScore : null;
   const liveInProgress = isLiveInProgress(liveScore);
@@ -1565,7 +1577,7 @@ function MatchCardPrototype({
   const doubleHintText = !teamsKnown
     ? 'Chờ xác định đội.'
     : locked
-      ? 'Đã khóa dự đoán.'
+      ? 'Đã khóa trước giờ bóng lăn 15 phút.'
       : doubleDownReserved
         ? `Kèo tủ x2 đã dùng ở trận #${dailyDoubleMatchNo}.`
         : isTodayMatchDay
@@ -1611,8 +1623,9 @@ function MatchCardPrototype({
 
   function handleInsightClick(event) {
     event.stopPropagation();
-    setInsightOpen(true);
-    if (!aiInsight?.summary && !aiInsight?.loading) {
+    const nextOpen = !insightOpen;
+    setInsightOpen(nextOpen);
+    if (nextOpen && !aiInsight?.summary && !aiInsight?.loading) {
       onLoadInsight?.(match);
     }
   }
@@ -1736,8 +1749,8 @@ function MatchCardPrototype({
       )}
       {aiInsightsEnabled && teamsKnown ? (
         <div className="match-ai">
-          <button type="button" className="match-ai-btn" onClick={handleInsightClick}>
-            Nhận định AI
+          <button type="button" className="match-ai-btn" aria-expanded={insightOpen} onClick={handleInsightClick}>
+            {insightOpen ? 'Ẩn nhận định AI' : 'Nhận định AI'}
           </button>
           {insightOpen ? (
             <div className={`match-ai-panel ${aiInsight?.error ? 'error' : ''}`}>
@@ -1889,7 +1902,12 @@ function PredictionRoomScreen({
             <h3>Lịch sử dự đoán</h3>
             <span>{prediction ? `Bạn: ${prediction.homePred}-${prediction.awayPred}` : 'Chưa có kèo'}</span>
           </div>
-          <button type="button" className="prediction-history-row" onClick={() => setShowPredictionSheet(true)}>
+          <button
+            type="button"
+            className="prediction-history-row"
+            aria-expanded={showPredictionSheet}
+            onClick={() => setShowPredictionSheet((value) => !value)}
+          >
             <span className="history-row-main">Cùng phe: <b>{sameFactionCount}</b> người</span>
             <strong>Xem danh sách</strong>
           </button>
@@ -2158,7 +2176,7 @@ function ScorePicker({ score, locked, ariaLabel, onDecrease, onIncrease }) {
 }
 
 function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
-  const locked = Date.now() >= new Date(match.kickoffAt).getTime();
+  const locked = isPredictionLocked(match);
   const isTodayMatchDay = match.matchDay === getLocalDateKey();
   const doubleDownReserved = !!dailyDoubleMatchNo && dailyDoubleMatchNo !== Number(match.matchNo);
   const [homePred, setHomePred] = useState(prediction?.homePred ?? 0);
@@ -2239,7 +2257,7 @@ function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
 function DailyScreen({ questions, triviaQuestion, answerMap, answers, longTermBet, longTermLocked, onSave, onSaveLongTerm }) {
   const visibleQuestions = useMemo(() => {
     const today = getLocalDateKey();
-    const tomorrow = getLocalDateKey(new Date(Date.now() + 24 * 60 * 60 * 1000));
+    const tomorrow = addDaysToDateKey(today, 1);
     return questions.filter((question) => question.date === today || question.date === tomorrow);
   }, [questions]);
   const streak = triviaStreak(answers, getLocalDateKey());
@@ -3190,7 +3208,7 @@ function RulesScreen() {
     {
       icon: ClipboardCheck,
       title: 'Chốt sổ',
-      body: 'Dự đoán phải lưu trước giờ bóng lăn. Trễ trận nào thì trận đó 0đ, không phạt thêm.',
+      body: 'Dự đoán phải lưu trước giờ bóng lăn 15 phút. Trễ trận nào thì trận đó 0đ, không phạt thêm.',
     },
     {
       icon: Trophy,
@@ -3677,6 +3695,7 @@ function groupByDate(matches) {
 
 function formatDate(value) {
   return new Intl.DateTimeFormat('vi-VN', {
+    timeZone: APP_TIME_ZONE,
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
@@ -3691,6 +3710,7 @@ function difficultyLabel(value) {
 
 function formatTime(value) {
   return new Intl.DateTimeFormat('vi-VN', {
+    timeZone: APP_TIME_ZONE,
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',
@@ -3719,6 +3739,7 @@ function formatTimeUntil(value) {
 
 function formatRelativeSyncTime(value) {
   return new Intl.DateTimeFormat('vi-VN', {
+    timeZone: APP_TIME_ZONE,
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value));
@@ -3731,8 +3752,38 @@ function formatGoalDifference(value) {
 }
 
 function getLocalDateKey(date = new Date()) {
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 10);
+  return dateKeyInAppTimeZone(date);
+}
+
+function dateKeyInAppTimeZone(value = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: APP_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(value));
+  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${byType.year}-${byType.month}-${byType.day}`;
+}
+
+function addDaysToDateKey(dateKey, days) {
+  const date = new Date(`${dateKey}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + Number(days || 0));
+  return date.toISOString().slice(0, 10);
+}
+
+function getPredictionLockAt(match) {
+  const kickoffMs = new Date(match?.kickoffAt).getTime();
+  if (!Number.isFinite(kickoffMs)) return new Date(0);
+  return new Date(kickoffMs - PREDICTION_LOCK_BEFORE_MS);
+}
+
+function isPredictionLocked(match, nowMs = Date.now()) {
+  return nowMs >= getPredictionLockAt(match).getTime();
+}
+
+function isMushyAdmin(ctx) {
+  return ctx?.role === 'owner' || ctx?.role === 'admin';
 }
 
 function shortTeam(team) {

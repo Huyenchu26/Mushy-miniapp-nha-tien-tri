@@ -3,6 +3,84 @@
 -- Submit through Admin Portal Migration Reviewer. Reviewer duplicates dev.
 -- =====================================================================
 
+-- Some workspaces applied the group-stage migrations before the full
+-- tournament table existed. Keep this migration self-healing so the later
+-- policies/functions can safely reference app_nha_tien_tri.matches.
+-- @realtime
+create table if not exists app_nha_tien_tri.matches (
+  id            uuid primary key default gen_random_uuid(),
+  workspace_id  uuid not null references public.workspaces(id) on delete cascade,
+  created_by    uuid not null references auth.users(id),
+  match_no      int not null check (match_no between 1 and 104),
+  stage         text not null check (stage in ('group','r32','r16','qf','sf','third','final')),
+  group_label   text,
+  home_team     text not null check (char_length(home_team) between 1 and 60),
+  away_team     text not null check (char_length(away_team) between 1 and 60),
+  kickoff_at    timestamptz not null,
+  home_score    int check (home_score >= 0),
+  away_score    int check (away_score >= 0),
+  status        text not null default 'scheduled' check (status in ('scheduled','finished')),
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  unique (workspace_id, match_no)
+);
+
+create index if not exists idx_wc_matches_ws
+  on app_nha_tien_tri.matches (workspace_id);
+create index if not exists idx_wc_matches_ws_kick
+  on app_nha_tien_tri.matches (workspace_id, kickoff_at);
+
+grant select, insert, update, delete on app_nha_tien_tri.matches to authenticated;
+alter table app_nha_tien_tri.matches enable row level security;
+
+drop policy if exists "matches_select" on app_nha_tien_tri.matches;
+create policy "matches_select" on app_nha_tien_tri.matches
+for select using (public.can_access_app_data(workspace_id, 'nha-tien-tri'));
+
+-- Same recovery path for long-term picks and app config when the legacy
+-- all-in-one schema migration was not applied to the target schema.
+-- @realtime
+create table if not exists app_nha_tien_tri.long_term_bets (
+  id            uuid primary key default gen_random_uuid(),
+  workspace_id  uuid not null references public.workspaces(id) on delete cascade,
+  created_by    uuid not null references auth.users(id),
+  champion      text check (char_length(champion) <= 60),
+  top_scorer    text check (char_length(top_scorer) <= 80),
+  shock_team    text check (char_length(shock_team) <= 60),
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  unique (workspace_id, created_by)
+);
+
+create index if not exists idx_wc_ltb_ws
+  on app_nha_tien_tri.long_term_bets (workspace_id);
+
+grant select, insert, update, delete on app_nha_tien_tri.long_term_bets to authenticated;
+alter table app_nha_tien_tri.long_term_bets enable row level security;
+
+create table if not exists app_nha_tien_tri.app_config (
+  id                 uuid primary key default gen_random_uuid(),
+  workspace_id       uuid not null references public.workspaces(id) on delete cascade,
+  created_by         uuid not null references auth.users(id),
+  opening_kickoff_at timestamptz,
+  champion_actual    text,
+  top_scorer_actual  text,
+  shock_team_actual  text,
+  created_at         timestamptz not null default now(),
+  updated_at         timestamptz not null default now(),
+  unique (workspace_id)
+);
+
+create index if not exists idx_wc_cfg_ws
+  on app_nha_tien_tri.app_config (workspace_id);
+
+grant select, insert, update, delete on app_nha_tien_tri.app_config to authenticated;
+alter table app_nha_tien_tri.app_config enable row level security;
+
+drop policy if exists "app_config_select" on app_nha_tien_tri.app_config;
+create policy "app_config_select" on app_nha_tien_tri.app_config
+for select using (public.can_access_app_data(workspace_id, 'nha-tien-tri'));
+
 -- Allow persisted predictions/results for the complete 104-match tournament.
 alter table app_nha_tien_tri.group_predictions
   drop constraint if exists group_predictions_match_no_check;
@@ -127,7 +205,7 @@ begin
   if v_kickoff is null then
     raise exception 'Tournament schedule is not synced for match %', new.match_no;
   end if;
-  if now() >= v_kickoff then
+  if now() >= v_kickoff - interval '15 minutes' then
     raise exception 'Prediction deadline has passed for match %', new.match_no;
   end if;
   return new;

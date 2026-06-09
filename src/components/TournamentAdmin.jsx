@@ -11,7 +11,7 @@ import {
   syncTournamentSchedule,
 } from '../lib/app/tournament-service.js';
 
-export default function TournamentAdmin({ open, onClose, ctx, workspaceId, matches, standings, config, onChanged }) {
+export default function TournamentAdmin({ open, onClose, ctx, workspaceId, matches, standings, config, canManage = false, onChanged }) {
   const dialog = useDialog();
   const upcoming = useMemo(() => nearestReminderMatch(matches), [matches]);
   const [matchNo, setMatchNo] = useState(String(upcoming?.matchNo || matches[0]?.matchNo || ''));
@@ -38,7 +38,7 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
     setShockTeamActual(config?.shockTeamActual || '');
   }, [config]);
 
-  if (!open) return null;
+  if (!open || !canManage) return null;
 
   const options = matches.map((match) => ({
     value: String(match.matchNo),
