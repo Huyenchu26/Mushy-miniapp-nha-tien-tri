@@ -32,10 +32,7 @@ import {
 import './App.css';
 
 const DEFAULT_TAB = 'matches';
-const LIVE_SCORE_POLL_MS = 120000;
-const LIVE_SCORE_IDLE_CHECK_MS = 900000;
-const LIVE_SCORE_PREMATCH_MS = 2 * 60 * 60 * 1000;
-const LIVE_SCORE_POSTMATCH_MS = 4 * 60 * 60 * 1000;
+const LIVE_SCORE_POLL_MS = 3 * 60 * 1000;
 const APP_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 const PREDICTION_LOCK_BEFORE_MS = 15 * 60 * 1000;
 const ROOM_POLL_FALLBACK_MS = 30000;
@@ -328,9 +325,7 @@ export default function App() {
 
     async function scheduleSync() {
       if (cancelled) return;
-      const waitMs = document.visibilityState === 'hidden'
-        ? LIVE_SCORE_IDLE_CHECK_MS
-        : await syncLiveScores();
+      const waitMs = await syncLiveScores();
       if (cancelled) return;
       timer = window.setTimeout(scheduleSync, waitMs || LIVE_SCORE_POLL_MS);
     }
@@ -1558,6 +1553,7 @@ function MatchCardPrototype({
   const [awayPred, setAwayPred] = useState(prediction?.awayPred ?? 0);
   const [doubleDown, setDoubleDown] = useState(prediction?.doubleDown ?? false);
   const [saving, setSaving] = useState(false);
+  const [editingPrediction, setEditingPrediction] = useState(false);
   const [insightOpen, setInsightOpen] = useState(false);
   const insightWrapRef = useRef(null);
   const base = matchBasePoints(prediction, match);
@@ -1570,6 +1566,10 @@ function MatchCardPrototype({
     setAwayPred(prediction?.awayPred ?? 0);
     setDoubleDown(prediction?.doubleDown ?? false);
   }, [prediction?.homePred, prediction?.awayPred, prediction?.doubleDown]);
+
+  useEffect(() => {
+    setEditingPrediction(false);
+  }, [match.matchNo, prediction?.id]);
 
   useEffect(() => {
     if (!insightOpen) return undefined;
@@ -1599,9 +1599,10 @@ function MatchCardPrototype({
     && Number(prediction.homePred) === homeScore
     && Number(prediction.awayPred) === awayScore
     && !!prediction.doubleDown === !!doubleDown;
+  const showPredictionEditor = !prediction || editingPrediction || !draftIsSaved;
   const predictionButtonLabel = saving
     ? 'Đang lưu...'
-    : prediction && draftIsSaved
+    : prediction && draftIsSaved && !editingPrediction
       ? 'Vào phòng dự đoán'
       : prediction
         ? 'Cập nhật dự đoán'
@@ -1637,14 +1638,15 @@ function MatchCardPrototype({
     if (locked || saving) return;
     setSaving(true);
     try {
-      await onSave(match, { homePred: homeScore, awayPred: awayScore, doubleDown });
+      const saved = await onSave(match, { homePred: homeScore, awayPred: awayScore, doubleDown });
+      if (saved) setEditingPrediction(false);
     } finally {
       setSaving(false);
     }
   }
 
   async function handlePrimaryActionClick() {
-    if (prediction && draftIsSaved) {
+    if (prediction && draftIsSaved && !editingPrediction) {
       onOpenRoom?.(match);
       return;
     }
@@ -1721,7 +1723,7 @@ function MatchCardPrototype({
           </div>
           <p className="match-social-line">{socialLine}</p>
         </>
-      ) : (
+      ) : showPredictionEditor ? (
         <>
           <div className="fixture prediction-fixture">
             <div className="prediction-side">
@@ -1787,6 +1789,43 @@ function MatchCardPrototype({
                   ? 'Mỗi ngày chỉ 1 kèo tủ.'
                   : 'Kèo tủ chỉ mở đúng ngày thi đấu.'}
           </p>
+        </>
+      ) : (
+        <>
+          <div className="fixture finished-fixture saved-fixture">
+            <MatchTeam team={match.homeTeam} />
+            <span className="ft-badge saved-pick-badge">VS</span>
+            <MatchTeam team={match.awayTeam} />
+          </div>
+          <div className="prediction-done pending">
+            <span>Bạn đã lưu dự đoán</span>
+            <small>Bạn dự <b>{prediction.homePred}-{prediction.awayPred}</b>{prediction.doubleDown ? ' · kèo tủ x2' : ''}</small>
+            <strong>Chờ trận đấu diễn ra</strong>
+          </div>
+          <div className="match-actions compact-actions">
+            <button
+              type="button"
+              className="secondary-btn small"
+              disabled={locked}
+              onClick={(event) => {
+                event.stopPropagation();
+                setEditingPrediction(true);
+              }}
+            >
+              Sửa dự đoán
+            </button>
+            <button
+              type="button"
+              className="primary-btn small room-action-btn room-ready"
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenRoom?.(match);
+              }}
+            >
+              Vào phòng dự đoán
+            </button>
+          </div>
+          <p className="match-social-line">{socialLine}</p>
         </>
       )}
       {aiInsightsEnabled && teamsKnown ? (
@@ -2195,12 +2234,14 @@ function formatGoalScorer(value) {
 
 function MatchTeam({ team, score = null }) {
   const meta = TEAM_META[team];
+  const fullName = displayTeamName(team);
+  const compactName = compactTeamName(team);
   return (
     <div className="match-team">
-      <span className="match-flag" aria-label={`Cờ ${team}`}>
+      <span className="match-flag" aria-label={`Cờ ${fullName}`}>
         {meta?.flagUrl ? <img src={meta.flagUrl} alt="" loading="lazy" /> : meta?.flag || team.slice(0, 2).toUpperCase()}
       </span>
-      <strong>{displayTeamName(team)}</strong>
+      <strong title={fullName}>{compactName}</strong>
       {Number.isInteger(meta?.fifaRank) ? <small>FIFA #{meta.fifaRank}</small> : null}
       {score != null ? <b className="real-score">{score}</b> : null}
     </div>
@@ -3333,45 +3374,24 @@ function normalizeLiveScorePayload(payload) {
 }
 
 function getLiveScoreSyncPlan(matches = [], nowMs = Date.now()) {
-  const windows = matches
+  const scheduledMatches = matches
     .map((match) => {
       const kickoffMs = new Date(match.kickoffAt).getTime();
       if (!Number.isFinite(kickoffMs)) return null;
       return {
         matchAt: match.kickoffAt,
-        startsAt: kickoffMs - LIVE_SCORE_PREMATCH_MS,
-        endsAt: kickoffMs + LIVE_SCORE_POSTMATCH_MS,
+        kickoffMs,
       };
     })
     .filter(Boolean)
-    .sort((a, b) => a.startsAt - b.startsAt);
+    .sort((a, b) => a.kickoffMs - b.kickoffMs);
+  const nextMatch = scheduledMatches.find((item) => nowMs <= item.kickoffMs) || scheduledMatches[scheduledMatches.length - 1] || null;
 
-  const activeWindow = windows.find((windowItem) => nowMs >= windowItem.startsAt && nowMs <= windowItem.endsAt);
-  if (activeWindow) {
-    return {
-      shouldFetch: true,
-      waitMs: LIVE_SCORE_POLL_MS,
-      nextMatchAt: activeWindow.matchAt,
-      nextFetchAt: new Date(nowMs + LIVE_SCORE_POLL_MS).toISOString(),
-    };
-  }
-
-  const nextWindow = windows.find((windowItem) => nowMs < windowItem.startsAt);
-  if (!nextWindow) {
-    return {
-      shouldFetch: false,
-      waitMs: LIVE_SCORE_IDLE_CHECK_MS,
-      nextMatchAt: '',
-      nextFetchAt: '',
-    };
-  }
-
-  const waitUntilWindow = Math.max(60000, nextWindow.startsAt - nowMs);
   return {
-    shouldFetch: false,
-    waitMs: Math.min(waitUntilWindow, LIVE_SCORE_IDLE_CHECK_MS),
-    nextMatchAt: nextWindow.matchAt,
-    nextFetchAt: new Date(nextWindow.startsAt).toISOString(),
+    shouldFetch: true,
+    waitMs: LIVE_SCORE_POLL_MS,
+    nextMatchAt: nextMatch?.matchAt || '',
+    nextFetchAt: new Date(nowMs + LIVE_SCORE_POLL_MS).toISOString(),
   };
 }
 
@@ -3835,6 +3855,21 @@ function shortTeam(team) {
 
 function displayTeamName(team) {
   return TEAM_META[team]?.viName || team;
+}
+
+function compactTeamName(team) {
+  const fullName = displayTeamName(team);
+  const overrides = {
+    'Bosnia and Herzegovina': 'Bosna & H.',
+    'Korea Republic': 'Hàn Quốc',
+    'South Africa': 'Nam Phi',
+    'United States': 'Hoa Kỳ',
+    'Saudi Arabia': 'Saudi Arabia',
+    'Côte d’Ivoire': 'Bờ Biển Ngà',
+    'Cote d’Ivoire': 'Bờ Biển Ngà',
+    'United Arab Emirates': 'UAE',
+  };
+  return overrides[team] || overrides[fullName] || (fullName.length > 14 ? `${fullName.slice(0, 12)}...` : fullName);
 }
 
 function matchStageLabel(match) {

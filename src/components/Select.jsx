@@ -84,6 +84,7 @@ export default function Select({ value, onChange, options, placeholder = '— Ch
 
   function pick(v) {
     onChange(v);
+    setHighlight(-1);
     setOpen(false);
   }
 
@@ -120,7 +121,10 @@ export default function Select({ value, onChange, options, placeholder = '— Ch
               aria-selected={opt.value === value}
               className={`mushy-select-option ${opt.value === value ? 'mushy-select-option--selected' : ''} ${i === highlight ? 'mushy-select-option--highlight' : ''}`}
               onMouseEnter={() => setHighlight(i)}
-              onClick={() => pick(opt.value)}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                pick(opt.value);
+              }}
             >
               {opt.icon && <span className="mushy-select-icon">{opt.icon}</span>}
               <span className="mushy-select-label">{opt.label}</span>

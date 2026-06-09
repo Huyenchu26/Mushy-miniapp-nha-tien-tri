@@ -3214,6 +3214,9 @@ main,
   font-size: 14px;
   line-height: 1.15;
   font-weight: 950;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .match-team small {
