@@ -2765,8 +2765,8 @@ main,
 
 .hero-notification {
   position: absolute;
-  top: 18px;
-  right: 18px;
+  top: clamp(10px, 3vw, 18px);
+  right: clamp(10px, 3vw, 18px);
   z-index: 5;
 }
 
@@ -2774,11 +2774,11 @@ main,
   position: relative;
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: clamp(44px, 12vw, 56px);
+  height: clamp(44px, 12vw, 56px);
   flex: 0 0 auto;
   border: 0;
-  border-radius: 20px;
+  border-radius: clamp(15px, 4vw, 20px);
   background: rgba(255, 255, 255, 0.76);
   color: #f7a600;
   font-size: 34px;
@@ -2787,6 +2787,8 @@ main,
 
 .notify-btn svg {
   color: #f7a600;
+  width: clamp(21px, 5.8vw, 25px);
+  height: clamp(21px, 5.8vw, 25px);
 }
 
 .notify-btn span {
@@ -2987,19 +2989,6 @@ main,
   font-size: clamp(28px, 5.7vw, 38px);
   line-height: 1.04;
   font-weight: 950;
-}
-
-.promo-copy button {
-  min-height: 50px;
-  margin-top: 20px;
-  border: 0;
-  border-radius: 999px;
-  padding: 0 26px;
-  background: linear-gradient(135deg, #ff4164, #ef2449);
-  color: #ffffff;
-  box-shadow: 0 16px 28px rgba(245, 54, 87, 0.24);
-  font-size: 18px;
-  font-weight: 900;
 }
 
 .goal-scene {
@@ -3819,8 +3808,7 @@ main,
   font-weight: 950;
 }
 
-.room-activity-item.comment strong,
-.room-activity-item.challenge strong {
+.room-activity-item.comment strong {
   max-width: 220px;
   background: var(--wc-strong);
   color: var(--wc-ink);
@@ -4013,15 +4001,6 @@ main,
   min-height: 40px;
   padding: 0 10px;
   font-size: 20px;
-}
-
-.reaction-row .challenge-btn {
-  flex: 1 1 112px;
-  min-width: 112px;
-  padding: 0 14px;
-  background: linear-gradient(135deg, #ff4164, #ef2449);
-  color: #ffffff;
-  font-size: 13px;
 }
 
 .chat-feed {
@@ -4328,14 +4307,14 @@ main,
   }
 
   .notify-btn {
-    width: 48px;
-    height: 48px;
+    width: clamp(42px, 11vw, 48px);
+    height: clamp(42px, 11vw, 48px);
     font-size: 28px;
   }
 
   .hero-notification {
-    top: 14px;
-    right: 14px;
+    top: max(10px, env(safe-area-inset-top));
+    right: max(10px, env(safe-area-inset-right));
   }
 
   .point-notification-panel {
@@ -4365,13 +4344,6 @@ main,
 
   .promo-copy strong {
     font-size: clamp(25px, 7vw, 32px);
-  }
-
-  .promo-copy button {
-    min-height: 48px;
-    margin-top: 18px;
-    padding: 0 22px;
-    font-size: 16px;
   }
 
   .today-checklist {

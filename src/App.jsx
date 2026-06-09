@@ -435,7 +435,7 @@ export default function App() {
       setLongTermBet(createMockLongTermBet(ctx, scope.workspaceId));
       setAllLongTermBets([createMockLongTermBet(ctx, scope.workspaceId)]);
       setOfficialMatches([]);
-      setAppConfig({ openingKickoffAt: tournamentMatches[0]?.kickoffAt, championActual: '', topScorerActual: '', shockTeamActual: '' });
+      setAppConfig({ openingKickoffAt: getLongTermLockAt(tournamentMatches), championActual: '', topScorerActual: '', shockTeamActual: '' });
       setMembers(mergeMockMembers([], ctx));
       setNotice('DEV mock: sample predictions and 6 match scores loaded.');
       setLoading(false);
@@ -659,9 +659,9 @@ export default function App() {
       if (!champion || !topScorer || !shockTeam) {
         throw new Error('Bạn cần chọn đủ vô địch, vua phá lưới và đội gây sốc.');
       }
-      const openingKickoffAt = appConfig?.openingKickoffAt || tournamentMatches[0]?.kickoffAt;
-      if (openingKickoffAt && Date.now() >= new Date(openingKickoffAt).getTime()) {
-        throw new Error('Dự đoán dài hạn đã khóa khi giải bắt đầu.');
+      const longTermLockAt = getLongTermLockAt(tournamentMatches, appConfig);
+      if (longTermLockAt && Date.now() >= new Date(longTermLockAt).getTime()) {
+        throw new Error('Dự đoán dài hạn đã khóa trước vòng play-off.');
       }
 
       if (localSimulation && isMockContext(ctx)) {
@@ -873,7 +873,6 @@ export default function App() {
         ) : (
           <>
             <PromoHero
-              onStart={() => setActiveTab('daily')}
               notifications={pointNotifications}
               totalScore={currentStanding?.total ?? 0}
             />
@@ -932,7 +931,7 @@ export default function App() {
                 answerMap={answerMap}
                 answers={currentUserAnswers}
                 longTermBet={longTermBet}
-                longTermLocked={Date.now() >= new Date(appConfig?.openingKickoffAt || tournamentMatches[0]?.kickoffAt).getTime()}
+                longTermLocked={Date.now() >= new Date(getLongTermLockAt(tournamentMatches, appConfig)).getTime()}
                 onSave={handleSaveAnswer}
                 onSaveLongTerm={handleSaveLongTermBet}
               />
@@ -1087,7 +1086,7 @@ function PointNotificationPanel({ items, totalScore }) {
   );
 }
 
-function PromoHero({ onStart, notifications, totalScore }) {
+function PromoHero({ notifications, totalScore }) {
   return (
     <div className="promo-hero-shell">
       <NotificationBell notifications={notifications} totalScore={totalScore} />
@@ -1102,7 +1101,6 @@ function PromoHero({ onStart, notifications, totalScore }) {
         <div className="promo-copy">
           <h2>Dự đoán cực hay</h2>
           <strong>Rinh quà mỗi ngày!</strong>
-          <button type="button" onClick={onStart}>Tham gia ngay <span>→</span></button>
         </div>
         <div className="goal-scene" aria-hidden="true">
           <div className="goal-net" />
@@ -1721,7 +1719,6 @@ function MatchCardPrototype({
               </>
             )}
           </div>
-          <p className="match-social-line">{socialLine}</p>
         </>
       ) : showPredictionEditor ? (
         <>
@@ -1776,8 +1773,6 @@ function MatchCardPrototype({
               {predictionButtonLabel}
             </button>
           </div>
-          <p className="match-social-line">{socialLine}</p>
-          <p className="double-hint double-hint-clean">{doubleHintText}</p>
           <p className="double-hint">
             {!teamsKnown
               ? 'Chờ xác định đội.'
@@ -1825,7 +1820,6 @@ function MatchCardPrototype({
               Vào phòng dự đoán
             </button>
           </div>
-          <p className="match-social-line">{socialLine}</p>
         </>
       )}
       {aiInsightsEnabled && teamsKnown ? (
@@ -1928,15 +1922,6 @@ function PredictionRoomScreen({
     }
   }
 
-  function sendChallenge() {
-    if (cooldownLeft > 0) return;
-    const score = prediction ? `${prediction.homePred}-${prediction.awayPred}` : 'kèo này';
-    onSend({
-      kind: 'challenge',
-      body: `Thách kèo tay đôi: ai dám ngược cửa dự đoán ${displayTeamName(match.homeTeam)} ${score} ${displayTeamName(match.awayTeam)}?`,
-    });
-  }
-
   return (
       <section className="prediction-room screen" aria-label={`Phòng dự đoán trận ${match.matchNo}`}>
         <div className="room-head">
@@ -1990,7 +1975,7 @@ function PredictionRoomScreen({
             onClick={() => setShowPredictionSheet((value) => !value)}
           >
             <span className="history-row-main">Cùng phe: <b>{sameFactionCount}</b> người</span>
-            <strong>Xem danh sách</strong>
+            <strong>Xem danh sách · {matchPredictions.length} người</strong>
           </button>
           <div className="room-activity-list" aria-label="Dự đoán tỉ số gần nhất">
             {visibleActivityItems.length === 0 ? (
@@ -2034,7 +2019,6 @@ function PredictionRoomScreen({
                 {emoji}
               </button>
             ))}
-            <button type="button" className="challenge-btn" disabled={cooldownLeft > 0} onClick={sendChallenge}>Thách kèo</button>
           </div>
 
           <div className="chat-feed" ref={chatFeedRef}>
@@ -2044,7 +2028,7 @@ function PredictionRoomScreen({
               <article key={message.id} className={`chat-message ${message.createdBy === currentUserId ? 'mine' : ''} ${message.failed ? 'failed' : ''}`}>
                 <span>{memberDisplayName(memberMap, message.createdBy)}</span>
                 <p>{message.kind === 'reaction' ? `${message.emoji || message.body}` : message.body}</p>
-                <small>{message.failed ? 'Chưa gửi được' : formatRoomTime(message.createdAt)}{message.kind === 'challenge' ? ' · thách kèo' : ''}</small>
+                <small>{message.failed ? 'Chưa gửi được' : formatRoomTime(message.createdAt)}</small>
               </article>
             ))}
           </div>
@@ -2522,7 +2506,7 @@ function LongTermBetCard({ bet, locked, onSave }) {
       </div>
 
       <div className="question-footer">
-        <span>{locked ? 'Đã khóa từ giờ khai mạc' : bet ? 'Đã lưu dự đoán dài hạn' : 'Chưa lưu dự đoán dài hạn'}</span>
+        <span>{locked ? 'Đã khóa trước vòng play-off' : bet ? 'Đã lưu dự đoán dài hạn' : 'Chưa lưu dự đoán dài hạn'}</span>
         <button type="button" className="primary-btn small" disabled={locked} onClick={() => onSave({ champion, topScorer, shockTeam })}>
           {locked ? 'Đã khóa' : 'Lưu'}
         </button>
@@ -3832,6 +3816,18 @@ function addDaysToDateKey(dateKey, days) {
   const date = new Date(`${dateKey}T12:00:00Z`);
   date.setUTCDate(date.getUTCDate() + Number(days || 0));
   return date.toISOString().slice(0, 10);
+}
+
+function getLongTermLockAt(matches = [], appConfig = null) {
+  const configured = appConfig?.longTermLockAt || appConfig?.playoffKickoffAt;
+  if (configured) return configured;
+  const playoffMatch = [...matches]
+    .filter((match) => match?.kickoffAt && match.stage !== 'group')
+    .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime())[0];
+  const fallbackAfterGroups = [...matches]
+    .filter((match) => match?.kickoffAt && Number(match.matchNo) > 72)
+    .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime())[0];
+  return playoffMatch?.kickoffAt || fallbackAfterGroups?.kickoffAt || matches[0]?.kickoffAt || '';
 }
 
 function getPredictionLockAt(match) {
