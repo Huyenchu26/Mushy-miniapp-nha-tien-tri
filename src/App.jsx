@@ -10,7 +10,7 @@ import {
   mergeMockMembers,
   mergeMockPredictions,
 } from './lib/app/mock-simulation.js';
-import { computeStandings, dailyPoints, filterCompetitionWindow, isFinished, matchBasePoints, matchScoreBreakdown, outcome } from './lib/app/scoring.js';
+import { computeStandings, dailyPoints, filterCompetitionWindow, isFinished, matchBasePoints, matchScoreBreakdown, normalizeAnswer, outcome } from './lib/app/scoring.js';
 import { ALL_SCORING_QUESTIONS, getTriviaQuestionForDate, triviaStreak } from './lib/app/quiz-data.js';
 import { selectInsightWarmupMatches } from './lib/app/match-insight.js';
 import Select from './components/Select.jsx';
@@ -872,10 +872,12 @@ export default function App() {
           />
         ) : (
           <>
-            <PromoHero
-              notifications={pointNotifications}
-              totalScore={currentStanding?.total ?? 0}
-            />
+            {activeTab === 'matches' && (
+              <PromoHero
+                notifications={pointNotifications}
+                totalScore={currentStanding?.total ?? 0}
+              />
+            )}
 
             {canManageTournament && (
               <div className="admin-entry">
@@ -1196,6 +1198,26 @@ function MatchesScreen({
   onLoadMatchInsight,
 }) {
   const grouped = useMemo(() => groupByDate(matches), [matches]);
+  const todayKey = getLocalDateKey();
+  const dayPages = useMemo(() => grouped.map(([date, dayMatches]) => {
+    const openMatches = dayMatches.filter((match) => !hasUnknownTeam(match) && !isPredictionLocked(match));
+    const predictedCount = dayMatches.filter((match) => predictionMap.has(Number(match.matchNo))).length;
+    const pendingCount = openMatches.filter((match) => !predictionMap.has(Number(match.matchNo))).length;
+    return {
+      date,
+      matches: dayMatches,
+      openCount: openMatches.length,
+      predictedCount,
+      pendingCount,
+    };
+  }), [grouped, predictionMap]);
+  const [selectedDate, setSelectedDate] = useState('');
+  const effectiveSelectedDate = dayPages.some((page) => page.date === selectedDate)
+    ? selectedDate
+    : pickDefaultMatchDay(dayPages, todayKey);
+  const selectedPage = dayPages.find((page) => page.date === effectiveSelectedDate) || null;
+  const selectedIndex = selectedPage ? dayPages.findIndex((page) => page.date === selectedPage.date) : -1;
+  const selectedDayStatus = selectedPage ? getDayPageStatusText(selectedPage, todayKey) : '';
   const roastMap = useMemo(
     () => buildRoastMap(matches, predictionMap),
     [matches, predictionMap]
@@ -1217,6 +1239,44 @@ function MatchesScreen({
       ? KNOCKOUT_FILTERS.find((round) => round.id === groupFilter)?.label || '+ thêm'
       : '+ thêm';
 
+  useEffect(() => {
+    if (!dayPages.length) {
+      if (selectedDate) setSelectedDate('');
+      return;
+    }
+
+    if (selectedDate !== effectiveSelectedDate) {
+      setSelectedDate(effectiveSelectedDate);
+    }
+  }, [dayPages, effectiveSelectedDate, selectedDate]);
+
+  function focusMatch(match) {
+    if (!match) return;
+    setSelectedDate(match.matchDay);
+    window.setTimeout(() => {
+      document.getElementById(`match-card-${match.matchNo}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }, 90);
+  }
+
+  function handleDayChange(nextIndex) {
+    const nextPage = dayPages[nextIndex];
+    if (nextPage) setSelectedDate(nextPage.date);
+  }
+
+  function handleDayPrimaryAction() {
+    if (!selectedPage) return;
+    const nextPendingMatch = selectedPage.matches.find(
+      (match) => !hasUnknownTeam(match) && !isPredictionLocked(match) && !predictionMap.has(Number(match.matchNo))
+    );
+    const visibleMatch = nextPendingMatch
+      || selectedPage.matches.find((match) => !hasUnknownTeam(match))
+      || selectedPage.matches[0];
+    focusMatch(visibleMatch);
+  }
+
   return (
     <section className="screen">
       <TodayChecklist
@@ -1225,6 +1285,8 @@ function MatchesScreen({
         answerMap={answerMap}
         dailyDoubleDownMap={dailyDoubleDownMap}
         onGroupFilter={onGroupFilter}
+        onQuery={onQuery}
+        onFocusMatch={focusMatch}
         onOpenDaily={onOpenDaily}
         onOpenLeaderboard={onOpenLeaderboard}
       />
@@ -1294,15 +1356,73 @@ function MatchesScreen({
         )}
       </div>
 
-      <div className="match-days">
-        {grouped.map(([date, dayMatches]) => (
-          <section className="match-day" key={date}>
+      {selectedPage ? (
+        <section className="day-pager" aria-label="Phân trang trận đấu theo ngày">
+          <div className="day-pager-head">
+            <button
+              type="button"
+              className="day-nav-btn"
+              disabled={selectedIndex <= 0}
+              onClick={() => handleDayChange(selectedIndex - 1)}
+              aria-label="Ngày trước"
+            >
+              ←
+            </button>
+            <div className="day-pager-copy">
+              <p>Ngày {selectedIndex + 1}/{dayPages.length}</p>
+              <h3>{formatDate(selectedPage.date)}</h3>
+              <span>
+                {selectedPage.matches.length} trận · {selectedPage.predictedCount}/{selectedPage.matches.length} đã dự · {selectedDayStatus}
+              </span>
+            </div>
+            <button
+              type="button"
+              className="day-nav-btn"
+              disabled={selectedIndex >= dayPages.length - 1}
+              onClick={() => handleDayChange(selectedIndex + 1)}
+              aria-label="Ngày sau"
+            >
+              →
+            </button>
+          </div>
+
+          <div className="day-chip-row" role="tablist" aria-label="Danh sách ngày thi đấu">
+            {dayPages.map((page, index) => {
+              const active = page.date === selectedPage.date;
+              return (
+                <button
+                  key={page.date}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  className={active ? 'active' : ''}
+                  onClick={() => setSelectedDate(page.date)}
+                >
+                  <span>{getDayChipLabel(page.date, index, todayKey)}</span>
+                  <strong>{formatShortDate(page.date)}</strong>
+                  <small>{page.pendingCount > 0 ? `${page.pendingCount} chưa dự` : `${page.predictedCount}/${page.matches.length} đã dự`}</small>
+                </button>
+              );
+            })}
+          </div>
+
+          <button type="button" className="secondary-btn day-pager-jump" onClick={handleDayPrimaryAction}>
+            {selectedPage.pendingCount > 0 ? 'Dự trận chưa làm' : selectedPage.date < todayKey ? 'Xem trận ngày này' : 'Xem lịch ngày này'}
+          </button>
+        </section>
+      ) : (
+        <p className="empty-state match-empty-state">Không có trận nào khớp bộ lọc hiện tại.</p>
+      )}
+
+      {selectedPage ? (
+        <div className="match-days">
+          <section className="match-day" id={`match-day-${selectedPage.date}`} key={selectedPage.date}>
             <div className="date-header">
-              <h3>{formatDate(date)}</h3>
-              <span>{dayMatches.length} trận</span>
+              <h3>{formatDate(selectedPage.date)}</h3>
+              <span>{selectedPage.matches.length} trận</span>
             </div>
             <div className="match-grid">
-              {dayMatches.map((match) => (
+              {selectedPage.matches.map((match) => (
                 <MatchCardPrototype
                   key={match.matchNo}
                   match={match}
@@ -1319,8 +1439,8 @@ function MatchesScreen({
               ))}
             </div>
           </section>
-        ))}
-      </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -1331,6 +1451,8 @@ function TodayChecklist({
   answerMap = new Map(),
   dailyDoubleDownMap = new Map(),
   onGroupFilter,
+  onQuery,
+  onFocusMatch,
   onOpenDaily,
   onOpenLeaderboard,
 }) {
@@ -1375,12 +1497,8 @@ function TodayChecklist({
   function scrollToMatch(match) {
     if (!match) return;
     onGroupFilter?.('all');
-    window.requestAnimationFrame(() => {
-      document.getElementById(`match-card-${match.matchNo}`)?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
-    });
+    onQuery?.('');
+    window.setTimeout(() => onFocusMatch?.(match), 0);
   }
 
   function handlePrimaryAction() {
@@ -1427,7 +1545,9 @@ function TodayChecklist({
           tone={nextLockMatch && timeUntilMs(getPredictionLockAt(nextLockMatch)) <= 60 * 60 * 1000 ? 'warn' : 'neutral'}
           label={nextLockMatch
             ? `${displayTeamName(nextLockMatch.homeTeam)} - ${displayTeamName(nextLockMatch.awayTeam)} khóa sau ${formatTimeUntil(getPredictionLockAt(nextLockMatch))}`
-            : hasMatchesToday ? 'Các trận hôm nay đã khóa hoặc đã xong' : 'Trận gần nhất sẽ hiện khi tới ngày thi đấu'}
+            : hasMatchesToday ? 'Các trận hôm nay đã khóa hoặc đã xong' : nextScheduleMatch
+              ? `Trận tiếp theo: ${displayTeamName(nextScheduleMatch.homeTeam)} - ${displayTeamName(nextScheduleMatch.awayTeam)} · ${formatTime(nextScheduleMatch.kickoffAt)}`
+              : 'Trận gần nhất sẽ hiện khi có lịch'}
         />
         <ChecklistItem
           icon="★"
@@ -2459,7 +2579,24 @@ function LongTermBetCard({ bet, locked, onSave }) {
     })),
     []
   );
-  const scorerOptions = useMemo(() => TOP_SCORER_OPTIONS.map((player) => player.label), []);
+  const scorerOptions = useMemo(
+    () => TOP_SCORER_OPTIONS.map((player) => ({ value: player.name, label: player.label })),
+    []
+  );
+  const longTermChanged = normalizeAnswer(champion) !== normalizeAnswer(bet?.champion)
+    || normalizeAnswer(topScorer) !== normalizeAnswer(bet?.topScorer)
+    || normalizeAnswer(shockTeam) !== normalizeAnswer(bet?.shockTeam);
+  const longTermReady = !!champion && !!topScorer.trim() && !!shockTeam;
+  const saveDisabled = locked || !longTermChanged || !longTermReady;
+  const footerLabel = locked
+    ? 'Đã khóa trước vòng play-off'
+    : !longTermReady
+      ? 'Chọn đủ 3 mục để lưu'
+      : bet && !longTermChanged
+        ? 'Đã lưu, chưa có thay đổi'
+        : bet
+          ? 'Có thay đổi chưa lưu'
+          : 'Chưa lưu dự đoán dài hạn';
 
   useEffect(() => {
     setChampion(bet?.champion || '');
@@ -2498,9 +2635,9 @@ function LongTermBetCard({ bet, locked, onSave }) {
       </div>
 
       <div className="question-footer">
-        <span>{locked ? 'Đã khóa trước vòng play-off' : bet ? 'Đã lưu dự đoán dài hạn' : 'Chưa lưu dự đoán dài hạn'}</span>
-        <button type="button" className="primary-btn small" disabled={locked} onClick={() => onSave({ champion, topScorer, shockTeam })}>
-          {locked ? 'Đã khóa' : 'Lưu'}
+        <span>{footerLabel}</span>
+        <button type="button" className="primary-btn small" disabled={saveDisabled} onClick={() => onSave({ champion, topScorer, shockTeam })}>
+          {locked ? 'Đã khóa' : bet && !longTermChanged ? 'Đã lưu' : 'Lưu'}
         </button>
       </div>
     </article>
@@ -2510,19 +2647,29 @@ function LongTermBetCard({ bet, locked, onSave }) {
 function TopScorerCombobox({ value, onChange, options = [], placeholder, disabled }) {
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
+  const [showFreeTextWarning, setShowFreeTextWarning] = useState(false);
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
   const needle = normalizeAnswer(value);
+  const normalizedOptions = useMemo(
+    () => options.map((option) => typeof option === 'string' ? { value: option, label: option } : option),
+    [options]
+  );
   const filteredOptions = useMemo(() => {
-    const ranked = options.filter((option) => normalizeAnswer(option).includes(needle));
-    return (needle ? ranked : options).slice(0, 8);
-  }, [needle, options]);
-  const exactMatch = options.some((option) => normalizeAnswer(option) === needle);
+    const ranked = normalizedOptions.filter((option) => (
+      normalizeAnswer(option.value).includes(needle) || normalizeAnswer(option.label).includes(needle)
+    ));
+    return (needle ? ranked : normalizedOptions).slice(0, 8);
+  }, [needle, normalizedOptions]);
+  const exactMatch = normalizedOptions.some((option) => normalizeAnswer(option.value) === needle);
 
   useEffect(() => {
     if (!open) return undefined;
     function onDocClick(event) {
-      if (wrapRef.current && !wrapRef.current.contains(event.target)) setOpen(false);
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) {
+        setOpen(false);
+        setShowFreeTextWarning(true);
+      }
     }
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
@@ -2530,10 +2677,11 @@ function TopScorerCombobox({ value, onChange, options = [], placeholder, disable
 
   useEffect(() => {
     setHighlight(0);
+    if (!value || exactMatch) setShowFreeTextWarning(false);
   }, [needle]);
 
   function pick(option) {
-    onChange(option);
+    onChange(option.value);
     setOpen(false);
     window.setTimeout(() => inputRef.current?.focus(), 0);
   }
@@ -2562,10 +2710,18 @@ function TopScorerCombobox({ value, onChange, options = [], placeholder, disable
         ref={inputRef}
         className="answer-input top-scorer-input"
         value={value}
-        onFocus={() => !disabled && setOpen(true)}
+        onFocus={() => {
+          if (disabled) return;
+          setOpen(true);
+          setShowFreeTextWarning(false);
+        }}
+        onBlur={() => {
+          window.setTimeout(() => setShowFreeTextWarning(true), 120);
+        }}
         onChange={(event) => {
           onChange(event.target.value);
           setOpen(true);
+          setShowFreeTextWarning(false);
         }}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
@@ -2579,10 +2735,10 @@ function TopScorerCombobox({ value, onChange, options = [], placeholder, disable
         <div className="top-scorer-panel" id="top-scorer-options" role="listbox">
           {filteredOptions.length > 0 ? filteredOptions.map((option, index) => (
             <button
-              key={option}
+              key={option.value}
               type="button"
               role="option"
-              aria-selected={option === value}
+              aria-selected={option.value === value}
               className={index === highlight ? 'active' : ''}
               onMouseEnter={() => setHighlight(index)}
               onMouseDown={(event) => {
@@ -2590,14 +2746,14 @@ function TopScorerCombobox({ value, onChange, options = [], placeholder, disable
                 pick(option);
               }}
             >
-              {option}
+              {option.label}
             </button>
           )) : (
             <p>Không có gợi ý phù hợp. Bạn vẫn có thể tự nhập tên.</p>
           )}
         </div>
       ) : null}
-      {value && !exactMatch ? (
+      {value && !exactMatch && showFreeTextWarning && !open ? (
         <small className="field-hint scorer-free-text">Tên này chưa có trong gợi ý, vẫn có thể lưu.</small>
       ) : null}
     </div>
@@ -2767,6 +2923,7 @@ function LeaderboardScreen({
   );
   const rows = standingsByMode?.[rankMode] || standings;
   const selectedStanding = rows.find((row) => row.participantId === currentParticipantId) || currentStanding;
+  const modeCopy = getLeaderboardModeCopy(rankMode, matches);
 
   return (
     <section className="screen">
@@ -2795,6 +2952,7 @@ function LeaderboardScreen({
           </button>
         ))}
       </div>
+      <p className="leader-mode-copy">{modeCopy}</p>
 
       <div className="leader-list">
         {rows.length === 0 ? (
@@ -2820,6 +2978,40 @@ function LeaderboardScreen({
       </div>
     </section>
   );
+}
+
+function getLeaderboardModeCopy(mode, matches = []) {
+  if (mode === 'week') {
+    const { start, end } = getCurrentWeekRange();
+    return `Chỉ tính các trận và câu hỏi trong tuần này (${formatDate(start)} - ${formatDate(end)}).`;
+  }
+  if (mode === 'stage') {
+    const stage = currentTournamentStage(matches);
+    return `Chỉ tính điểm ở ${stage}.`;
+  }
+  return 'Tổng điểm toàn giải, gồm trận đấu, câu hỏi, streak và dự đoán dài hạn đã chốt.';
+}
+
+function getCurrentWeekRange(date = new Date()) {
+  const start = new Date(date);
+  const day = start.getDay() || 7;
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - day + 1);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start, end };
+}
+
+function currentTournamentStage(matches = []) {
+  const now = Date.now();
+  const started = matches
+    .filter((match) => new Date(match.kickoffAt).getTime() <= now)
+    .sort((a, b) => new Date(b.kickoffAt) - new Date(a.kickoffAt));
+  const next = matches
+    .filter((match) => new Date(match.kickoffAt).getTime() > now)
+    .sort((a, b) => new Date(a.kickoffAt) - new Date(b.kickoffAt));
+  const match = started[0] || next[0];
+  return match ? matchStageLabel(match).toLowerCase() : 'giai đoạn hiện tại';
 }
 
 function ScoreHistoryPanel({ items, rank, total, predictedCount, isOpen, onToggle }) {
@@ -3828,6 +4020,17 @@ function groupByDate(matches) {
   return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
 }
 
+function pickDefaultMatchDay(dayPages, todayKey = getLocalDateKey()) {
+  if (!dayPages.length) return '';
+  const todayPage = dayPages.find((page) => page.date === todayKey);
+  if (todayPage) return todayPage.date;
+  const futurePendingPage = dayPages.find((page) => page.date > todayKey && page.pendingCount > 0);
+  if (futurePendingPage) return futurePendingPage.date;
+  const futurePage = dayPages.find((page) => page.date > todayKey);
+  if (futurePage) return futurePage.date;
+  return dayPages[dayPages.length - 1]?.date || '';
+}
+
 function formatDate(value) {
   return new Intl.DateTimeFormat('vi-VN', {
     timeZone: APP_TIME_ZONE,
@@ -3835,6 +4038,29 @@ function formatDate(value) {
     day: '2-digit',
     month: '2-digit',
   }).format(new Date(value));
+}
+
+function formatShortDate(value) {
+  return new Intl.DateTimeFormat('vi-VN', {
+    timeZone: APP_TIME_ZONE,
+    day: '2-digit',
+    month: '2-digit',
+  }).format(new Date(value));
+}
+
+function getDayChipLabel(dateKey, index, todayKey = getLocalDateKey()) {
+  if (dateKey === todayKey) return 'Hôm nay';
+  if (dateKey === addDaysToDateKey(todayKey, 1)) return 'Ngày mai';
+  if (dateKey === addDaysToDateKey(todayKey, -1)) return 'Hôm qua';
+  return `Ngày ${index + 1}`;
+}
+
+function getDayPageStatusText(page, todayKey = getLocalDateKey()) {
+  if (!page) return '';
+  if (page.pendingCount > 0) return `${page.pendingCount} trận chưa dự`;
+  if (page.openCount > 0) return 'Đã đủ dự đoán';
+  if (page.date < todayKey) return 'Đã qua hoặc đã khóa';
+  return 'Chưa mở dự đoán';
 }
 
 function difficultyLabel(value) {
