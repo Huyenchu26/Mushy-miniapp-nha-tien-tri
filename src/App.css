@@ -3709,7 +3709,7 @@ main,
 
 .prediction-history-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   width: 100%;
@@ -3722,13 +3722,6 @@ main,
   font-size: 13px;
   font-weight: 900;
   text-align: left;
-}
-
-.history-row-main {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .prediction-history-row b {
