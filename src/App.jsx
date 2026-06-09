@@ -2482,17 +2482,13 @@ function LongTermBetCard({ bet, locked, onSave }) {
         </label>
         <label>
           <span>Vua phá lưới</span>
-          <input
-            className="answer-input"
-            list="top-scorer-suggestions"
+          <TopScorerCombobox
             value={topScorer}
-            onChange={(event) => setTopScorer(event.target.value)}
+            onChange={setTopScorer}
+            options={scorerOptions}
             placeholder="Nhập hoặc chọn cầu thủ"
             disabled={locked}
           />
-          <datalist id="top-scorer-suggestions">
-            {scorerOptions.map((label) => <option key={label} value={label} />)}
-          </datalist>
         </label>
         <label>
           <span>Đội gây sốc</span>
@@ -2508,6 +2504,103 @@ function LongTermBetCard({ bet, locked, onSave }) {
         </button>
       </div>
     </article>
+  );
+}
+
+function TopScorerCombobox({ value, onChange, options = [], placeholder, disabled }) {
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
+  const wrapRef = useRef(null);
+  const inputRef = useRef(null);
+  const needle = normalizeAnswer(value);
+  const filteredOptions = useMemo(() => {
+    const ranked = options.filter((option) => normalizeAnswer(option).includes(needle));
+    return (needle ? ranked : options).slice(0, 8);
+  }, [needle, options]);
+  const exactMatch = options.some((option) => normalizeAnswer(option) === needle);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    function onDocClick(event) {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [open]);
+
+  useEffect(() => {
+    setHighlight(0);
+  }, [needle]);
+
+  function pick(option) {
+    onChange(option);
+    setOpen(false);
+    window.setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
+  function handleKeyDown(event) {
+    if (disabled) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setOpen(true);
+      setHighlight((index) => Math.min(filteredOptions.length - 1, index + 1));
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setOpen(true);
+      setHighlight((index) => Math.max(0, index - 1));
+    } else if (event.key === 'Enter' && open && filteredOptions[highlight]) {
+      event.preventDefault();
+      pick(filteredOptions[highlight]);
+    } else if (event.key === 'Escape') {
+      setOpen(false);
+    }
+  }
+
+  return (
+    <div className="top-scorer-combobox" ref={wrapRef}>
+      <input
+        ref={inputRef}
+        className="answer-input top-scorer-input"
+        value={value}
+        onFocus={() => !disabled && setOpen(true)}
+        onChange={(event) => {
+          onChange(event.target.value);
+          setOpen(true);
+        }}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        disabled={disabled}
+        role="combobox"
+        aria-expanded={open}
+        aria-autocomplete="list"
+        aria-controls="top-scorer-options"
+      />
+      {open && !disabled ? (
+        <div className="top-scorer-panel" id="top-scorer-options" role="listbox">
+          {filteredOptions.length > 0 ? filteredOptions.map((option, index) => (
+            <button
+              key={option}
+              type="button"
+              role="option"
+              aria-selected={option === value}
+              className={index === highlight ? 'active' : ''}
+              onMouseEnter={() => setHighlight(index)}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                pick(option);
+              }}
+            >
+              {option}
+            </button>
+          )) : (
+            <p>Không có gợi ý phù hợp. Bạn vẫn có thể tự nhập tên.</p>
+          )}
+        </div>
+      ) : null}
+      {value && !exactMatch ? (
+        <small className="field-hint scorer-free-text">Tên này chưa có trong gợi ý, vẫn có thể lưu.</small>
+      ) : null}
+    </div>
   );
 }
 

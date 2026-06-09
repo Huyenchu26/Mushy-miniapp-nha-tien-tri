@@ -1893,6 +1893,72 @@ main {
   margin-top: 0;
 }
 
+.top-scorer-combobox {
+  position: relative;
+  display: grid;
+  gap: 6px;
+}
+
+.top-scorer-input {
+  padding-right: 40px;
+}
+
+.top-scorer-combobox::after {
+  content: "⌕";
+  position: absolute;
+  top: 11px;
+  right: 14px;
+  color: var(--wc-muted);
+  font-size: 15px;
+  pointer-events: none;
+}
+
+.top-scorer-panel {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 4px;
+  max-height: 260px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--wc-line);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 18px 46px rgba(20, 25, 40, 0.16);
+}
+
+.top-scorer-panel button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--wc-ink);
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+}
+
+.top-scorer-panel button.active,
+.top-scorer-panel button:hover {
+  background: rgba(245, 54, 87, 0.1);
+  color: var(--wc-primary);
+}
+
+.top-scorer-panel p {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--wc-muted);
+  font-size: 13px;
+}
+
+.scorer-free-text {
+  color: var(--wc-warn, #b45309);
+}
+
 .field-hint {
   color: var(--wc-muted);
   font-size: 12px;
