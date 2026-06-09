@@ -1889,9 +1889,6 @@ function PredictionRoomScreen({
       : matchPredictions.filter((item) => predictedOutcomeKey(item) === activeFaction),
     [activeFaction, matchPredictions]
   );
-  const sameFactionCount = myFaction === 'all'
-    ? 0
-    : matchPredictions.filter((item) => predictedOutcomeKey(item) === myFaction).length;
   const roomActivityItems = useMemo(
     () => buildRoomPredictionItems({ match, predictions: matchPredictions, memberMap }),
     [match, matchPredictions, memberMap]
@@ -1974,7 +1971,6 @@ function PredictionRoomScreen({
             aria-expanded={showPredictionSheet}
             onClick={() => setShowPredictionSheet((value) => !value)}
           >
-            <span className="history-row-main">Cùng phe: <b>{sameFactionCount}</b> người</span>
             <strong>Xem danh sách · {matchPredictions.length} người</strong>
           </button>
           <div className="room-activity-list" aria-label="Dự đoán tỉ số gần nhất">
