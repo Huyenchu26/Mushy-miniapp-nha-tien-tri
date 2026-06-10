@@ -917,20 +917,8 @@ export default function App() {
               <PromoHero
                 notifications={pointNotifications}
                 totalScore={currentStanding?.total ?? 0}
+                userId={ctx?.userId}
               />
-            )}
-
-            {canManageTournament && (
-              <div className="admin-entry">
-                <button
-                  type="button"
-                  className="secondary-btn"
-                  aria-expanded={adminOpen}
-                  onClick={() => setAdminOpen((value) => !value)}
-                >
-                  Điều hành giải
-                </button>
-              </div>
             )}
 
             {(error || loading) && (
@@ -1068,10 +1056,26 @@ export default function App() {
   );
 }
 
-function NotificationBell({ notifications = [], totalScore = 0 }) {
+function NotificationBell({ notifications = [], totalScore = 0, userId }) {
   const [open, setOpen] = useState(false);
+  const storageKey = useMemo(() => `nha-tien-tri.point-notifications.seen.${userId || 'anon'}`, [userId]);
+  const notificationKeys = useMemo(() => notifications.map((item) => item.key).filter(Boolean), [notifications]);
+  const notificationKeySignature = notificationKeys.join('|');
+  const [seenKeys, setSeenKeys] = useState(() => readSeenNotificationKeys(storageKey));
   const wrapRef = useRef(null);
-  const countLabel = notifications.length > 9 ? '9+' : String(notifications.length);
+  const unreadCount = notificationKeys.filter((key) => !seenKeys.has(key)).length;
+  const countLabel = unreadCount > 9 ? '9+' : String(unreadCount);
+
+  useEffect(() => {
+    setSeenKeys(readSeenNotificationKeys(storageKey));
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!open || notificationKeys.length === 0) return;
+    const next = new Set([...readSeenNotificationKeys(storageKey), ...notificationKeys]);
+    setSeenKeys(next);
+    writeSeenNotificationKeys(storageKey, next);
+  }, [open, notificationKeySignature, storageKey]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -1103,7 +1107,7 @@ function NotificationBell({ notifications = [], totalScore = 0 }) {
         onClick={() => setOpen((value) => !value)}
       >
         <Bell aria-hidden="true" size={25} strokeWidth={2.7} />
-        <span className="notify-badge" aria-hidden="true">{countLabel}</span>
+        {unreadCount > 0 ? <span className="notify-badge" aria-hidden="true">{countLabel}</span> : null}
       </button>
       {open && <PointNotificationPanel items={notifications} totalScore={totalScore} />}
     </div>
@@ -1141,10 +1145,30 @@ function PointNotificationPanel({ items, totalScore }) {
   );
 }
 
-function PromoHero({ notifications, totalScore }) {
+function readSeenNotificationKeys(storageKey) {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(storageKey) || '[]');
+    return new Set(Array.isArray(parsed) ? parsed.filter(Boolean) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function writeSeenNotificationKeys(storageKey, keys) {
+  if (typeof window === 'undefined') return;
+  try {
+    const list = [...keys].filter(Boolean).slice(-120);
+    window.localStorage.setItem(storageKey, JSON.stringify(list));
+  } catch {
+    // localStorage can fail in restricted WebViews; the badge will simply reset next session.
+  }
+}
+
+function PromoHero({ notifications, totalScore, userId }) {
   return (
     <div className="promo-hero-shell">
-      <NotificationBell notifications={notifications} totalScore={totalScore} />
+      <NotificationBell notifications={notifications} totalScore={totalScore} userId={userId} />
       <section className="promo-hero" aria-label="Dự đoán nhận quà">
         <div className="confetti-layer" aria-hidden="true">
           <i />

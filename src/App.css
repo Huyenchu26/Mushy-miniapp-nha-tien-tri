@@ -5008,21 +5008,6 @@ main,
   }
 }
 
-.admin-entry {
-  display: flex;
-  justify-content: flex-end;
-  max-width: 1180px;
-  margin: 8px auto 0;
-  padding: 0 16px;
-}
-
-.admin-entry .secondary-btn {
-  min-height: 38px;
-  padding: 8px 14px;
-  border-radius: 14px;
-  font-size: 12px;
-}
-
 .admin-overlay {
   position: fixed;
   inset: 0;
