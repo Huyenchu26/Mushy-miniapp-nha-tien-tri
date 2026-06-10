@@ -164,6 +164,7 @@ export default function App() {
     addToast(msg, type);
   };
   const refreshGestureRef = useRef({ startY: 0, scrollY: 0 });
+  const activeTabScrollRef = useRef(DEFAULT_TAB);
   const chatSendTimesRef = useRef([]);
   const chatRepeatRef = useRef([]);
   const matchInsightRequestsRef = useRef(new Map());
@@ -174,6 +175,17 @@ export default function App() {
   );
   const tournamentMatches = useMemo(() => mergeTournamentMatches(MATCHES, officialMatches), [officialMatches]);
   const canManageTournament = isMushyAdmin(ctx);
+
+  useEffect(() => {
+    if (activeTabScrollRef.current === activeTab) return;
+    activeTabScrollRef.current = activeTab;
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
+  }, [activeTab]);
 
   useEffect(() => {
     try {
