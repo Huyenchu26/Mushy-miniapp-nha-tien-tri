@@ -2321,6 +2321,12 @@ button.today-checklist-item:hover {
   background: var(--wc-strong);
 }
 
+.score-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .score-history-type {
   display: inline-flex;
   justify-content: center;
@@ -2426,17 +2432,6 @@ button.today-checklist-item:hover {
 
 .score-history-section-label:first-child {
   margin-top: 4px;
-}
-
-.score-history-pending-badge {
-  flex: 0 0 auto;
-  border-radius: 999px;
-  padding: 4px 10px;
-  background: rgba(8, 127, 91, 0.12);
-  color: var(--wc-green);
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
 }
 
 .leader-modes {
@@ -2848,9 +2843,22 @@ button.today-checklist-item:hover {
   }
 
   .score-history-type {
-    grid-column: 1 / -1;
+    grid-column: 1;
+    grid-row: 1;
     justify-content: flex-start;
     width: fit-content;
+  }
+
+  .score-history-copy {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .score-history-actions,
+  .score-history-row b {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
   }
 
   .leader-modes {
@@ -3624,10 +3632,11 @@ main,
 }
 
 .score-vs {
-  display: grid;
+  display: flex;
   align-self: center;
-  place-items: center;
-  width: 22px;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
   height: 32px;
   border-radius: 999px;
   background: rgba(245, 54, 87, 0.08);
@@ -5318,4 +5327,11 @@ main,
   font-size: 18px;
   font-weight: 850;
   color: var(--wc-ink);
+}
+
+@media (max-width: 380px) {
+  .score-history-actions {
+    flex-direction: column;
+    gap: 6px;
+  }
 }

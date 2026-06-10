@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, ClipboardCheck, Flame, Home, PenLine, Scale, Star, Target, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, ClipboardCheck, Flame, Home, MessagesSquare, Minus, PenLine, Plus, Scale, Star, Target, Trophy } from 'lucide-react';
 import { DAILY_QUESTIONS, DATA_SOURCE, FIFA_RANKING_SOURCE, GROUPS, MATCHES, TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS } from './lib/app/worldcup-data.js';
 import {
   MOCK_SCORE_STEP_MS,
@@ -147,6 +147,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [editingPredictionMatch, setEditingPredictionMatch] = useState(null);
   const [showMyPredictions, setShowMyPredictions] = useState(false);
+  const [myPredictionsTab, setMyPredictionsTab] = useState('scored'); // 'scored' | 'pending'
 
   const addToast = (message, type = 'success') => {
     if (!message) return;
@@ -960,10 +961,16 @@ export default function App() {
         ) : showMyPredictions ? (
           <MyPredictionsScreen
             items={scoreHistory}
-            onBack={() => setShowMyPredictions(false)}
+            onBack={() => {
+              setShowMyPredictions(false);
+              setMyPredictionsTab('scored');
+            }}
             onEditPrediction={setEditingPredictionMatch}
+            onOpenRoom={handleOpenPredictionRoom}
             currentStanding={currentStanding}
             predictedCount={predictionMap.size}
+            activeTab={myPredictionsTab}
+            onTabChange={setMyPredictionsTab}
           />
         ) : (
           <>
@@ -1049,23 +1056,35 @@ export default function App() {
         )}
       </main>
 
-      {!roomMatch && !showMyPredictions && <nav className="tab-nav bottom-nav" aria-label="Điều hướng">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            className={activeTab === tab.id ? 'active' : ''}
-            onClick={() => setActiveTab(tab.id)}
-            aria-label={tab.label}
-            aria-current={activeTab === tab.id ? 'page' : undefined}
-          >
-            <span className="tab-icon" aria-hidden="true">
-              <tab.icon size={15} strokeWidth={2.5} />
-            </span>
-            <span className="tab-label">{tab.shortLabel}</span>
-          </button>
-        ))}
-      </nav>}
+      <nav className="tab-nav bottom-nav" aria-label="Điều hướng">
+        {TABS.map((tab) => {
+          const effectiveActiveTab = roomMatch ? 'matches' : showMyPredictions ? 'leaderboard' : activeTab;
+          const isActive = effectiveActiveTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              className={isActive ? 'active' : ''}
+              onClick={() => {
+                setRoomMatch(null);
+                setRoomMessages([]);
+                setRoomError('');
+                setRoomRealtimeState('idle');
+                setShowMyPredictions(false);
+                setMyPredictionsTab('scored');
+                setActiveTab(tab.id);
+              }}
+              aria-label={tab.label}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <span className="tab-icon" aria-hidden="true">
+                <tab.icon size={15} strokeWidth={2.5} />
+              </span>
+              <span className="tab-label">{tab.shortLabel}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {!roomMatch && !showMyPredictions && <footer className="app-footer">
         <span>Dữ liệu lịch: {DATA_SOURCE.label}</span>
@@ -1998,7 +2017,9 @@ function MatchCardPrototype({
                 onIncrease={() => bumpScore('home', 1)}
               />
             </div>
-            <span className="score-vs" aria-hidden="true">:</span>
+            <span className="score-vs" aria-hidden="true">
+              <ColonIcon size={16}/>
+            </span>
             <div className="prediction-side">
               <MatchTeam team={match.awayTeam} />
               <ScorePicker
@@ -2612,12 +2633,37 @@ function MatchTeam({ team, score = null }) {
   );
 }
 
+const ColonIcon = ({size=24}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="lucide lucide-divide-icon lucide-divide"
+    >
+      <circle cx="12" cy="6" r="1" />
+      <circle cx="12" cy="18" r="1" />
+    </svg>
+  );
+};
+
+
 function ScorePicker({ score, locked, ariaLabel, onDecrease, onIncrease }) {
   return (
     <div className="score-stepper score-stepper--side" aria-label={ariaLabel}>
-      <button type="button" disabled={locked} onClick={onDecrease} aria-label="Giảm tỉ số">-</button>
+      <button type="button" disabled={locked} onClick={onDecrease} aria-label="Giảm tỉ số">
+        <Minus size={16} />
+      </button>
       <span className="score-value">{score}</span>
-      <button type="button" disabled={locked} onClick={onIncrease} aria-label="Tăng tỉ số">+</button>
+      <button type="button" disabled={locked} onClick={onIncrease} aria-label="Tăng tỉ số">
+        <Plus size={16} />
+      </button>
     </div>
   );
 }
@@ -2742,11 +2788,22 @@ function DailyScreen({ questions, triviaQuestion, userId, answerMap, answers, lo
 
 function TriviaCard({ question, answer, streak, onSave }) {
   const [draft, setDraft] = useState(answer?.answer || '');
+  const [loading, setLoading] = useState(false);
   const answered = Boolean(answer);
   const isCorrect = answered && dailyPoints(answer, question) > 0;
   const expired = Date.now() >= new Date(question.closesAt).getTime();
 
   useEffect(() => setDraft(answer?.answer || ''), [answer?.answer]);
+
+  async function handleSaveClick() {
+    if (loading || !draft || expired) return;
+    setLoading(true);
+    try {
+      await onSave(question, draft);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <article className={`trivia-card ${answered ? (isCorrect ? 'is-correct' : 'is-wrong') : ''}`}>
@@ -2787,8 +2844,8 @@ function TriviaCard({ question, answer, streak, onSave }) {
       ) : (
         <div className="trivia-card__footer">
           <span>{expired ? 'Câu hỏi hôm nay đã đóng' : 'Chọn kỹ nhé, không được đổi đáp án.'}</span>
-          <button type="button" className="primary-btn small" disabled={!draft || expired} onClick={() => onSave(question, draft)}>
-            Chốt đáp án
+          <button type="button" className="primary-btn small" disabled={!draft || expired || loading} onClick={handleSaveClick}>
+            {loading ? 'Đang lưu...' : 'Chốt đáp án'}
           </button>
         </div>
       )}
@@ -2803,6 +2860,7 @@ function QuestionCard({ question, answer, onSave }) {
   const expired = Date.now() >= new Date(question.closesAt).getTime();
   const locked = expired || hasOfficialAnswer || answered;
   const [draft, setDraft] = useState(answer?.answer || '');
+  const [loading, setLoading] = useState(false);
   const points = dailyPoints(answer, question);
   const isCorrect = hasOfficialAnswer && answered && points > 0;
   const state = hasOfficialAnswer ? (isCorrect ? 'correct' : 'wrong') : answered ? 'pending' : expired ? 'locked' : 'open';
@@ -2812,6 +2870,16 @@ function QuestionCard({ question, answer, onSave }) {
   const resultText = questionResultText({ officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points });
 
   useEffect(() => setDraft(answer?.answer || ''), [answer?.answer]);
+
+  async function handleSaveClick() {
+    if (loading || locked || !draft) return;
+    setLoading(true);
+    try {
+      await onSave(question, draft);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <article className={`question-card daily-question-card ${state}`}>
@@ -2857,8 +2925,8 @@ function QuestionCard({ question, answer, onSave }) {
       <div className="question-footer">
         <span>{footerText}</span>
         {hasOfficialAnswer ? <strong className={`question-score ${isCorrect ? 'ok' : 'miss'}`}>+{points}đ</strong> : null}
-        <button type="button" className="primary-btn small" disabled={locked || !draft} onClick={() => onSave(question, draft)}>
-          {answered ? 'Đã trả lời' : 'Chốt câu trả lời'}
+        <button type="button" className="primary-btn small" disabled={locked || !draft || loading} onClick={handleSaveClick}>
+          {loading ? 'Đang lưu...' : answered ? 'Đã trả lời' : 'Chốt câu trả lời'}
         </button>
       </div>
     </article>
@@ -4748,7 +4816,9 @@ function PredictionEditModal({ match, prediction, dailyDoubleMatchNo, onClose, o
               onIncrease={() => bumpScore('home', 1)}
             />
           </div>
-          <span className="score-vs" aria-hidden="true">:</span>
+          <span className="score-vs" aria-hidden="true">
+            <ColonIcon size={16}/>
+          </span>
           <div className="prediction-side">
             <MatchTeam team={match.awayTeam} />
             <ScorePicker
@@ -4797,8 +4867,9 @@ function PredictionEditModal({ match, prediction, dailyDoubleMatchNo, onClose, o
   );
 }
 
-function MyPredictionsScreen({ items, onBack, onEditPrediction, currentStanding, predictedCount }) {
-  const [subTab, setSubTab] = useState('scored'); // 'scored' | 'pending'
+function MyPredictionsScreen({ items, onBack, onEditPrediction, onOpenRoom, currentStanding, predictedCount, activeTab, onTabChange }) {
+  const subTab = activeTab || 'scored';
+  const setSubTab = onTabChange;
 
   const pendingItems = useMemo(() => items.filter((item) => item.status === 'saved'), [items]);
   const scoredItems = useMemo(() => items.filter((item) => item.status !== 'saved'), [items]);
@@ -4872,7 +4943,7 @@ function MyPredictionsScreen({ items, onBack, onEditPrediction, currentStanding,
                         )}
                         <small>{item.detail}</small>
                       </span>
-                      <div className="score-history-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div className="score-history-actions">
                         {item.kind === 'match' && !isPredictionLocked(item.match) && (
                           <button
                             type="button"
@@ -4883,7 +4954,16 @@ function MyPredictionsScreen({ items, onBack, onEditPrediction, currentStanding,
                             <PenLine size={16} strokeWidth={2.5} />
                           </button>
                         )}
-                        <span className="score-history-pending-badge">Chờ</span>
+                        {item.kind === 'match' && (
+                          <button
+                            type="button"
+                            className="score-history-edit-btn"
+                            onClick={() => onOpenRoom?.(item.match)}
+                            aria-label="Phòng cà khịa"
+                          >
+                            <MessagesSquare size={16} strokeWidth={2.5} />
+                          </button>
+                        )}
                       </div>
                     </article>
                   ))}
