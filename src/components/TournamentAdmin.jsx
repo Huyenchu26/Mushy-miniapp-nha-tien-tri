@@ -14,8 +14,20 @@ import {
 export default function TournamentAdmin({ open, onClose, ctx, workspaceId, matches, standings, config, canManage = false, onChanged }) {
   const dialog = useDialog();
   const upcoming = useMemo(() => nearestReminderMatch(matches), [matches]);
+  const todayKey = getLocalDateKey();
+  const todayMatches = useMemo(
+    () => matches
+      .filter((match) => getMatchDateKey(match) === todayKey && !hasUnknownTeam(match))
+      .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime()),
+    [matches, todayKey]
+  );
   const [matchNo, setMatchNo] = useState(String(upcoming?.matchNo || matches[0]?.matchNo || ''));
+  const [hypeMatchNo, setHypeMatchNo] = useState('');
+  const [hypeTitle, setHypeTitle] = useState('Kèo hot hôm nay');
+  const [hypeBody, setHypeBody] = useState('');
   const selected = matches.find((match) => String(match.matchNo) === String(matchNo));
+  const hotMatchFallback = todayMatches[0] || null;
+  const hotMatch = todayMatches.find((match) => String(match.matchNo) === String(hypeMatchNo)) || hotMatchFallback;
   const [homeScore, setHomeScore] = useState('');
   const [awayScore, setAwayScore] = useState('');
   const [homeTeam, setHomeTeam] = useState('');
@@ -38,11 +50,19 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
     setShockTeamActual(config?.shockTeamActual || '');
   }, [config]);
 
+  useEffect(() => {
+    if (!hypeMatchNo && hotMatchFallback?.matchNo) setHypeMatchNo(String(hotMatchFallback.matchNo));
+  }, [hotMatchFallback?.matchNo, hypeMatchNo]);
+
   if (!open || !canManage) return null;
 
   const options = matches.map((match) => ({
     value: String(match.matchNo),
     label: `#${match.matchNo} · ${match.homeTeam} - ${match.awayTeam}`,
+  }));
+  const hypeOptions = todayMatches.map((match) => ({
+    value: String(match.matchNo),
+    label: `#${match.matchNo} · ${match.homeTeam} - ${match.awayTeam} · ${formatAdminTime(match.kickoffAt)}`,
   }));
 
   async function run(key, action, success) {
@@ -132,6 +152,31 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
     }, 'Đã gửi tổng kết ngày tới workspace.'));
   }
 
+  function handleHypePush() {
+    if (!hotMatch) return dialog.info('Không có trận hôm nay', 'Chỉ gửi kích war cho trận diễn ra trong ngày.');
+    const title = normalizePushText(hypeTitle, 60) || 'Kèo hot hôm nay';
+    const body = normalizePushText(hypeBody, 240);
+    if (!body) return dialog.error('Thiếu nội dung', 'Nhập nội dung kích war trước khi gửi.');
+
+    return dialog.confirm(
+      `Gửi kích war trận #${hotMatch.matchNo}?`,
+      `${title}\n\n${body}`,
+      { confirmLabel: 'Gửi noti', cancelLabel: 'Huỷ' }
+    ).then((ok) => ok && run('hype', async () => {
+      await mushyApi.push({
+        title,
+        body,
+        data: {
+          appSlug: 'nha-tien-tri',
+          kind: 'daily_match_hype',
+          screen: 'match',
+          matchNo: String(hotMatch.matchNo),
+        },
+      });
+      track('daily_match_hype_sent', { match_no: hotMatch.matchNo });
+    }, `Đã gửi kích war trận #${hotMatch.matchNo} tới workspace.`));
+  }
+
   return (
     <div className="admin-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="admin-panel" role="dialog" aria-modal="true" aria-label="Trung tâm điều hành giải">
@@ -163,6 +208,20 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
           <article className="admin-card">
             <h3>Tương tác</h3>
             <p>Nhắc riêng người chưa dự trận gần nhất hoặc gửi recap workspace.</p>
+            <div className="admin-hype-box">
+              <b>Kích war trận hot</b>
+              <small>{todayMatches.length ? `${todayMatches.length} trận hôm nay` : 'Hôm nay chưa có trận để gửi'}</small>
+              <Select value={String(hotMatch?.matchNo || hypeMatchNo)} onChange={setHypeMatchNo} options={hypeOptions} placeholder="Chọn trận hot" />
+              <input value={hypeTitle} onChange={(e) => setHypeTitle(e.target.value)} placeholder="Tiêu đề noti" maxLength={60} />
+              <textarea
+                value={hypeBody}
+                onChange={(e) => setHypeBody(e.target.value)}
+                placeholder="VD: Tây Ban Nha đang hụt hơi trước WC 2026? La Roja bước vào trận tổng duyệt cuối cùng..."
+                maxLength={240}
+                rows={4}
+              />
+              <button type="button" className="primary-btn" disabled={!!busy || !todayMatches.length} onClick={handleHypePush}>{busy === 'hype' ? 'Đang gửi...' : 'Gửi kích war'}</button>
+            </div>
             <button type="button" className="secondary-btn" disabled={!!busy} onClick={handleReminder}>Nhắc deadline</button>
             <button type="button" className="secondary-btn" disabled={!!busy} onClick={handleRecap}>Gửi recap ngày</button>
           </article>
@@ -170,4 +229,32 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
       </section>
     </div>
   );
+}
+
+function getLocalDateKey() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date());
+}
+
+function getMatchDateKey(match) {
+  return match?.matchDay || String(match?.kickoffAt || '').slice(0, 10);
+}
+
+function hasUnknownTeam(match) {
+  return match?.homeTeam === 'Unknown' || match?.awayTeam === 'Unknown';
+}
+
+function formatAdminTime(value) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return '--:--';
+  return new Intl.DateTimeFormat('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Ho_Chi_Minh',
+  }).format(date);
+}
+
+function normalizePushText(value, maxLength) {
+  const text = String(value || '').trim().replace(/\s+/g, ' ');
+  return text.length > maxLength ? `${text.slice(0, Math.max(0, maxLength - 1)).trim()}…` : text;
 }
