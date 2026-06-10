@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, ClipboardCheck, Flame, Home, Minus, PenLine, Plus, Scale, Star, Target, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, ClipboardCheck, Flame, Home, MessagesSquare, Minus, PenLine, Plus, Scale, Star, Target, Trophy } from 'lucide-react';
 import { DAILY_QUESTIONS, DATA_SOURCE, FIFA_RANKING_SOURCE, GROUPS, MATCHES, TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS } from './lib/app/worldcup-data.js';
 import {
   MOCK_SCORE_STEP_MS,
@@ -147,6 +147,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [editingPredictionMatch, setEditingPredictionMatch] = useState(null);
   const [showMyPredictions, setShowMyPredictions] = useState(false);
+  const [myPredictionsTab, setMyPredictionsTab] = useState('scored'); // 'scored' | 'pending'
 
   const addToast = (message, type = 'success') => {
     if (!message) return;
@@ -906,10 +907,16 @@ export default function App() {
         ) : showMyPredictions ? (
           <MyPredictionsScreen
             items={scoreHistory}
-            onBack={() => setShowMyPredictions(false)}
+            onBack={() => {
+              setShowMyPredictions(false);
+              setMyPredictionsTab('scored');
+            }}
             onEditPrediction={setEditingPredictionMatch}
+            onOpenRoom={handleOpenPredictionRoom}
             currentStanding={currentStanding}
             predictedCount={predictionMap.size}
+            activeTab={myPredictionsTab}
+            onTabChange={setMyPredictionsTab}
           />
         ) : (
           <>
@@ -4728,8 +4735,9 @@ function PredictionEditModal({ match, prediction, dailyDoubleMatchNo, onClose, o
   );
 }
 
-function MyPredictionsScreen({ items, onBack, onEditPrediction, currentStanding, predictedCount }) {
-  const [subTab, setSubTab] = useState('scored'); // 'scored' | 'pending'
+function MyPredictionsScreen({ items, onBack, onEditPrediction, onOpenRoom, currentStanding, predictedCount, activeTab, onTabChange }) {
+  const subTab = activeTab || 'scored';
+  const setSubTab = onTabChange;
 
   const pendingItems = useMemo(() => items.filter((item) => item.status === 'saved'), [items]);
   const scoredItems = useMemo(() => items.filter((item) => item.status !== 'saved'), [items]);
@@ -4803,7 +4811,7 @@ function MyPredictionsScreen({ items, onBack, onEditPrediction, currentStanding,
                         )}
                         <small>{item.detail}</small>
                       </span>
-                      <div className="score-history-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div className="score-history-actions">
                         {item.kind === 'match' && !isPredictionLocked(item.match) && (
                           <button
                             type="button"
@@ -4812,6 +4820,16 @@ function MyPredictionsScreen({ items, onBack, onEditPrediction, currentStanding,
                             aria-label="Sửa dự đoán"
                           >
                             <PenLine size={16} strokeWidth={2.5} />
+                          </button>
+                        )}
+                        {item.kind === 'match' && (
+                          <button
+                            type="button"
+                            className="score-history-edit-btn"
+                            onClick={() => onOpenRoom?.(item.match)}
+                            aria-label="Phòng cà khịa"
+                          >
+                            <MessagesSquare size={16} strokeWidth={2.5} />
                           </button>
                         )}
                       </div>

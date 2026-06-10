@@ -2307,6 +2307,12 @@ main {
   background: var(--wc-strong);
 }
 
+.score-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .score-history-type {
   display: inline-flex;
   justify-content: center;
@@ -5241,4 +5247,11 @@ main,
   font-size: 18px;
   font-weight: 850;
   color: var(--wc-ink);
+}
+
+@media (max-width: 380px) {
+  .score-history-actions {
+    flex-direction: column;
+    gap: 6px;
+  }
 }
