@@ -144,6 +144,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState([]);
   const [error, setError] = useState('');
+  const [editingPredictionMatch, setEditingPredictionMatch] = useState(null);
 
   const addToast = (message, type = 'success') => {
     if (!message) return;
@@ -930,6 +931,7 @@ export default function App() {
                 aiInsightsEnabled={aiInsightsEnabled && !(localSimulation && isMockContext(ctx))}
                 matchInsights={matchInsights}
                 onLoadMatchInsight={handleLoadMatchInsight}
+                onEditPrediction={setEditingPredictionMatch}
               />
             )}
             {activeTab === 'matches' && (
@@ -960,6 +962,7 @@ export default function App() {
                 predictions={currentUserPredictions}
                 answers={currentUserAnswers}
                 matches={matchesWithOfficialScores}
+                onEditPrediction={setEditingPredictionMatch}
               />
             )}
             {activeTab === 'results' && (
@@ -1009,6 +1012,16 @@ export default function App() {
         canManage={canManageTournament}
         onChanged={loadGameData}
       />
+
+      {editingPredictionMatch && (
+        <PredictionEditModal
+          match={editingPredictionMatch}
+          prediction={predictionMap.get(Number(editingPredictionMatch.matchNo))}
+          dailyDoubleMatchNo={dailyDoubleDownMap.get(editingPredictionMatch.matchDay)}
+          onClose={() => setEditingPredictionMatch(null)}
+          onSave={handleSavePrediction}
+        />
+      )}
 
       {/* Toast notifications */}
       <div className="toast-container" aria-live="assertive">
@@ -1208,6 +1221,7 @@ function MatchesScreen({
   aiInsightsEnabled,
   matchInsights,
   onLoadMatchInsight,
+  onEditPrediction,
 }) {
   const grouped = useMemo(() => groupByDate(matches), [matches]);
   const todayKey = getLocalDateKey();
@@ -1447,6 +1461,7 @@ function MatchesScreen({
                   onSave={onSave}
                   onOpenRoom={onOpenRoom}
                   onLoadInsight={onLoadMatchInsight}
+                  onEditPrediction={onEditPrediction}
                 />
               ))}
             </div>
@@ -1670,6 +1685,7 @@ function MatchCardPrototype({
   onSave,
   onOpenRoom,
   onLoadInsight,
+  onEditPrediction,
 }) {
   const teamsKnown = !hasUnknownTeam(match);
   const locked = isPredictionLocked(match) || !teamsKnown;
@@ -1936,7 +1952,7 @@ function MatchCardPrototype({
               disabled={locked}
               onClick={(event) => {
                 event.stopPropagation();
-                setEditingPrediction(true);
+                onEditPrediction?.(match);
               }}
             >
               Sửa dự đoán
@@ -2926,6 +2942,7 @@ function LeaderboardScreen({
   predictions,
   answers,
   matches,
+  onEditPrediction,
 }) {
   const [rankMode, setRankMode] = useState('total');
   const [showHistory, setShowHistory] = useState(false);
@@ -2946,6 +2963,7 @@ function LeaderboardScreen({
         predictedCount={predictedCount}
         isOpen={showHistory}
         onToggle={() => setShowHistory((value) => !value)}
+        onEditPrediction={onEditPrediction}
       />
 
       <div className="leader-modes" role="tablist" aria-label="Chế độ bảng xếp hạng">
@@ -3026,7 +3044,7 @@ function currentTournamentStage(matches = []) {
   return match ? matchStageLabel(match).toLowerCase() : 'giai đoạn hiện tại';
 }
 
-function ScoreHistoryPanel({ items, rank, total, predictedCount, isOpen, onToggle }) {
+function ScoreHistoryPanel({ items, rank, total, predictedCount, isOpen, onToggle, onEditPrediction }) {
   const pendingItems = items.filter((item) => item.status === 'saved');
   const scoredItems = items.filter((item) => item.status !== 'saved');
   const totalItems = items.length;
@@ -3068,7 +3086,19 @@ function ScoreHistoryPanel({ items, rank, total, predictedCount, isOpen, onToggl
                       )}
                       <small>{item.detail}</small>
                     </span>
-                    <span className="score-history-pending-badge">Chờ</span>
+                    <div className="score-history-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {item.kind === 'match' && !isPredictionLocked(item.match) && (
+                        <button
+                          type="button"
+                          className="score-history-edit-btn"
+                          onClick={() => onEditPrediction?.(item.match)}
+                          aria-label="Sửa dự đoán"
+                        >
+                          <PenLine size={16} strokeWidth={2.5} />
+                        </button>
+                      )}
+                      <span className="score-history-pending-badge">Chờ</span>
+                    </div>
                   </article>
                 ))}
               </>
@@ -3173,6 +3203,8 @@ function buildScoreHistory({ predictions = [], answers = [], matches = [], curre
           label: 'Đã lưu dự đoán',
           detail: `Bạn dự ${prediction.homePred}-${prediction.awayPred}${prediction.doubleDown ? ' · kèo tủ x2' : ''}`,
           points: 0,
+          match,
+          prediction,
         };
       }
 
@@ -4265,4 +4297,124 @@ function roomStorageErrorMessage(error) {
     return 'Chưa có bảng chat. Hãy submit migration 005_match_room_messages.sql qua Admin Portal.';
   }
   return error?.message || 'Không kết nối được phòng dự đoán.';
+}
+
+function PredictionEditModal({ match, prediction, dailyDoubleMatchNo, onClose, onSave }) {
+  const [homePred, setHomePred] = useState(prediction?.homePred ?? 0);
+  const [awayPred, setAwayPred] = useState(prediction?.awayPred ?? 0);
+  const [doubleDown, setDoubleDown] = useState(prediction?.doubleDown ?? false);
+  const [saving, setSaving] = useState(false);
+
+  const locked = isPredictionLocked(match);
+  const teamsKnown = !hasUnknownTeam(match);
+  const isTodayMatchDay = match.matchDay === getLocalDateKey();
+  const doubleDownReserved = !!dailyDoubleMatchNo && dailyDoubleMatchNo !== Number(match.matchNo);
+  const canUseDoubleDown = teamsKnown && !locked && isTodayMatchDay && !doubleDownReserved;
+
+  const homeScore = normalizeDraftScore(homePred);
+  const awayScore = normalizeDraftScore(awayPred);
+
+  const doubleHintText = !teamsKnown
+    ? 'Chờ xác định đội.'
+    : locked
+      ? 'Đã khóa trước giờ bóng lăn 15 phút.'
+      : doubleDownReserved
+        ? `Kèo tủ x2 đã dùng ở trận #${dailyDoubleMatchNo}.`
+        : isTodayMatchDay
+          ? 'Mỗi ngày chỉ 1 kèo tủ.'
+          : 'Kèo tủ chỉ mở đúng ngày thi đấu.';
+
+  function bumpScore(side, delta) {
+    if (locked) return;
+    const setter = side === 'home' ? setHomePred : setAwayPred;
+    const current = side === 'home' ? homeScore : awayScore;
+    setter(Math.max(0, Math.min(99, current + delta)));
+  }
+
+  async function handleSaveClick() {
+    if (locked || saving) return;
+    setSaving(true);
+    try {
+      const ok = await onSave(match, { homePred: homeScore, awayPred: awayScore, doubleDown });
+      if (ok) {
+        onClose();
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="modal-scrim dialog-scrim" onClick={onClose}>
+      <div className="modal-card prediction-edit-card" onClick={(e) => e.stopPropagation()}>
+        <div className="prediction-edit-header">
+          <h3>Sửa dự đoán</h3>
+          <button type="button" className="close-btn" onClick={onClose} aria-label="Đóng">
+            ✕
+          </button>
+        </div>
+
+        <div className="prediction-edit-match-info">
+          <span>#{match.matchNo} · {matchStageLabel(match)}</span>
+          <strong>{formatTime(match.kickoffAt)}</strong>
+        </div>
+
+        <div className="fixture prediction-fixture edit-fixture">
+          <div className="prediction-side">
+            <MatchTeam team={match.homeTeam} />
+            <ScorePicker
+              score={homeScore}
+              locked={locked}
+              ariaLabel={`Dự đoán tỉ số ${displayTeamName(match.homeTeam)}`}
+              onDecrease={() => bumpScore('home', -1)}
+              onIncrease={() => bumpScore('home', 1)}
+            />
+          </div>
+          <span className="score-vs" aria-hidden="true">:</span>
+          <div className="prediction-side">
+            <MatchTeam team={match.awayTeam} />
+            <ScorePicker
+              score={awayScore}
+              locked={locked}
+              ariaLabel={`Dự đoán tỉ số ${displayTeamName(match.awayTeam)}`}
+              onDecrease={() => bumpScore('away', -1)}
+              onIncrease={() => bumpScore('away', 1)}
+            />
+          </div>
+        </div>
+
+        <div className="prediction-edit-options">
+          <button
+            type="button"
+            className={`double-btn star-btn ${doubleDown ? 'active' : ''}`}
+            disabled={!canUseDoubleDown}
+            aria-label={doubleDown ? 'Bỏ kèo tủ x2' : 'Chọn kèo tủ x2'}
+            aria-pressed={doubleDown}
+            onClick={() => setDoubleDown((value) => !value)}
+            title={`Kèo tủ x2 · ${doubleHintText}`}
+          >
+            ★ Kèo tủ x2
+          </button>
+          <p className="double-hint" style={{ marginTop: '8px', color: 'var(--muted)' }}>
+            {doubleHintText}
+          </p>
+        </div>
+
+        <div className="form-actions">
+          <button type="button" className="mushy-btn mushy-btn--ghost" onClick={onClose} style={{ flex: 1 }}>
+            Hủy
+          </button>
+          <button
+            type="button"
+            className="mushy-btn mushy-btn--primary"
+            disabled={saving || locked}
+            onClick={handleSaveClick}
+            style={{ flex: 1 }}
+          >
+            {saving ? 'Đang lưu...' : 'Xác nhận'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
