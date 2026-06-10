@@ -2702,11 +2702,22 @@ function DailyScreen({ questions, triviaQuestion, answerMap, answers, longTermBe
 
 function TriviaCard({ question, answer, streak, onSave }) {
   const [draft, setDraft] = useState(answer?.answer || '');
+  const [loading, setLoading] = useState(false);
   const answered = Boolean(answer);
   const isCorrect = answered && dailyPoints(answer, question) > 0;
   const expired = Date.now() >= new Date(question.closesAt).getTime();
 
   useEffect(() => setDraft(answer?.answer || ''), [answer?.answer]);
+
+  async function handleSaveClick() {
+    if (loading || !draft || expired) return;
+    setLoading(true);
+    try {
+      await onSave(question, draft);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <article className={`trivia-card ${answered ? (isCorrect ? 'is-correct' : 'is-wrong') : ''}`}>
@@ -2747,8 +2758,8 @@ function TriviaCard({ question, answer, streak, onSave }) {
       ) : (
         <div className="trivia-card__footer">
           <span>{expired ? 'Câu hỏi hôm nay đã đóng' : 'Chọn kỹ nhé, không được đổi đáp án.'}</span>
-          <button type="button" className="primary-btn small" disabled={!draft || expired} onClick={() => onSave(question, draft)}>
-            Chốt đáp án
+          <button type="button" className="primary-btn small" disabled={!draft || expired || loading} onClick={handleSaveClick}>
+            {loading ? 'Đang lưu...' : 'Chốt đáp án'}
           </button>
         </div>
       )}
@@ -2763,6 +2774,7 @@ function QuestionCard({ question, answer, onSave }) {
   const expired = Date.now() >= new Date(question.closesAt).getTime();
   const locked = expired || hasOfficialAnswer || answered;
   const [draft, setDraft] = useState(answer?.answer || '');
+  const [loading, setLoading] = useState(false);
   const points = dailyPoints(answer, question);
   const isCorrect = hasOfficialAnswer && answered && points > 0;
   const state = hasOfficialAnswer ? (isCorrect ? 'correct' : 'wrong') : answered ? 'pending' : expired ? 'locked' : 'open';
@@ -2772,6 +2784,16 @@ function QuestionCard({ question, answer, onSave }) {
   const resultText = questionResultText({ officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points });
 
   useEffect(() => setDraft(answer?.answer || ''), [answer?.answer]);
+
+  async function handleSaveClick() {
+    if (loading || locked || !draft) return;
+    setLoading(true);
+    try {
+      await onSave(question, draft);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <article className={`question-card daily-question-card ${state}`}>
@@ -2817,8 +2839,8 @@ function QuestionCard({ question, answer, onSave }) {
       <div className="question-footer">
         <span>{footerText}</span>
         {hasOfficialAnswer ? <strong className={`question-score ${isCorrect ? 'ok' : 'miss'}`}>+{points}đ</strong> : null}
-        <button type="button" className="primary-btn small" disabled={locked || !draft} onClick={() => onSave(question, draft)}>
-          {answered ? 'Đã trả lời' : 'Chốt câu trả lời'}
+        <button type="button" className="primary-btn small" disabled={locked || !draft || loading} onClick={handleSaveClick}>
+          {loading ? 'Đang lưu...' : answered ? 'Đã trả lời' : 'Chốt câu trả lời'}
         </button>
       </div>
     </article>
