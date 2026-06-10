@@ -17,6 +17,7 @@ import Select from './components/Select.jsx';
 import TournamentAdmin from './components/TournamentAdmin.jsx';
 import { getContext } from './lib/context.js';
 import { listMembers } from './lib/members.js';
+import { mushyApi } from './lib/mushy-api.js';
 import { subscribeToTable } from './lib/realtime.js';
 import { db } from './lib/supabase.js';
 import { track, trackScreen } from './lib/analytics.js';
@@ -826,6 +827,15 @@ export default function App() {
         emoji,
       });
       setRoomMessages((rows) => rows.map((row) => (row.id === optimisticMessage.id ? saved : row)));
+      if (kind === 'chat') {
+        notifyMentionedRoomMembers({
+          body: cleanBody,
+          members,
+          currentUserId: ctx.userId,
+          senderName: memberDisplayName(new Map(members.map((member) => [member.user_id, member])), ctx.userId),
+          match: roomMatch,
+        });
+      }
       return true;
     } catch (err) {
       setRoomMessages((rows) => rows.map((row) => (row.id === optimisticMessage.id ? { ...row, failed: true } : row)));
@@ -3644,6 +3654,60 @@ function renderChatMessageBody(body, members) {
 
   if (lastIndex < text.length) parts.push(text.slice(lastIndex));
   return parts.length ? parts : text;
+}
+
+function findMentionedMembers(body, members, currentUserId) {
+  const text = String(body || '');
+  if (!text) return [];
+
+  const labelMap = new Map();
+  members.forEach((member) => {
+    const label = mentionMemberLabel(member);
+    if (!label || member.user_id === currentUserId) return;
+    const key = normalizeMentionSearch(label);
+    const rows = labelMap.get(key) || [];
+    rows.push({ ...member, mentionLabel: label });
+    labelMap.set(key, rows);
+  });
+
+  const labels = [...labelMap.keys()].sort((a, b) => b.length - a.length);
+  if (!labels.length) return [];
+
+  const mentioned = new Map();
+  const matcher = new RegExp(`@(${labels.map(escapeRegExp).join('|')})(?=$|\\s|[.,!?;:)\\]])`, 'gi');
+  for (const match of text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().matchAll(matcher)) {
+    const key = normalizeMentionSearch(match[1]);
+    (labelMap.get(key) || []).forEach((member) => mentioned.set(member.user_id, member));
+  }
+  return [...mentioned.values()];
+}
+
+function notifyMentionedRoomMembers({ body, members, currentUserId, senderName, match }) {
+  const mentionedMembers = findMentionedMembers(body, members, currentUserId);
+  if (!mentionedMembers.length) return;
+
+  const userIds = mentionedMembers.map((member) => member.user_id);
+  const title = `${senderName || 'Có người'} nhắc bạn trong phòng dự đoán`;
+  const shortBody = `${displayTeamName(match.homeTeam)} vs ${displayTeamName(match.awayTeam)}: ${truncateText(body, 90)}`;
+  void mushyApi.push({
+    title,
+    body: shortBody,
+    userIds,
+    data: {
+      appSlug: 'nha-tien-tri',
+      kind: 'chat_mention',
+      screen: 'match',
+      matchNo: String(match.matchNo),
+    },
+  }).catch((err) => {
+    console.warn('[room-chat] mention push failed', err);
+  });
+}
+
+function truncateText(value, maxLength) {
+  const text = String(value || '').trim();
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, Math.max(0, maxLength - 1)).trim()}…`;
 }
 
 function buildRoomPredictionItems({ match, predictions = [], memberMap = new Map() }) {
