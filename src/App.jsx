@@ -2998,10 +2998,8 @@ function FootballStandingTable({ rows }) {
 
 function FootballMatchRow({ match }) {
   const scoreState = getMatchScoreState(match);
-  const hideMatchTime = scoreState.kind === 'final';
   return (
-    <article className={`football-match-row ${scoreState.kind}${hideMatchTime ? ' no-match-time' : ''}`}>
-      {hideMatchTime ? null : <span className="football-match-time">#{match.matchNo} · {formatTime(match.kickoffAt)}</span>}
+    <article className={`football-match-row ${scoreState.kind}`}>
       <FootballFixtureTeam team={match.homeTeam} side="home" />
       <span className="football-match-score">
         {scoreState.hasScore ? `${scoreState.homeScore} - ${scoreState.awayScore}` : '-'}
