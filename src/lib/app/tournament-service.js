@@ -91,6 +91,51 @@ export async function fetchMissingPredictionUserIds(workspaceId, matchNo) {
   return (data || []).map((row) => row.user_id).filter(Boolean);
 }
 
+export async function resetTodayTriviaAnswers({ workspaceId, userId, dateKey }) {
+  const { count, error } = await db
+    .from('group_daily_answers')
+    .delete({ count: 'exact' })
+    .eq('workspace_id', workspaceId)
+    .like('question_key', `trivia-${dateKey}-%`);
+  if (error) throw error;
+
+  await writeAudit({
+    workspaceId,
+    userId,
+    action: 'today_trivia_answers_reset',
+    entityType: 'daily_answers',
+    entityKey: dateKey,
+    afterData: { dateKey, deletedCount: count || 0 },
+  });
+  return count || 0;
+}
+
+export async function resetWorkspaceLeaderboardData({ workspaceId, userId }) {
+  const [answers, predictions, longTerm] = await Promise.all([
+    db.from('group_daily_answers').delete({ count: 'exact' }).eq('workspace_id', workspaceId),
+    db.from('group_predictions').delete({ count: 'exact' }).eq('workspace_id', workspaceId),
+    db.from('long_term_bets').delete({ count: 'exact' }).eq('workspace_id', workspaceId),
+  ]);
+
+  const error = answers.error || predictions.error || longTerm.error;
+  if (error) throw error;
+
+  const summary = {
+    groupDailyAnswers: answers.count || 0,
+    groupPredictions: predictions.count || 0,
+    longTermBets: longTerm.count || 0,
+  };
+  await writeAudit({
+    workspaceId,
+    userId,
+    action: 'workspace_leaderboard_reset',
+    entityType: 'workspace',
+    entityKey: workspaceId,
+    afterData: summary,
+  });
+  return summary;
+}
+
 function writeAudit({ workspaceId, userId, action, entityType, entityKey, afterData }) {
   return db.from('admin_audit_log').insert({
     workspace_id: workspaceId,

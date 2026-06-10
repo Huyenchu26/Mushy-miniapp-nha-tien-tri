@@ -185,6 +185,21 @@ export default function App() {
   const canManageTournament = isMushyAdmin(ctx);
 
   useEffect(() => {
+    if (!canManageTournament || typeof window === 'undefined') return undefined;
+
+    function openAdminFromLocation() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('admin') === '1' || window.location.hash === '#admin') {
+        setAdminOpen(true);
+      }
+    }
+
+    openAdminFromLocation();
+    window.addEventListener('hashchange', openAdminFromLocation);
+    return () => window.removeEventListener('hashchange', openAdminFromLocation);
+  }, [canManageTournament]);
+
+  useEffect(() => {
     if (activeTabScrollRef.current === activeTab) return;
     activeTabScrollRef.current = activeTab;
 
@@ -939,6 +954,8 @@ export default function App() {
                 notifications={pointNotifications}
                 totalScore={currentStanding?.total ?? 0}
                 userId={ctx?.userId}
+                canManage={canManageTournament}
+                onOpenAdmin={() => setAdminOpen(true)}
               />
             )}
 
@@ -1187,10 +1204,18 @@ function writeSeenNotificationKeys(storageKey, keys) {
   }
 }
 
-function PromoHero({ notifications, totalScore, userId }) {
+function PromoHero({ notifications, totalScore, userId, canManage = false, onOpenAdmin }) {
   return (
     <div className="promo-hero-shell">
-      <NotificationBell notifications={notifications} totalScore={totalScore} userId={userId} />
+      <div className="hero-actions">
+        {canManage ? (
+          <button type="button" className="hero-admin-btn" onClick={onOpenAdmin} aria-label="Mở trung tâm quản lý">
+            <Scale aria-hidden="true" size={18} strokeWidth={2.5} />
+            <span>Quản lý</span>
+          </button>
+        ) : null}
+        <NotificationBell notifications={notifications} totalScore={totalScore} userId={userId} />
+      </div>
       <section className="promo-hero" aria-label="Dự đoán nhận quà">
         <div className="confetti-layer" aria-hidden="true">
           <i />

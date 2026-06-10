@@ -6,6 +6,8 @@ import { track } from '../lib/analytics.js';
 import { buildDailyRecap, nearestReminderMatch } from '../lib/app/engagement.js';
 import {
   fetchMissingPredictionUserIds,
+  resetTodayTriviaAnswers,
+  resetWorkspaceLeaderboardData,
   saveOfficialMatch,
   saveTournamentConfig,
   syncTournamentSchedule,
@@ -74,9 +76,9 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
   async function run(key, action, success) {
     setBusy(key);
     try {
-      await action();
+      const result = await action();
       await onChanged?.();
-      await dialog.success('Đã cập nhật', success);
+      await dialog.success('Đã cập nhật', typeof success === 'function' ? success(result) : success);
     } catch (error) {
       await dialog.error('Không thể cập nhật', error.message || 'Có lỗi xảy ra.');
     } finally {
@@ -183,6 +185,32 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
     }, `Đã gửi kích war trận #${hotMatch.matchNo} tới workspace.`));
   }
 
+  function handleResetTodayTrivia() {
+    return dialog.confirm(
+      'Reset Hỏi vui hôm nay?',
+      `Xoá toàn bộ câu trả lời Hỏi vui ngày ${todayKey} trong workspace hiện tại. Người chơi có thể trả lời lại câu hôm nay.`,
+      { danger: true, confirmLabel: 'Reset Hỏi vui', cancelLabel: 'Huỷ' }
+    ).then((ok) => ok && run('reset-trivia', async () => {
+      const deletedCount = await resetTodayTriviaAnswers({ workspaceId, userId: ctx.userId, dateKey: todayKey });
+      track('today_trivia_answers_reset', { date_key: todayKey, deleted_count: deletedCount });
+      return deletedCount;
+    }, (deletedCount) => `Đã xoá ${deletedCount} câu trả lời Hỏi vui hôm nay.`));
+  }
+
+  function handleResetLeaderboard() {
+    return dialog.confirm(
+      'Reset toàn bộ leaderboard workspace?',
+      'Xoá dự đoán trận, câu trả lời và dự đoán dài hạn của workspace hiện tại. Thao tác này đưa điểm leaderboard của workspace về gần 0 và không thể hoàn tác từ app.',
+      { danger: true, confirmLabel: 'Reset leaderboard', cancelLabel: 'Huỷ' }
+    ).then((ok) => ok && run('reset-leaderboard', async () => {
+      const summary = await resetWorkspaceLeaderboardData({ workspaceId, userId: ctx.userId });
+      track('workspace_leaderboard_reset', summary);
+      return summary;
+    }, (summary) => (
+      `Đã xoá ${summary.groupDailyAnswers} câu trả lời, ${summary.groupPredictions} dự đoán trận và ${summary.longTermBets} dự đoán dài hạn.`
+    )));
+  }
+
   return (
     <div className="admin-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="admin-panel" role="dialog" aria-modal="true" aria-label="Trung tâm điều hành giải">
@@ -230,6 +258,17 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
             </div>
             <button type="button" className="secondary-btn" disabled={!!busy} onClick={handleReminder}>Nhắc deadline</button>
             <button type="button" className="secondary-btn" disabled={!!busy} onClick={handleRecap}>Gửi recap ngày</button>
+          </article>
+
+          <article className="admin-card admin-danger-zone">
+            <h3>Reset dữ liệu workspace</h3>
+            <p>Chạy trực tiếp trong workspace hiện tại, có filter <code>workspace_id</code> và đi qua RLS. Không dùng tab Migrations.</p>
+            <button type="button" className="secondary-btn danger" disabled={!!busy} onClick={handleResetTodayTrivia}>
+              {busy === 'reset-trivia' ? 'Đang reset...' : 'Reset Hỏi vui hôm nay'}
+            </button>
+            <button type="button" className="secondary-btn danger" disabled={!!busy} onClick={handleResetLeaderboard}>
+              {busy === 'reset-leaderboard' ? 'Đang reset...' : 'Reset leaderboard workspace'}
+            </button>
           </article>
         </div>
       </section>
