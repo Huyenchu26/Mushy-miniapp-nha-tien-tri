@@ -4814,7 +4814,6 @@ function MyPredictionsScreen({ items, onBack, onEditPrediction, currentStanding,
                             <PenLine size={16} strokeWidth={2.5} />
                           </button>
                         )}
-                        <span className="score-history-pending-badge">Chờ</span>
                       </div>
                     </article>
                   ))}
