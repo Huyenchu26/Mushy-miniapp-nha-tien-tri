@@ -1809,6 +1809,11 @@ main {
   background: rgba(8, 127, 91, 0.06);
 }
 
+.football-match-row.no-match-time {
+  grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr) 76px;
+  padding-inline: 12px 10px;
+}
+
 .football-match-row.live {
   border-color: rgba(255, 56, 92, 0.22);
   background: rgba(255, 56, 92, 0.06);
@@ -2971,6 +2976,11 @@ main {
     padding: 8px;
   }
 
+  .football-match-row.no-match-time {
+    grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr);
+    padding-inline: 8px;
+  }
+
   .fixture-team {
     gap: 5px;
   }
@@ -2984,6 +2994,10 @@ main {
   .football-match-status {
     grid-column: 2 / -1;
     text-align: center;
+  }
+
+  .football-match-row.no-match-time .football-match-status {
+    grid-column: 1 / -1;
   }
 
   .hero-band {
@@ -4339,13 +4353,17 @@ main,
 }
 
 .chat-feed {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  align-content: end;
   min-width: 0;
   min-height: 240px;
   max-height: 420px;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   border-radius: 16px;
   padding: 10px;
   background:

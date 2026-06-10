@@ -17,9 +17,9 @@ export async function fetchDailyAnswers(workspaceId) {
 export async function fetchMatchRoomMessages(workspaceId, matchNo) {
   const { data, error } = await db.from('match_room_messages').select('*')
     .eq('workspace_id', workspaceId).eq('match_no', matchNo)
-    .order('created_at', { ascending: true }).limit(80);
+    .order('created_at', { ascending: false }).limit(120);
   if (error) throw error;
-  return (data || []).map(mapRoomMessage);
+  return [...(data || [])].reverse().map(mapRoomMessage);
 }
 
 export async function insertMatchRoomMessage({ workspaceId, createdBy, matchNo, kind, body, emoji }) {
