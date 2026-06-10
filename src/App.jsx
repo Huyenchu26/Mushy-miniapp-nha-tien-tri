@@ -11,7 +11,7 @@ import {
   mergeMockPredictions,
 } from './lib/app/mock-simulation.js';
 import { computeStandings, dailyPoints, filterCompetitionWindow, isFinished, matchBasePoints, matchScoreBreakdown, normalizeAnswer, outcome } from './lib/app/scoring.js';
-import { ALL_SCORING_QUESTIONS, getTriviaQuestionForDate, triviaStreak } from './lib/app/quiz-data.js';
+import { ALL_SCORING_QUESTIONS, getTriviaQuestionForUserDate, triviaStreak } from './lib/app/quiz-data.js';
 import { selectInsightWarmupMatches } from './lib/app/match-insight.js';
 import Select from './components/Select.jsx';
 import TournamentAdmin from './components/TournamentAdmin.jsx';
@@ -175,6 +175,11 @@ export default function App() {
   const scope = useMemo(
     () => (ctx?.workspaceId ? { workspaceId: ctx.workspaceId, label: ctx.workspaceSlug || 'Mushy' } : null),
     [ctx?.workspaceId, ctx?.workspaceSlug]
+  );
+  const todayKey = getLocalDateKey();
+  const todayTriviaQuestion = useMemo(
+    () => getTriviaQuestionForUserDate(todayKey, ctx?.userId),
+    [ctx?.userId, todayKey]
   );
   const tournamentMatches = useMemo(() => mergeTournamentMatches(MATCHES, officialMatches), [officialMatches]);
   const canManageTournament = isMushyAdmin(ctx);
@@ -419,6 +424,16 @@ export default function App() {
     () => answers.filter((answer) => answer.createdBy === ctx?.userId),
     [answers, ctx?.userId]
   );
+  const currentTriviaAnswer = useMemo(
+    () => findTriviaAnswerForDate(currentUserAnswers, todayKey),
+    [currentUserAnswers, todayKey]
+  );
+  const activeTriviaQuestion = useMemo(() => {
+    if (!currentTriviaAnswer || currentTriviaAnswer.questionKey === todayTriviaQuestion?.key) {
+      return todayTriviaQuestion;
+    }
+    return getScoringQuestionByKey(currentTriviaAnswer.questionKey) || todayTriviaQuestion;
+  }, [currentTriviaAnswer, todayTriviaQuestion]);
   const scoreHistory = useMemo(
     () => buildScoreHistory({
       predictions: currentUserPredictions,
@@ -637,6 +652,12 @@ export default function App() {
       );
       if (question.kind === 'trivia' && existingAnswer) {
         throw new Error('Hỏi vui chỉ được trả lời một lần.');
+      }
+      const existingTriviaAnswerForDate = question.kind === 'trivia'
+        ? answers.find((row) => row.createdBy === ctx.userId && isTriviaQuestionKeyForDate(row.questionKey, question.date))
+        : null;
+      if (existingTriviaAnswerForDate) {
+        throw new Error('Hỏi vui hôm nay chỉ được trả lời một lần.');
       }
       if (Date.now() >= new Date(question.closesAt).getTime() || (question.correctAnswer && question.kind !== 'trivia')) {
         throw new Error('Câu hỏi này đã khóa.');
@@ -935,7 +956,7 @@ export default function App() {
                 predictionMap={predictionMap}
                 answerMap={answerMap}
                 dailyDoubleDownMap={dailyDoubleDownMap}
-                triviaQuestion={getTriviaQuestionForDate(getLocalDateKey())}
+                triviaQuestion={activeTriviaQuestion}
                 groupFilter={groupFilter}
                 query={query}
                 onGroupFilter={setGroupFilter}
@@ -960,7 +981,8 @@ export default function App() {
             {activeTab === 'daily' && (
               <DailyScreen
                 questions={DAILY_QUESTIONS}
-                triviaQuestion={getTriviaQuestionForDate(getLocalDateKey())}
+                triviaQuestion={activeTriviaQuestion}
+                userId={ctx?.userId}
                 answerMap={answerMap}
                 answers={currentUserAnswers}
                 longTermBet={longTermBet}
@@ -2636,13 +2658,13 @@ function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
   );
 }
 
-function DailyScreen({ questions, triviaQuestion, answerMap, answers, longTermBet, longTermLocked, onSave, onSaveLongTerm }) {
+function DailyScreen({ questions, triviaQuestion, userId, answerMap, answers, longTermBet, longTermLocked, onSave, onSaveLongTerm }) {
   const visibleQuestions = useMemo(() => {
     const today = getLocalDateKey();
     const tomorrow = addDaysToDateKey(today, 1);
     return questions.filter((question) => question.date === today || question.date === tomorrow);
   }, [questions]);
-  const streak = triviaStreak(answers, getLocalDateKey());
+  const streak = triviaStreak(answers, getLocalDateKey(), userId);
 
   return (
     <section className="screen">
@@ -2716,8 +2738,8 @@ function TriviaCard({ question, answer, streak, onSave }) {
       </div>
       {answered ? (
         <div className="trivia-reveal" role="status">
-          <strong>{isCorrect ? `Chính xác, bạn nhận +${question.points}đ` : 'Chưa đúng rồi'}</strong>
-          <p>{isCorrect ? question.explanation : `${question.wrongCopy} ${question.explanation}`}</p>
+          <strong>{isCorrect ? `Chính xác, bạn nhận +${question.points}đ` : 'Chưa đúng rồi, mai phục thù tiếp nhé'}</strong>
+          <p>{isCorrect ? question.explanation : `${question.wrongCopy} ${question.explanation} Quay lại ngày mai để thử câu mới.`}</p>
         </div>
       ) : (
         <div className="trivia-card__footer">
@@ -3356,6 +3378,18 @@ function initials(name) {
 
 function leaderSubtitle(row) {
   return `${row.matchPts} trận · ${row.upsetPts} cửa dưới · ${row.streakPts} streak · ${row.dailyPts} vui · ${row.longTermPts || 0} dài hạn`;
+}
+
+function findTriviaAnswerForDate(answers = [], dateKey) {
+  return answers.find((answer) => isTriviaQuestionKeyForDate(answer.questionKey, dateKey)) || null;
+}
+
+function isTriviaQuestionKeyForDate(questionKey, dateKey) {
+  return String(questionKey || '').startsWith(`trivia-${dateKey}-`);
+}
+
+function getScoringQuestionByKey(questionKey) {
+  return ALL_SCORING_QUESTIONS.find((question) => question.key === questionKey) || null;
 }
 
 function buildScoreHistory({ predictions = [], answers = [], matches = [], currentStanding = null }) {

@@ -1,4 +1,4 @@
-import quizBank from '../../../World Cup 2026/quiz_questions.json';
+import quizBank from '../../../World Cup 2026/quiz_questions.json' with { type: 'json' };
 
 const QUIZ_START_DATE = '2026-06-08';
 const QUIZ_END_DATE = '2026-07-19';
@@ -21,22 +21,39 @@ export const TRIVIA_QUESTIONS = buildTriviaSchedule();
 export const ALL_SCORING_QUESTIONS = TRIVIA_QUESTIONS;
 
 export function getTriviaQuestionForDate(dateKey) {
-  return TRIVIA_QUESTIONS.find((question) => question.date === dateKey) || null;
+  return getTriviaQuestionForUserDate(dateKey, 'default');
 }
 
-export function triviaStreak(answers = [], throughDate) {
-  const answersByKey = new Map(answers.map((answer) => [answer.questionKey, answer]));
-  const eligible = TRIVIA_QUESTIONS
-    .filter((question) => question.date <= throughDate)
-    .slice()
-    .sort((a, b) => b.date.localeCompare(a.date));
+export function getTriviaQuestionForUserDate(dateKey, userId = 'guest') {
+  const dayIndex = daysBetween(QUIZ_START_DATE, dateKey);
+  if (!curatedQuestions.length || dayIndex < 0 || dateKey > QUIZ_END_DATE) return null;
 
+  const source = curatedQuestions[getTriviaSourceIndex(userId, dayIndex)];
+  return toTriviaQuestion(source, dateKey);
+}
+
+export function getTriviaQuestionsForDate(dateKey) {
+  return TRIVIA_QUESTIONS.filter((question) => question.date === dateKey);
+}
+
+export function triviaStreak(answers = [], throughDate, userId = 'guest') {
+  const answersByKey = new Map(answers.map((answer) => [answer.questionKey, answer]));
   let streak = 0;
-  for (const question of eligible) {
+
+  for (
+    let cursor = dateAtUtcMidnight(throughDate), start = dateAtUtcMidnight(QUIZ_START_DATE);
+    cursor >= start;
+    cursor.setUTCDate(cursor.getUTCDate() - 1)
+  ) {
+    const date = cursor.toISOString().slice(0, 10);
+    const question = getTriviaQuestionForUserDate(date, userId);
+    if (!question) break;
+
     const answer = answersByKey.get(question.key);
     if (!answer || normalize(answer.answer) !== normalize(question.correctAnswer)) break;
     streak += 1;
   }
+
   return streak;
 }
 
@@ -46,36 +63,85 @@ function buildTriviaSchedule() {
   const schedule = [];
   let cursor = dateAtUtcMidnight(QUIZ_START_DATE);
   const end = dateAtUtcMidnight(QUIZ_END_DATE);
-  let index = 0;
 
   while (cursor <= end) {
     const date = cursor.toISOString().slice(0, 10);
-    const source = curatedQuestions[index % curatedQuestions.length];
-    schedule.push({
-      key: `trivia-${date}-${source.id}`,
-      kind: 'trivia',
-      date,
-      prompt: source.question,
-      options: source.options,
-      correctAnswer: source.answer,
-      points: POINTS_BY_DIFFICULTY[source.difficulty] || 1,
-      category: source.category,
-      difficulty: source.difficulty,
-      explanation: source.explanation,
-      wrongCopy: source.taunt_wrong,
-      closesAt: `${date}T16:59:59Z`,
-    });
+    for (const source of curatedQuestions) {
+      schedule.push(toTriviaQuestion(source, date));
+    }
     cursor.setUTCDate(cursor.getUTCDate() + 1);
-    index += 1;
   }
 
   return schedule;
+}
+
+function toTriviaQuestion(source, date) {
+  return {
+    key: `trivia-${date}-${source.id}`,
+    sourceId: Number(source.id),
+    kind: 'trivia',
+    date,
+    prompt: source.question,
+    options: source.options,
+    correctAnswer: source.answer,
+    points: POINTS_BY_DIFFICULTY[source.difficulty] || 1,
+    category: source.category,
+    difficulty: source.difficulty,
+    explanation: source.explanation,
+    wrongCopy: source.taunt_wrong,
+    closesAt: `${date}T16:59:59Z`,
+  };
 }
 
 function dateAtUtcMidnight(dateKey) {
   return new Date(`${dateKey}T00:00:00Z`);
 }
 
+function daysBetween(startDateKey, endDateKey) {
+  const start = dateAtUtcMidnight(startDateKey);
+  const end = dateAtUtcMidnight(endDateKey);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return -1;
+  return Math.floor((end.getTime() - start.getTime()) / 86400000);
+}
+
 function normalize(value) {
   return String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function getTriviaSourceIndex(userId, dayIndex) {
+  const total = curatedQuestions.length;
+  const seed = stableHash(userId || 'guest');
+  const offset = seed % total;
+  const stride = pickCoprimeStride(seed, total);
+  return (offset + dayIndex * stride) % total;
+}
+
+function pickCoprimeStride(seed, total) {
+  if (total <= 1) return 1;
+
+  let stride = (Math.floor(seed / total) % (total - 1)) + 1;
+  while (greatestCommonDivisor(stride, total) !== 1) {
+    stride = (stride % (total - 1)) + 1;
+  }
+  return stride;
+}
+
+function greatestCommonDivisor(left, right) {
+  let a = Math.abs(left);
+  let b = Math.abs(right);
+  while (b) {
+    const next = a % b;
+    a = b;
+    b = next;
+  }
+  return a;
+}
+
+function stableHash(value) {
+  let hash = 2166136261;
+  for (const char of String(value)) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
 }
