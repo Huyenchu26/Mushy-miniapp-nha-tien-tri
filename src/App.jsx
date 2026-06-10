@@ -937,6 +937,7 @@ export default function App() {
                 predictionMap={predictionMap}
                 answerMap={answerMap}
                 dailyDoubleDownMap={dailyDoubleDownMap}
+                triviaQuestion={getTriviaQuestionForDate(getLocalDateKey())}
                 groupFilter={groupFilter}
                 query={query}
                 onGroupFilter={setGroupFilter}
@@ -1226,6 +1227,7 @@ function MatchesScreen({
   predictionMap,
   answerMap,
   dailyDoubleDownMap,
+  triviaQuestion,
   groupFilter,
   query,
   onGroupFilter,
@@ -1327,6 +1329,7 @@ function MatchesScreen({
         predictionMap={predictionMap}
         answerMap={answerMap}
         dailyDoubleDownMap={dailyDoubleDownMap}
+        triviaQuestion={triviaQuestion}
         onGroupFilter={onGroupFilter}
         onQuery={onQuery}
         onFocusMatch={focusMatch}
@@ -1494,6 +1497,7 @@ function TodayChecklist({
   predictionMap = new Map(),
   answerMap = new Map(),
   dailyDoubleDownMap = new Map(),
+  triviaQuestion = null,
   onGroupFilter,
   onQuery,
   onFocusMatch,
@@ -1518,25 +1522,26 @@ function TodayChecklist({
   const todayQuestion = DAILY_QUESTIONS.find((question) => question.date === today);
   const dailyAnswered = todayQuestion ? answerMap.has(todayQuestion.key) : false;
   const dailyLocked = todayQuestion ? Date.now() >= new Date(todayQuestion.closesAt).getTime() || !!todayQuestion.correctAnswer : false;
+  const triviaAnswered = triviaQuestion ? answerMap.has(triviaQuestion.key) : false;
+  const triviaLocked = triviaQuestion ? Date.now() >= new Date(triviaQuestion.closesAt).getTime() : false;
   const doubleDownUsed = !!dailyDoubleDownMap.get(today);
   const hasMatchesToday = todayMatches.length > 0;
-  const noTasksToday = !hasMatchesToday && !todayQuestion;
+  const hasQuestionTask = !!todayQuestion || !!triviaQuestion;
+  const noTasksToday = !hasMatchesToday && !hasQuestionTask;
   const allMatchesDone = hasMatchesToday && pendingMatches.length === 0;
+  const allQuestionTasksDone = (!todayQuestion || dailyAnswered || dailyLocked)
+    && (!triviaQuestion || triviaAnswered || triviaLocked);
   const checklistDone = (!hasMatchesToday || allMatchesDone)
     && (doubleDownUsed || !openTodayMatches.length)
-    && (!todayQuestion || dailyAnswered || dailyLocked);
-
-  const primaryLabel = nextActionMatch
-    ? pendingMatches.length > 1
-      ? `Dự tiếp ${pendingMatches.length} trận`
-      : 'Dự trận gần nhất'
-    : todayQuestion && !dailyAnswered && !dailyLocked
-      ? 'Trả lời câu hỏi'
-      : noTasksToday
-        ? 'Xem lịch trận'
-        : checklistDone
-          ? 'Xem BXH'
-          : 'Xem trận hôm nay';
+    && allQuestionTasksDone;
+  const checklistTaskCount = (hasMatchesToday ? todayMatches.length : 0)
+    + (openTodayMatches.length ? 1 : 0)
+    + (todayQuestion ? 1 : 0)
+    + (triviaQuestion ? 1 : 0);
+  const checklistDoneCount = (hasMatchesToday ? predictedToday.length : 0)
+    + (openTodayMatches.length ? Number(doubleDownUsed) : 0)
+    + (todayQuestion ? Number(dailyAnswered || dailyLocked) : 0)
+    + (triviaQuestion ? Number(triviaAnswered || triviaLocked) : 0);
 
   function scrollToMatch(match) {
     if (!match) return;
@@ -1545,27 +1550,10 @@ function TodayChecklist({
     window.setTimeout(() => onFocusMatch?.(match), 0);
   }
 
-  function handlePrimaryAction() {
-    if (nextActionMatch) {
-      scrollToMatch(nextActionMatch);
-      return;
-    }
-
-    if (todayQuestion && !dailyAnswered && !dailyLocked) {
+  function openQuestionTask() {
+    if (todayQuestion || triviaQuestion) {
       onOpenDaily?.();
-      return;
     }
-
-    if (checklistDone) {
-      if (noTasksToday) {
-        scrollToMatch(nextScheduleMatch);
-        return;
-      }
-      onOpenLeaderboard?.();
-      return;
-    }
-
-    scrollToMatch(todayMatches[0] || nextScheduleMatch);
   }
 
   return (
@@ -1573,16 +1561,17 @@ function TodayChecklist({
       <div className="today-checklist-head">
         <div>
           <p className="eyebrow">Checklist hôm nay</p>
-          <h2>{noTasksToday ? 'Chưa có nhiệm vụ hôm nay' : checklistDone ? 'Xong việc hôm nay rồi' : hasMatchesToday ? `${pendingMatches.length} việc cần xử lý` : 'Chưa có trận hôm nay'}</h2>
+          <h2>{noTasksToday ? 'Chưa có nhiệm vụ hôm nay' : checklistDone ? 'Xong việc hôm nay rồi' : hasMatchesToday ? `${pendingMatches.length} việc cần xử lý` : 'Còn câu hỏi cần làm'}</h2>
         </div>
-        <span>{predictedToday.length}/{todayMatches.length || 0} đã dự đoán</span>
+        <span>{checklistDoneCount}/{checklistTaskCount || 0} nhiệm vụ</span>
       </div>
 
       <div className="today-checklist-items">
         <ChecklistItem
-          icon="✓"
+          icon="🗓"
           tone={hasMatchesToday && allMatchesDone ? 'ok' : 'todo'}
-          label={hasMatchesToday ? `Đã dự ${predictedToday.length}/${todayMatches.length} trận hôm nay` : 'Hôm nay chưa có trận cần dự'}
+          label={hasMatchesToday ? `Đã dự ${predictedToday.length}/${todayMatches.length} trận hôm nay` : 'Hôm nay chưa có trận cần dự đoán'}
+          onClick={() => scrollToMatch(nextActionMatch || todayMatches[0] || nextScheduleMatch)}
         />
         <ChecklistItem
           icon="⏰"
@@ -1592,40 +1581,48 @@ function TodayChecklist({
             : hasMatchesToday ? 'Các trận hôm nay đã khóa hoặc đã xong' : nextScheduleMatch
               ? `Trận tiếp theo: ${displayTeamName(nextScheduleMatch.homeTeam)} - ${displayTeamName(nextScheduleMatch.awayTeam)} · ${formatTime(nextScheduleMatch.kickoffAt)}`
               : 'Trận gần nhất sẽ hiện khi có lịch'}
+          onClick={() => scrollToMatch(nextLockMatch || nextScheduleMatch || todayMatches[0])}
         />
         <ChecklistItem
           icon="★"
           tone={doubleDownUsed ? 'ok' : openTodayMatches.length ? 'todo' : 'neutral'}
           label={doubleDownUsed ? 'Kèo tủ x2: Đã dùng' : openTodayMatches.length ? 'Kèo tủ x2: Chưa dùng' : 'Kèo tủ x2: Chưa mở hôm nay'}
+          onClick={() => scrollToMatch(nextActionMatch || nextLockMatch || nextScheduleMatch)}
         />
         <ChecklistItem
           icon="?"
-          tone={!todayQuestion || dailyAnswered || dailyLocked ? 'ok' : 'todo'}
-          label={!todayQuestion ? 'Câu hỏi ngày: Chưa có' : dailyAnswered ? 'Câu hỏi ngày: Đã trả lời' : dailyLocked ? 'Câu hỏi ngày: Đã khóa' : 'Câu hỏi ngày: Chưa trả lời'}
+          tone={(!todayQuestion || dailyAnswered || dailyLocked) && (!triviaQuestion || triviaAnswered || triviaLocked) ? 'ok' : 'todo'}
+          label={todayQuestion || triviaQuestion
+            ? todayQuestion && triviaQuestion
+              ? `Câu hỏi: ${Number(dailyAnswered || dailyLocked) + Number(triviaAnswered || triviaLocked)}/2 đã xong`
+              : todayQuestion
+                ? (dailyAnswered ? 'Câu hỏi ngày: Đã trả lời' : dailyLocked ? 'Câu hỏi ngày: Đã khóa' : 'Câu hỏi ngày: Chưa trả lời')
+                : (triviaAnswered ? 'Hỏi vui hôm nay: Đã trả lời' : triviaLocked ? 'Hỏi vui hôm nay: Đã khóa' : 'Hỏi vui hôm nay: Chưa trả lời')
+            : 'Câu hỏi ngày: Chưa có'}
+          onClick={openQuestionTask}
         />
-      </div>
-
-      <div className="today-checklist-actions">
-        <button type="button" className="primary-btn small" onClick={handlePrimaryAction}>
-          {primaryLabel}
-        </button>
-        {todayQuestion && !dailyAnswered && !dailyLocked && nextActionMatch ? (
-          <button type="button" className="secondary-btn" onClick={onOpenDaily}>
-            Câu hỏi ngày
-          </button>
-        ) : null}
       </div>
     </section>
   );
 }
 
-function ChecklistItem({ icon, label, tone = 'neutral' }) {
-  return (
-    <div className={`today-checklist-item ${tone}`}>
+function ChecklistItem({ icon, label, tone = 'neutral', onClick }) {
+  const content = (
+    <>
       <span aria-hidden="true">{icon}</span>
       <strong>{label}</strong>
-    </div>
+    </>
   );
+
+  if (onClick) {
+    return (
+      <button type="button" className={`today-checklist-item ${tone}`} onClick={onClick}>
+        {content}
+      </button>
+    );
+  }
+
+  return <div className={`today-checklist-item ${tone}`}>{content}</div>;
 }
 
 function LiveSyncStatus({ liveSync }) {

@@ -435,11 +435,25 @@ main {
   grid-template-columns: 28px minmax(0, 1fr);
   align-items: center;
   gap: 9px;
+  width: 100%;
   min-height: 44px;
   border: 1px solid var(--wc-line-soft);
   border-radius: 13px;
   padding: 8px 10px;
   background: rgba(255, 255, 255, 0.78);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.today-checklist-item {
+  cursor: pointer;
+  appearance: none;
+}
+
+button.today-checklist-item:hover {
+  border-color: rgba(255, 56, 92, 0.28);
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .today-checklist-item span {
