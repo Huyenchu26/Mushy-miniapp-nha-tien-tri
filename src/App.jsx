@@ -172,6 +172,7 @@ export default function App() {
   const chatRepeatRef = useRef([]);
   const matchInsightRequestsRef = useRef(new Map());
   const matchInsightWarmupKeyRef = useRef('');
+  const deepLinkHandledRef = useRef('');
   const scope = useMemo(
     () => (ctx?.workspaceId ? { workspaceId: ctx.workspaceId, label: ctx.workspaceSlug || 'Mushy' } : null),
     [ctx?.workspaceId, ctx?.workspaceSlug]
@@ -887,14 +888,31 @@ export default function App() {
   useEffect(() => {
     if (loading) return;
     const params = new URLSearchParams(window.location.search);
+    const signature = params.toString();
+    if (!signature || deepLinkHandledRef.current === signature) return;
+
     const screen = params.get('screen');
+    const kind = params.get('kind');
     const matchNo = Number(params.get('matchNo'));
-    if (screen === 'leaderboard') setActiveTab('leaderboard');
+    const shouldOpenRoom = screen === 'room' || kind === 'chat_mention';
+    if (screen === 'leaderboard') {
+      deepLinkHandledRef.current = signature;
+      setActiveTab('leaderboard');
+    }
+    if (shouldOpenRoom && matchNo) {
+      const match = matchesWithLiveScores.find((item) => Number(item.matchNo) === matchNo);
+      if (!match) return;
+      deepLinkHandledRef.current = signature;
+      setActiveTab('matches');
+      handleOpenPredictionRoom(match);
+      return;
+    }
     if (screen === 'match' && matchNo) {
+      deepLinkHandledRef.current = signature;
       setActiveTab('matches');
       window.setTimeout(() => document.getElementById(`match-card-${matchNo}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
     }
-  }, [loading]);
+  }, [loading, matchesWithLiveScores, predictionMap]);
 
   if (ctxError) {
     return <SetupScreen error={ctxError} />;
@@ -3776,7 +3794,7 @@ function notifyMentionedRoomMembers({ body, members, currentUserId, senderName, 
     data: {
       appSlug: 'nha-tien-tri',
       kind: 'chat_mention',
-      screen: 'match',
+      screen: 'room',
       matchNo: String(match.matchNo),
     },
   }).catch((err) => {
