@@ -3543,7 +3543,8 @@ main,
 }
 
 .star-btn,
-.primary-btn.small {
+.primary-btn.small,
+.secondary-btn.small {
   min-height: 44px;
   border-radius: 15px;
 }
@@ -4875,5 +4876,111 @@ main,
   .admin-panel { max-height: 92vh; border-radius: 24px 24px 0 0; padding: 18px 14px calc(18px + env(safe-area-inset-bottom)); }
   .admin-grid { grid-template-columns: 1fr; }
 }
+
+.prediction-edit-card {
+  max-width: 380px;
+}
+
+.prediction-edit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.prediction-edit-header h3 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.prediction-edit-header .close-btn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.prediction-edit-header .close-btn:hover {
+  color: var(--brand);
+}
+
+.prediction-edit-match-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 8px;
+}
+
+.prediction-edit-match-info strong {
+  font-weight: 600;
+}
+
+.prediction-edit-options {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.prediction-edit-options .star-btn {
+  border-radius: 12px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  background: var(--surface-muted);
+  border: 1px solid var(--hairline);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.prediction-edit-options .star-btn.active {
+  background: #fff3c9;
+  border-color: #ffbf1f;
+  color: #8a5a08;
+  box-shadow: 0 4px 10px rgba(255, 191, 31, 0.2);
+}
+
+.prediction-edit-options .star-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.score-history-edit-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.score-history-edit-btn:hover {
+  background: var(--surface-muted);
+  color: var(--brand);
+}
+
+.edit-fixture {
+  padding: 10px 0;
+}
+
 
 
