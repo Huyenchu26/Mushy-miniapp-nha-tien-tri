@@ -3543,7 +3543,8 @@ main,
 }
 
 .star-btn,
-.primary-btn.small {
+.primary-btn.small,
+.secondary-btn.small {
   min-height: 44px;
   border-radius: 15px;
 }
