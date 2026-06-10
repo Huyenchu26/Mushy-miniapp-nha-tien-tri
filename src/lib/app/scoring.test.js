@@ -81,6 +81,8 @@ test('streak bonus adds 5 points for every 3 consecutive exact scores', () => {
 
 test('daily points compare answers case-insensitively', () => {
   assert.equal(dailyPoints({ answer: '  co ' }, { correctAnswer: 'Co', points: 2 }), 2);
+  assert.equal(dailyPoints({ answer: 'Có' }, { correctAnswer: 'Co', points: 2 }), 2);
+  assert.equal(dailyPoints({ answer: 'Khong' }, { correctAnswer: 'Không', points: 2 }), 2);
   assert.equal(dailyPoints({ answer: 'khong' }, { correctAnswer: 'Co', points: 2 }), 0);
 });
 
