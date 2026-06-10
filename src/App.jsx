@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, BookOpen, CalendarDays, ClipboardCheck, Flame, Home, PenLine, Scale, Star, Target, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, ClipboardCheck, Flame, Home, PenLine, Scale, Star, Target, Trophy } from 'lucide-react';
 import { DAILY_QUESTIONS, DATA_SOURCE, FIFA_RANKING_SOURCE, GROUPS, MATCHES, TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS } from './lib/app/worldcup-data.js';
 import {
   MOCK_SCORE_STEP_MS,
@@ -1191,7 +1191,9 @@ function RewardBanner({ onOpenRules }) {
     <section className="reward-banner">
       <span aria-hidden="true">🎁</span>
       <strong>Dự đoán đúng - Nhận quà khủng!</strong>
-      <button type="button" onClick={onOpenRules}>Xem thể lệ →</button>
+      <button type="button" onClick={onOpenRules} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+        Xem thể lệ <ArrowRight size={16} />
+      </button>
     </section>
   );
 }
@@ -1408,8 +1410,9 @@ function MatchesScreen({
               disabled={selectedIndex <= 0}
               onClick={() => handleDayChange(selectedIndex - 1)}
               aria-label="Ngày trước"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              ←
+              <ArrowLeft size={18} />
             </button>
             <div className="day-pager-copy">
               <p>Ngày {selectedIndex + 1}/{dayPages.length}</p>
@@ -1424,8 +1427,9 @@ function MatchesScreen({
               disabled={selectedIndex >= dayPages.length - 1}
               onClick={() => handleDayChange(selectedIndex + 1)}
               aria-label="Ngày sau"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              →
+              <ArrowRight size={18} />
             </button>
           </div>
 
@@ -2158,7 +2162,7 @@ function PredictionRoomScreen({
     <section className="prediction-room screen" aria-label={`Phòng dự đoán trận ${match.matchNo}`}>
       <div className="room-head">
         <button type="button" className="room-back" onClick={onBack} aria-label="Quay lại danh sách trận">
-          ←
+          <ArrowLeft size={20} />
         </button>
         <div>
           <p className="section-label">Phòng dự đoán</p>
@@ -4645,7 +4649,7 @@ function MyPredictionsScreen({ items, onBack, onEditPrediction, currentStanding,
       <div className="my-predictions-header-card">
         <div className="my-predictions-header-top">
           <button type="button" className="room-back" onClick={onBack} aria-label="Quay lại" style={{ margin: 0 }}>
-            ←
+            <ArrowLeft size={20} />
           </button>
           <div className="my-predictions-title-group">
             <p className="section-label" style={{ padding: 0 }}>BXH</p>
