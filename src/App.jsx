@@ -1010,23 +1010,35 @@ export default function App() {
         )}
       </main>
 
-      {!roomMatch && !showMyPredictions && <nav className="tab-nav bottom-nav" aria-label="Điều hướng">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            className={activeTab === tab.id ? 'active' : ''}
-            onClick={() => setActiveTab(tab.id)}
-            aria-label={tab.label}
-            aria-current={activeTab === tab.id ? 'page' : undefined}
-          >
-            <span className="tab-icon" aria-hidden="true">
-              <tab.icon size={15} strokeWidth={2.5} />
-            </span>
-            <span className="tab-label">{tab.shortLabel}</span>
-          </button>
-        ))}
-      </nav>}
+      <nav className="tab-nav bottom-nav" aria-label="Điều hướng">
+        {TABS.map((tab) => {
+          const effectiveActiveTab = roomMatch ? 'matches' : showMyPredictions ? 'leaderboard' : activeTab;
+          const isActive = effectiveActiveTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              className={isActive ? 'active' : ''}
+              onClick={() => {
+                setRoomMatch(null);
+                setRoomMessages([]);
+                setRoomError('');
+                setRoomRealtimeState('idle');
+                setShowMyPredictions(false);
+                setMyPredictionsTab('scored');
+                setActiveTab(tab.id);
+              }}
+              aria-label={tab.label}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <span className="tab-icon" aria-hidden="true">
+                <tab.icon size={15} strokeWidth={2.5} />
+              </span>
+              <span className="tab-label">{tab.shortLabel}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {!roomMatch && !showMyPredictions && <footer className="app-footer">
         <span>Dữ liệu lịch: {DATA_SOURCE.label}</span>
