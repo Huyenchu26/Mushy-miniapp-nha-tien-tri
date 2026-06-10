@@ -5075,7 +5075,8 @@ main,
   background: var(--surface-muted);
 }
 
-.admin-card input {
+.admin-card input,
+.admin-card textarea {
   width: 100%;
   min-height: 44px;
   padding: 10px 12px;
@@ -5084,6 +5085,33 @@ main,
   background: var(--surface);
   color: var(--text);
   font: inherit;
+}
+
+.admin-card textarea {
+  min-height: 104px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.admin-hype-box {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 4px;
+  padding: 12px;
+  border: 1px solid rgba(230, 57, 70, 0.12);
+  border-radius: var(--r-card-v3);
+  background: rgba(230, 57, 70, 0.06);
+}
+
+.admin-hype-box b {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.admin-hype-box small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .admin-team-fields,

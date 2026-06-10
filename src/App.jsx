@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, BookOpen, CalendarDays, ClipboardCheck, Flame, Home, PenLine, Scale, Star, Target, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, ClipboardCheck, Flame, Home, PenLine, Scale, Star, Target, Trophy } from 'lucide-react';
 import { DAILY_QUESTIONS, DATA_SOURCE, FIFA_RANKING_SOURCE, GROUPS, MATCHES, TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS } from './lib/app/worldcup-data.js';
 import {
   MOCK_SCORE_STEP_MS,
@@ -17,6 +17,7 @@ import Select from './components/Select.jsx';
 import TournamentAdmin from './components/TournamentAdmin.jsx';
 import { getContext } from './lib/context.js';
 import { listMembers } from './lib/members.js';
+import { mushyApi } from './lib/mushy-api.js';
 import { subscribeToTable } from './lib/realtime.js';
 import { db } from './lib/supabase.js';
 import { track, trackScreen } from './lib/analytics.js';
@@ -826,6 +827,15 @@ export default function App() {
         emoji,
       });
       setRoomMessages((rows) => rows.map((row) => (row.id === optimisticMessage.id ? saved : row)));
+      if (kind === 'chat') {
+        notifyMentionedRoomMembers({
+          body: cleanBody,
+          members,
+          currentUserId: ctx.userId,
+          senderName: memberDisplayName(new Map(members.map((member) => [member.user_id, member])), ctx.userId),
+          match: roomMatch,
+        });
+      }
       return true;
     } catch (err) {
       setRoomMessages((rows) => rows.map((row) => (row.id === optimisticMessage.id ? { ...row, failed: true } : row)));
@@ -1192,7 +1202,9 @@ function RewardBanner({ onOpenRules }) {
     <section className="reward-banner">
       <span aria-hidden="true">🎁</span>
       <strong>Dự đoán đúng - Nhận quà khủng!</strong>
-      <button type="button" onClick={onOpenRules}>Xem thể lệ →</button>
+      <button type="button" onClick={onOpenRules} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+        Xem thể lệ <ArrowRight size={16} />
+      </button>
     </section>
   );
 }
@@ -1411,8 +1423,9 @@ function MatchesScreen({
               disabled={selectedIndex <= 0}
               onClick={() => handleDayChange(selectedIndex - 1)}
               aria-label="Ngày trước"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              ←
+              <ArrowLeft size={18} />
             </button>
             <div className="day-pager-copy">
               <p>Ngày {selectedIndex + 1}/{dayPages.length}</p>
@@ -1427,8 +1440,9 @@ function MatchesScreen({
               disabled={selectedIndex >= dayPages.length - 1}
               onClick={() => handleDayChange(selectedIndex + 1)}
               aria-label="Ngày sau"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              →
+              <ArrowRight size={18} />
             </button>
           </div>
 
@@ -2155,7 +2169,7 @@ function PredictionRoomScreen({
     <section className="prediction-room screen" aria-label={`Phòng dự đoán trận ${match.matchNo}`}>
       <div className="room-head">
         <button type="button" className="room-back" onClick={onBack} aria-label="Quay lại danh sách trận">
-          ←
+          <ArrowLeft size={20} />
         </button>
         <div>
           <p className="section-label">Phòng dự đoán</p>
@@ -3639,6 +3653,60 @@ function renderChatMessageBody(body, members) {
   return parts.length ? parts : text;
 }
 
+function findMentionedMembers(body, members, currentUserId) {
+  const text = String(body || '');
+  if (!text) return [];
+
+  const labelMap = new Map();
+  members.forEach((member) => {
+    const label = mentionMemberLabel(member);
+    if (!label || member.user_id === currentUserId) return;
+    const key = normalizeMentionSearch(label);
+    const rows = labelMap.get(key) || [];
+    rows.push({ ...member, mentionLabel: label });
+    labelMap.set(key, rows);
+  });
+
+  const labels = [...labelMap.keys()].sort((a, b) => b.length - a.length);
+  if (!labels.length) return [];
+
+  const mentioned = new Map();
+  const matcher = new RegExp(`@(${labels.map(escapeRegExp).join('|')})(?=$|\\s|[.,!?;:)\\]])`, 'gi');
+  for (const match of text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().matchAll(matcher)) {
+    const key = normalizeMentionSearch(match[1]);
+    (labelMap.get(key) || []).forEach((member) => mentioned.set(member.user_id, member));
+  }
+  return [...mentioned.values()];
+}
+
+function notifyMentionedRoomMembers({ body, members, currentUserId, senderName, match }) {
+  const mentionedMembers = findMentionedMembers(body, members, currentUserId);
+  if (!mentionedMembers.length) return;
+
+  const userIds = mentionedMembers.map((member) => member.user_id);
+  const title = `${senderName || 'Có người'} nhắc bạn trong phòng dự đoán`;
+  const shortBody = `${displayTeamName(match.homeTeam)} vs ${displayTeamName(match.awayTeam)}: ${truncateText(body, 90)}`;
+  void mushyApi.push({
+    title,
+    body: shortBody,
+    userIds,
+    data: {
+      appSlug: 'nha-tien-tri',
+      kind: 'chat_mention',
+      screen: 'match',
+      matchNo: String(match.matchNo),
+    },
+  }).catch((err) => {
+    console.warn('[room-chat] mention push failed', err);
+  });
+}
+
+function truncateText(value, maxLength) {
+  const text = String(value || '').trim();
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, Math.max(0, maxLength - 1)).trim()}…`;
+}
+
 function buildRoomPredictionItems({ match, predictions = [], memberMap = new Map() }) {
   return predictions.map((prediction) => {
     const name = memberDisplayName(memberMap, prediction.createdBy);
@@ -4642,7 +4710,7 @@ function MyPredictionsScreen({ items, onBack, onEditPrediction, currentStanding,
       <div className="my-predictions-header-card">
         <div className="my-predictions-header-top">
           <button type="button" className="room-back" onClick={onBack} aria-label="Quay lại" style={{ margin: 0 }}>
-            ←
+            <ArrowLeft size={20} />
           </button>
           <div className="my-predictions-title-group">
             <p className="section-label" style={{ padding: 0 }}>BXH</p>
