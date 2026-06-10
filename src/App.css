@@ -3583,10 +3583,11 @@ main,
 }
 
 .score-vs {
-  display: grid;
+  display: flex;
   align-self: center;
-  place-items: center;
-  width: 22px;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
   height: 32px;
   border-radius: 999px;
   background: rgba(245, 54, 87, 0.08);

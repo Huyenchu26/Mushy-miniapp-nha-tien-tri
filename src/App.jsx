@@ -1912,7 +1912,9 @@ function MatchCardPrototype({
                 onIncrease={() => bumpScore('home', 1)}
               />
             </div>
-            <span className="score-vs" aria-hidden="true">:</span>
+            <span className="score-vs" aria-hidden="true">
+              <ColonIcon size={16}/>
+            </span>
             <div className="prediction-side">
               <MatchTeam team={match.awayTeam} />
               <ScorePicker
@@ -2525,6 +2527,27 @@ function MatchTeam({ team, score = null }) {
     </div>
   );
 }
+
+const ColonIcon = ({size=24}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="lucide lucide-divide-icon lucide-divide"
+    >
+      <circle cx="12" cy="6" r="1" />
+      <circle cx="12" cy="18" r="1" />
+    </svg>
+  );
+};
+
 
 function ScorePicker({ score, locked, ariaLabel, onDecrease, onIncrease }) {
   return (
@@ -4654,7 +4677,9 @@ function PredictionEditModal({ match, prediction, dailyDoubleMatchNo, onClose, o
               onIncrease={() => bumpScore('home', 1)}
             />
           </div>
-          <span className="score-vs" aria-hidden="true">:</span>
+          <span className="score-vs" aria-hidden="true">
+            <ColonIcon size={16}/>
+          </span>
           <div className="prediction-side">
             <MatchTeam team={match.awayTeam} />
             <ScorePicker
