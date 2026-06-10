@@ -4316,7 +4316,7 @@ main,
 }
 
 .reaction-row button,
-.chat-compose button {
+.chat-compose > button {
   border: 0;
   border-radius: 14px;
   background: var(--wc-strong);
@@ -4399,6 +4399,19 @@ main,
   color: #ffffff;
 }
 
+.chat-mention {
+  border-radius: 999px;
+  padding: 1px 5px;
+  background: rgba(245, 54, 87, 0.12);
+  color: var(--wc-primary);
+  font-weight: 950;
+}
+
+.chat-message.mine .chat-mention {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
 .chat-message.failed p {
   background: rgba(193, 53, 21, 0.08);
   color: #9b2d17;
@@ -4408,9 +4421,16 @@ main,
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(78px, auto);
   gap: 8px;
+  align-items: end;
 }
 
-.chat-compose input {
+.chat-input-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.chat-input-wrap input {
+  width: 100%;
   min-width: 0;
   min-height: 44px;
   border: 1px solid rgba(245, 54, 87, 0.14);
@@ -4422,7 +4442,70 @@ main,
   font-weight: 750;
 }
 
-.chat-compose button {
+.mention-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 5;
+  display: grid;
+  gap: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(245, 54, 87, 0.14);
+  border-radius: 14px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 16px 34px rgba(35, 35, 42, 0.14);
+}
+
+.mention-menu button {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 10px;
+  padding: 7px 8px;
+  background: transparent;
+  color: var(--wc-ink);
+  text-align: left;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.mention-menu button.active,
+.mention-menu button:hover {
+  background: rgba(245, 54, 87, 0.09);
+}
+
+.mention-menu img,
+.mention-menu i {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--wc-soft);
+  color: var(--wc-primary);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.mention-menu img {
+  object-fit: cover;
+}
+
+.mention-menu span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-compose > button {
   min-width: 78px;
   min-height: 44px;
   padding: 0 18px;
@@ -4430,7 +4513,7 @@ main,
   color: #ffffff;
 }
 
-.chat-compose button:disabled,
+.chat-compose > button:disabled,
 .reaction-row button:disabled {
   opacity: 0.48;
   transform: none;

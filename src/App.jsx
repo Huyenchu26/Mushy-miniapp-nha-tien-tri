@@ -2026,11 +2026,14 @@ function PredictionRoomScreen({
   onSend,
 }) {
   const [draft, setDraft] = useState('');
+  const [mentionCursor, setMentionCursor] = useState(0);
+  const [activeMentionIndex, setActiveMentionIndex] = useState(0);
   const [sending, setSending] = useState(false);
   const [predictionFaction, setPredictionFaction] = useState('mine');
   const [showPredictionSheet, setShowPredictionSheet] = useState(false);
   const [activityLimit, setActivityLimit] = useState(3);
   const chatFeedRef = useRef(null);
+  const chatInputRef = useRef(null);
   const wasChatNearBottomRef = useRef(true);
   const matchPredictions = useMemo(
     () => predictions
@@ -2039,6 +2042,25 @@ function PredictionRoomScreen({
     [predictions, match.matchNo]
   );
   const memberMap = useMemo(() => new Map(members.map((member) => [member.user_id, member])), [members]);
+  const mentionMembers = useMemo(
+    () => members
+      .map((member) => ({ ...member, mentionLabel: mentionMemberLabel(member) }))
+      .filter((member) => member.mentionLabel)
+      .sort((a, b) => a.mentionLabel.localeCompare(b.mentionLabel, 'vi')),
+    [members]
+  );
+  const mentionableMembers = useMemo(
+    () => mentionMembers
+      .filter((member) => member.user_id !== currentUserId)
+      .sort((a, b) => a.mentionLabel.localeCompare(b.mentionLabel, 'vi')),
+    [currentUserId, mentionMembers]
+  );
+  const activeMention = useMemo(() => getActiveMentionToken(draft, mentionCursor), [draft, mentionCursor]);
+  const mentionSuggestions = useMemo(
+    () => filterMentionMembers(mentionableMembers, activeMention?.query || '').slice(0, 5),
+    [activeMention, mentionableMembers]
+  );
+  const showMentionSuggestions = !!activeMention && mentionSuggestions.length > 0;
   const split = useMemo(() => buildPredictionSplit(match, matchPredictions), [match, matchPredictions]);
   const myFaction = prediction ? predictedOutcomeKey(prediction) : 'all';
   const activeFaction = predictionFaction === 'mine' ? myFaction : predictionFaction;
@@ -2087,18 +2109,46 @@ function PredictionRoomScreen({
     wasChatNearBottomRef.current = true;
   }, [match.matchNo]);
 
+  useEffect(() => {
+    setActiveMentionIndex(0);
+  }, [activeMention?.query, mentionSuggestions.length]);
+
   function handleChatScroll() {
     const feed = chatFeedRef.current;
     if (!feed) return;
     wasChatNearBottomRef.current = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 80;
   }
 
+  function syncMentionCursor(element) {
+    setMentionCursor(element?.selectionStart ?? draft.length);
+  }
+
+  function insertMention(member) {
+    if (!activeMention) return;
+    const mentionText = `@${member.mentionLabel}`;
+    const suffix = draft.slice(mentionCursor);
+    const spacer = suffix.length === 0 || !/^\s/.test(suffix) ? ' ' : '';
+    const nextDraft = `${draft.slice(0, activeMention.start)}${mentionText}${spacer}${suffix}`;
+    const nextCursor = activeMention.start + mentionText.length + spacer.length;
+    setDraft(nextDraft);
+    setMentionCursor(nextCursor);
+    setActiveMentionIndex(0);
+    window.requestAnimationFrame(() => {
+      chatInputRef.current?.focus();
+      chatInputRef.current?.setSelectionRange(nextCursor, nextCursor);
+    });
+  }
+
   async function sendChat() {
-    if (sending || cooldownLeft > 0) return;
+    const body = draft.trim();
+    if (!body || sending || cooldownLeft > 0) return;
     setSending(true);
     try {
-      const ok = await onSend({ kind: 'chat', body: draft });
-      if (ok) setDraft('');
+      const ok = await onSend({ kind: 'chat', body });
+      if (ok) {
+        setDraft('');
+        setMentionCursor(0);
+      }
     } finally {
       setSending(false);
     }
@@ -2190,7 +2240,6 @@ function PredictionRoomScreen({
       <div className="room-chat">
         <div className="room-section-head">
           <h3>Cà khịa trực tiếp</h3>
-          <span>{loading ? 'Đang tải...' : `${messages.length} tin`}</span>
         </div>
 
         <p className="room-realtime-chip">{roomRealtimeLabel(realtimeState)}</p>
@@ -2208,7 +2257,7 @@ function PredictionRoomScreen({
           ) : messages.map((message) => (
             <article key={message.id} className={`chat-message ${message.createdBy === currentUserId ? 'mine' : ''} ${message.failed ? 'failed' : ''}`}>
               <span>{memberDisplayName(memberMap, message.createdBy)}</span>
-              <p>{message.kind === 'reaction' ? `${message.emoji || message.body}` : message.body}</p>
+              <p>{message.kind === 'reaction' ? `${message.emoji || message.body}` : renderChatMessageBody(message.body, mentionMembers)}</p>
               <small>{message.failed ? 'Chưa gửi được' : formatRoomTime(message.createdAt)}</small>
             </article>
           ))}
@@ -2218,15 +2267,65 @@ function PredictionRoomScreen({
         {cooldownLeft > 0 ? <p className="room-error">Chống spam: chờ khoảng {cooldownLeft}s.</p> : null}
 
         <div className="chat-compose">
-          <input
-            value={draft}
-            maxLength={280}
-            placeholder="Cà khịa văn minh, đau nhưng vui..."
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') sendChat();
-            }}
-          />
+          <div className="chat-input-wrap">
+            {showMentionSuggestions ? (
+              <div className="mention-menu" role="listbox" aria-label="Gợi ý mention thành viên">
+                {mentionSuggestions.map((member, index) => (
+                  <button
+                    key={member.user_id}
+                    type="button"
+                    className={index === activeMentionIndex ? 'active' : ''}
+                    role="option"
+                    aria-selected={index === activeMentionIndex}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      insertMention(member);
+                    }}
+                  >
+                    {member.avatar_url ? <img src={member.avatar_url} alt="" loading="lazy" /> : <i>{initialsFromName(member.mentionLabel)}</i>}
+                    <span>{member.mentionLabel}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <input
+              ref={chatInputRef}
+              value={draft}
+              maxLength={280}
+              placeholder={mentionableMembers.length ? 'Gõ @ để mention thành viên...' : 'Cà khịa văn minh, đau nhưng vui...'}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                syncMentionCursor(event.target);
+              }}
+              onClick={(event) => syncMentionCursor(event.target)}
+              onSelect={(event) => syncMentionCursor(event.target)}
+              onKeyUp={(event) => syncMentionCursor(event.target)}
+              onKeyDown={(event) => {
+                if (showMentionSuggestions && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+                  event.preventDefault();
+                  setActiveMentionIndex((value) => {
+                    const delta = event.key === 'ArrowDown' ? 1 : -1;
+                    return (value + delta + mentionSuggestions.length) % mentionSuggestions.length;
+                  });
+                  return;
+                }
+                if (showMentionSuggestions && (event.key === 'Enter' || event.key === 'Tab')) {
+                  event.preventDefault();
+                  insertMention(mentionSuggestions[activeMentionIndex] || mentionSuggestions[0]);
+                  return;
+                }
+                if (showMentionSuggestions && event.key === 'Escape') {
+                  event.preventDefault();
+                  setMentionCursor(0);
+                  return;
+                }
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  sendChat();
+                }
+              }}
+            />
+          </div>
           <button type="button" disabled={!draft.trim() || cooldownLeft > 0 || sending} onClick={sendChat}>
             {sending ? '...' : 'Gửi'}
           </button>
@@ -3474,6 +3573,73 @@ function predictionOutcomeLabel(match, prediction) {
 function memberDisplayName(memberMap, userId) {
   const member = memberMap.get(userId);
   return member?.full_name || member?.email || `Người chơi ${String(userId || '').slice(0, 4)}`;
+}
+
+function mentionMemberLabel(member) {
+  return String(member?.full_name || member?.email || '')
+    .replace(/^@+/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getActiveMentionToken(text, cursor) {
+  const safeCursor = Math.max(0, Math.min(Number(cursor) || 0, text.length));
+  const beforeCursor = text.slice(0, safeCursor);
+  const start = beforeCursor.lastIndexOf('@');
+  if (start < 0) return null;
+  if (start > 0 && !/\s/.test(beforeCursor[start - 1])) return null;
+
+  const query = beforeCursor.slice(start + 1);
+  if (query.length > 32) return null;
+  if (/[\s,!?;:()[\]{}]/.test(query)) return null;
+  return { start, query };
+}
+
+function normalizeMentionSearch(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function filterMentionMembers(members, query) {
+  const needle = normalizeMentionSearch(query);
+  if (!needle) return members;
+  return members
+    .map((member) => {
+      const label = normalizeMentionSearch(member.mentionLabel);
+      const score = label.startsWith(needle) ? 0 : label.includes(needle) ? 1 : 2;
+      return { member, score };
+    })
+    .filter((item) => item.score < 2)
+    .sort((a, b) => a.score - b.score || a.member.mentionLabel.localeCompare(b.member.mentionLabel, 'vi'))
+    .map((item) => item.member);
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function renderChatMessageBody(body, members) {
+  const text = String(body || '');
+  const labels = [...new Set(members.map((member) => member.mentionLabel).filter(Boolean))]
+    .sort((a, b) => b.length - a.length);
+  if (!labels.length) return text;
+
+  const matcher = new RegExp(`@(${labels.map(escapeRegExp).join('|')})(?=$|\\s|[.,!?;:)\\]])`, 'gi');
+  const parts = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(matcher)) {
+    const index = match.index ?? 0;
+    if (index > lastIndex) parts.push(text.slice(lastIndex, index));
+    parts.push(<mark key={`${index}-${match[0]}`} className="chat-mention">{match[0]}</mark>);
+    lastIndex = index + match[0].length;
+  }
+
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+  return parts.length ? parts : text;
 }
 
 function buildRoomPredictionItems({ match, predictions = [], memberMap = new Map() }) {
