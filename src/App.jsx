@@ -2031,6 +2031,7 @@ function PredictionRoomScreen({
   const [showPredictionSheet, setShowPredictionSheet] = useState(false);
   const [activityLimit, setActivityLimit] = useState(3);
   const chatFeedRef = useRef(null);
+  const wasChatNearBottomRef = useRef(true);
   const matchPredictions = useMemo(
     () => predictions
       .filter((item) => Number(item.matchNo) === Number(match.matchNo))
@@ -2070,8 +2071,27 @@ function PredictionRoomScreen({
   useEffect(() => {
     const feed = chatFeedRef.current;
     if (!feed) return;
-    feed.scrollTop = feed.scrollHeight;
+    const nearBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 80;
+    const shouldStickToBottom = nearBottom || wasChatNearBottomRef.current;
+    if (shouldStickToBottom) {
+      window.requestAnimationFrame(() => {
+        feed.scrollTop = feed.scrollHeight;
+        wasChatNearBottomRef.current = true;
+      });
+    } else {
+      wasChatNearBottomRef.current = false;
+    }
   }, [messages.length]);
+
+  useEffect(() => {
+    wasChatNearBottomRef.current = true;
+  }, [match.matchNo]);
+
+  function handleChatScroll() {
+    const feed = chatFeedRef.current;
+    if (!feed) return;
+    wasChatNearBottomRef.current = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 80;
+  }
 
   async function sendChat() {
     if (sending || cooldownLeft > 0) return;
@@ -2182,10 +2202,10 @@ function PredictionRoomScreen({
           ))}
         </div>
 
-        <div className="chat-feed" ref={chatFeedRef}>
+        <div className="chat-feed" ref={chatFeedRef} onScroll={handleChatScroll}>
           {messages.length === 0 ? (
             <p className="room-empty">{error || 'Chưa có ai gáy. Bạn mở bát đi.'}</p>
-          ) : messages.slice(-30).map((message) => (
+          ) : messages.map((message) => (
             <article key={message.id} className={`chat-message ${message.createdBy === currentUserId ? 'mine' : ''} ${message.failed ? 'failed' : ''}`}>
               <span>{memberDisplayName(memberMap, message.createdBy)}</span>
               <p>{message.kind === 'reaction' ? `${message.emoji || message.body}` : message.body}</p>
@@ -2494,10 +2514,13 @@ function DailyScreen({ questions, triviaQuestion, answerMap, answers, longTermBe
     <section className="screen">
       <div className="screen-heading">
         <div>
-          <p className="eyebrow">Không cần giỏi bóng đá</p>
+          <p className="eyebrow">Câu hỏi dự đoán</p>
           <h2>Câu hỏi hôm nay và ngày mai</h2>
         </div>
       </div>
+      <p className="daily-question-note">
+        Đây là câu hỏi dự đoán theo ngày, khác với Hỏi vui. Trả lời trước giờ khóa, sau đó chờ admin chốt đáp án để tính điểm.
+      </p>
       {triviaQuestion ? (
         <TriviaCard
           question={triviaQuestion}
@@ -2575,41 +2598,114 @@ function TriviaCard({ question, answer, streak, onSave }) {
 }
 
 function QuestionCard({ question, answer, onSave }) {
-  const locked = Date.now() >= new Date(question.closesAt).getTime() || !!question.correctAnswer;
+  const optionItems = useMemo(() => normalizeQuestionOptions(question.options), [question.options]);
+  const hasOfficialAnswer = !!question.correctAnswer;
+  const answered = !!answer;
+  const expired = Date.now() >= new Date(question.closesAt).getTime();
+  const locked = expired || hasOfficialAnswer || answered;
   const [draft, setDraft] = useState(answer?.answer || '');
   const points = dailyPoints(answer, question);
+  const isCorrect = hasOfficialAnswer && answered && points > 0;
+  const state = hasOfficialAnswer ? (isCorrect ? 'correct' : 'wrong') : answered ? 'pending' : expired ? 'locked' : 'open';
+  const answerLabel = questionAnswerLabel(answer?.answer, optionItems);
+  const officialAnswerLabel = questionAnswerLabel(question.correctAnswer, optionItems);
+  const footerText = questionFooterText({ answerLabel, officialAnswerLabel, answered, expired, hasOfficialAnswer });
+  const resultText = questionResultText({ officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points });
 
   useEffect(() => setDraft(answer?.answer || ''), [answer?.answer]);
 
   return (
-    <article className="question-card">
+    <article className={`question-card daily-question-card ${state}`}>
       <div>
-        <span className="date-chip">{formatDate(question.date)}</span>
+        <div className="question-card-meta">
+          <span className="date-chip">{formatDate(question.date)}</span>
+          <span className={`question-status-pill ${state}`}>{questionStatusLabel(state)}</span>
+        </div>
         <h3>{question.prompt}</h3>
-        <p>Khóa: {formatTime(question.closesAt)}</p>
+        <p>Khóa trả lời: {formatTime(question.closesAt)} · Đúng +{question.points || 2}đ</p>
       </div>
 
-      {question.options?.length ? (
+      {optionItems.length ? (
         <div className="option-grid">
-          {question.options.map((option) => (
-            <button key={option} type="button" disabled={locked} className={draft === option ? 'active' : ''} onClick={() => setDraft(option)}>
-              {option}
-            </button>
-          ))}
+          {optionItems.map((option) => {
+            const selected = normalizeAnswer(draft) === normalizeAnswer(option.value);
+            const correct = hasOfficialAnswer && normalizeAnswer(option.value) === normalizeAnswer(question.correctAnswer);
+            const missed = hasOfficialAnswer && selected && !correct;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                disabled={locked}
+                className={`${selected ? 'active' : ''} ${correct ? 'is-answer' : ''} ${missed ? 'is-missed' : ''}`}
+                onClick={() => setDraft(option.value)}
+              >
+                <span>{option.label}</span>
+                {correct ? <strong>Đáp án</strong> : null}
+              </button>
+            );
+          })}
         </div>
       ) : (
         <input className="answer-input" disabled={locked} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Nhập câu trả lời của bạn" />
       )}
 
+      {resultText ? (
+        <div className={`question-result ${state}`} role="status">
+          {resultText}
+        </div>
+      ) : null}
+
       <div className="question-footer">
-        <span>{answer ? `Đã chọn: ${answer.answer}` : locked ? 'Chưa trả lời' : 'Chọn 1 đáp án'}</span>
-        {question.correctAnswer ? <strong>{points}đ</strong> : null}
+        <span>{footerText}</span>
+        {hasOfficialAnswer ? <strong className={`question-score ${isCorrect ? 'ok' : 'miss'}`}>+{points}đ</strong> : null}
         <button type="button" className="primary-btn small" disabled={locked || !draft} onClick={() => onSave(question, draft)}>
-          Lưu
+          {answered ? 'Đã trả lời' : 'Chốt câu trả lời'}
         </button>
       </div>
     </article>
   );
+}
+
+function normalizeQuestionOptions(options = []) {
+  return (options || []).map((option) => (
+    typeof option === 'string'
+      ? { value: option, label: option }
+      : { value: option.value, label: option.label || option.value }
+  )).filter((option) => option.value);
+}
+
+function questionAnswerLabel(value, options = []) {
+  if (!value) return '';
+  const match = options.find((option) => normalizeAnswer(option.value) === normalizeAnswer(value));
+  return match?.label || value;
+}
+
+function questionStatusLabel(state) {
+  if (state === 'correct') return 'Đúng';
+  if (state === 'wrong') return 'Sai';
+  if (state === 'pending') return 'Chờ kết quả';
+  if (state === 'locked') return 'Đã khóa';
+  return 'Đang mở';
+}
+
+function questionFooterText({ answerLabel, officialAnswerLabel, answered, expired, hasOfficialAnswer }) {
+  if (hasOfficialAnswer && answered) return `Bạn trả lời: ${answerLabel} · Đáp án: ${officialAnswerLabel}`;
+  if (hasOfficialAnswer) return `Đáp án: ${officialAnswerLabel}`;
+  if (answered) return 'Chờ kết quả';
+  if (expired) return 'Đã khóa, bạn chưa trả lời';
+  return 'Chọn 1 câu trả lời';
+}
+
+function questionResultText({ officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points }) {
+  if (hasOfficialAnswer && answered) {
+    return isCorrect
+      ? `Bạn đúng, nhận +${points}đ.`
+      : `Bạn chưa đúng. Đáp án là ${officialAnswerLabel}.`;
+  }
+  if (hasOfficialAnswer) return `Câu hỏi đã chốt đáp án: ${officialAnswerLabel}.`;
+  if (answered) return '';
+  if (expired) return 'Câu hỏi đã khóa và bạn chưa trả lời.';
+  return '';
 }
 
 function LongTermBetCard({ bet, locked, onSave }) {
@@ -2922,7 +3018,6 @@ function FootballMatchRow({ match }) {
   const scoreState = getMatchScoreState(match);
   return (
     <article className={`football-match-row ${scoreState.kind}`}>
-      <span className="football-match-time">#{match.matchNo} · {formatTime(match.kickoffAt)}</span>
       <FootballFixtureTeam team={match.homeTeam} side="home" />
       <span className="football-match-score">
         {scoreState.hasScore ? `${scoreState.homeScore} - ${scoreState.awayScore}` : '-'}

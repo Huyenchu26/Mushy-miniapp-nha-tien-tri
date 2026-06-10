@@ -25,6 +25,10 @@ export function outcome(home, away) {
 
 export function normalizeAnswer(value) {
   return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
     .trim()
     .toLowerCase()
     .replace(/\s+/g, ' ');

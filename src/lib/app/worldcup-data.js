@@ -221,24 +221,28 @@ export const MATCHES = [
   knockoutMatch(104, 'final', 'Chung k\u1ebft', '2026-07-19T20:00:00Z'),
 ];
 
+const YES_NO_OPTIONS = [choice('Co', 'Có'), choice('Khong', 'Không')];
+const ODD_EVEN_OPTIONS = [choice('Chan', 'Chẵn'), choice('Le', 'Lẻ')];
+const WIN_DRAW_OPTIONS = [choice('Co', 'Có'), choice('Khong', 'Không'), choice('Hoa', 'Hòa')];
+
 export const DAILY_QUESTIONS = [
-  question('2026-06-11', 'Tran khai mac co tu 3 ban thang tro len khong?', ['Co', 'Khong'], '2026-06-11T18:30:00Z'),
-  question('2026-06-12', 'Tong so ban thang trong ngay la chan hay le?', ['Chan', 'Le'], '2026-06-12T18:30:00Z'),
-  question('2026-06-13', 'Hom nay co tran nao hoa khong?', ['Co', 'Khong'], '2026-06-13T18:30:00Z'),
-  question('2026-06-14', 'Doi nao ghi nhieu ban nhat ngay hom nay?', null, '2026-06-14T16:30:00Z'),
-  question('2026-06-15', 'Hom nay co the do khong?', ['Co', 'Khong'], '2026-06-15T15:30:00Z'),
-  question('2026-06-16', 'Tran nao nhieu ban nhat ngay hom nay?', null, '2026-06-16T18:30:00Z'),
-  question('2026-06-17', 'Tong so tran co clean sheet trong ngay la chan hay le?', ['Chan', 'Le'], '2026-06-17T16:30:00Z'),
-  question('2026-06-18', 'Chu nha Canada co thang Qatar khong?', ['Co', 'Khong', 'Hoa'], '2026-06-18T18:30:00Z'),
-  question('2026-06-19', 'Hom nay co doi nao ghi tu 4 ban tro len khong?', ['Co', 'Khong'], '2026-06-19T18:30:00Z'),
-  question('2026-06-20', 'Doi nao se giu sach luoi thuyet phuc nhat?', null, '2026-06-20T16:30:00Z'),
-  question('2026-06-21', 'Tong so ban thang trong ngay co vuot 10 khong?', ['Co', 'Khong'], '2026-06-21T15:30:00Z'),
-  question('2026-06-22', 'Hom nay co bat ngo lon khong?', ['Co', 'Khong'], '2026-06-22T16:30:00Z'),
-  question('2026-06-23', 'Tran nao co ban thang muon nhat?', null, '2026-06-23T16:30:00Z'),
-  question('2026-06-24', 'Bang nao kich tinh nhat trong ngay chot luot?', ['B', 'C'], '2026-06-24T18:30:00Z'),
-  question('2026-06-25', 'Doi lon nao se gay that vong nhat hom nay?', null, '2026-06-25T19:30:00Z'),
-  question('2026-06-26', 'United States co thang Turkey khong?', ['Co', 'Khong', 'Hoa'], '2026-06-26T01:30:00Z'),
-  question('2026-06-27', 'Ngay chot vong bang co tong ban thang la chan hay le?', ['Chan', 'Le'], '2026-06-26T23:30:00Z'),
+  question('2026-06-11', 'Trận khai mạc có từ 3 bàn thắng trở lên không?', YES_NO_OPTIONS, '2026-06-11T18:30:00Z'),
+  question('2026-06-12', 'Tổng số bàn thắng trong ngày là chẵn hay lẻ?', ODD_EVEN_OPTIONS, '2026-06-12T18:30:00Z'),
+  question('2026-06-13', 'Hôm nay có trận nào hòa không?', YES_NO_OPTIONS, '2026-06-13T18:30:00Z'),
+  question('2026-06-14', 'Đội nào ghi nhiều bàn nhất ngày hôm nay?', null, '2026-06-14T16:30:00Z'),
+  question('2026-06-15', 'Hôm nay có thẻ đỏ không?', YES_NO_OPTIONS, '2026-06-15T15:30:00Z'),
+  question('2026-06-16', 'Trận nào nhiều bàn nhất ngày hôm nay?', null, '2026-06-16T18:30:00Z'),
+  question('2026-06-17', 'Tổng số trận giữ sạch lưới trong ngày là chẵn hay lẻ?', ODD_EVEN_OPTIONS, '2026-06-17T16:30:00Z'),
+  question('2026-06-18', 'Chủ nhà Canada có thắng Qatar không?', WIN_DRAW_OPTIONS, '2026-06-18T18:30:00Z'),
+  question('2026-06-19', 'Hôm nay có đội nào ghi từ 4 bàn trở lên không?', YES_NO_OPTIONS, '2026-06-19T18:30:00Z'),
+  question('2026-06-20', 'Đội nào sẽ giữ sạch lưới thuyết phục nhất?', null, '2026-06-20T16:30:00Z'),
+  question('2026-06-21', 'Tổng số bàn thắng trong ngày có vượt 10 không?', YES_NO_OPTIONS, '2026-06-21T15:30:00Z'),
+  question('2026-06-22', 'Hôm nay có bất ngờ lớn không?', YES_NO_OPTIONS, '2026-06-22T16:30:00Z'),
+  question('2026-06-23', 'Trận nào có bàn thắng muộn nhất?', null, '2026-06-23T16:30:00Z'),
+  question('2026-06-24', 'Bảng nào kịch tính nhất trong ngày chốt lượt?', [choice('B'), choice('C')], '2026-06-24T18:30:00Z'),
+  question('2026-06-25', 'Đội lớn nào sẽ gây thất vọng nhất hôm nay?', null, '2026-06-25T19:30:00Z'),
+  question('2026-06-26', 'United States có thắng Turkey không?', WIN_DRAW_OPTIONS, '2026-06-26T01:30:00Z'),
+  question('2026-06-27', 'Ngày chốt vòng bảng có tổng bàn thắng là chẵn hay lẻ?', ODD_EVEN_OPTIONS, '2026-06-26T23:30:00Z'),
 ];
 
 function match(matchNo, group, homeTeam, awayTeam, kickoffAt) {
@@ -282,6 +286,10 @@ function question(date, prompt, options, closesAt) {
     correctAnswer: null,
     points: 2,
   };
+}
+
+function choice(value, label = value) {
+  return { value, label };
 }
 
 function team(flag, fifaCode, fifaRank, viName) {

@@ -1795,7 +1795,7 @@ main {
 
 .football-match-row {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr) 64px minmax(0, 1fr) 76px;
+  grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr) 76px;
   align-items: center;
   gap: 8px;
   min-height: 42px;
@@ -1812,12 +1812,6 @@ main {
 .football-match-row.live {
   border-color: rgba(255, 56, 92, 0.22);
   background: rgba(255, 56, 92, 0.06);
-}
-
-.football-match-time {
-  color: var(--wc-muted);
-  font-size: 11px;
-  font-weight: 800;
 }
 
 .football-match-team {
@@ -2019,6 +2013,146 @@ main {
 
 .long-term-fields .answer-input {
   margin-top: 0;
+}
+
+.daily-question-note {
+  margin: -8px 0 16px;
+  border: 1px solid rgba(245, 54, 87, 0.12);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: rgba(245, 54, 87, 0.06);
+  color: var(--wc-muted);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.daily-question-card {
+  display: grid;
+  gap: 14px;
+}
+
+.daily-question-card.pending {
+  border-color: rgba(255, 149, 0, 0.24);
+  background: linear-gradient(180deg, rgba(255, 149, 0, 0.05), #ffffff 44%);
+}
+
+.daily-question-card.correct {
+  border-color: rgba(8, 127, 91, 0.22);
+  background: linear-gradient(180deg, rgba(8, 127, 91, 0.06), #ffffff 44%);
+}
+
+.daily-question-card.wrong {
+  border-color: rgba(245, 54, 87, 0.2);
+  background: linear-gradient(180deg, rgba(245, 54, 87, 0.05), #ffffff 44%);
+}
+
+.question-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.question-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: rgba(28, 100, 242, 0.08);
+  color: #1c64f2;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.question-status-pill.pending {
+  background: rgba(255, 149, 0, 0.12);
+  color: #9a5a00;
+}
+
+.question-status-pill.correct {
+  background: rgba(8, 127, 91, 0.12);
+  color: var(--wc-green);
+}
+
+.question-status-pill.wrong {
+  background: rgba(245, 54, 87, 0.1);
+  color: var(--wc-primary);
+}
+
+.question-status-pill.locked {
+  background: rgba(17, 20, 28, 0.07);
+  color: var(--wc-muted);
+}
+
+.option-grid button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.option-grid button strong {
+  border-radius: 999px;
+  padding: 3px 6px;
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 10px;
+  font-weight: 950;
+}
+
+.option-grid button.is-answer {
+  border-color: rgba(8, 127, 91, 0.35);
+  background: rgba(8, 127, 91, 0.1);
+  color: var(--wc-green);
+}
+
+.option-grid button.is-missed {
+  border-color: rgba(245, 54, 87, 0.28);
+  background: rgba(245, 54, 87, 0.08);
+  color: var(--wc-primary);
+}
+
+.question-result {
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: var(--wc-strong);
+  color: var(--wc-muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.question-result.pending {
+  background: rgba(255, 149, 0, 0.1);
+  color: #875100;
+}
+
+.question-result.correct {
+  background: rgba(8, 127, 91, 0.1);
+  color: var(--wc-green);
+}
+
+.question-result.wrong,
+.question-result.locked {
+  background: rgba(245, 54, 87, 0.08);
+  color: var(--wc-primary);
+}
+
+.question-score {
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.question-score.ok {
+  background: rgba(8, 127, 91, 0.1);
+  color: var(--wc-green);
+}
+
+.question-score.miss {
+  background: rgba(245, 54, 87, 0.08);
+  color: var(--wc-primary);
 }
 
 .top-scorer-combobox {
@@ -2825,7 +2959,7 @@ main {
   }
 
   .football-match-row {
-    grid-template-columns: 58px minmax(0, 1fr) 54px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr);
     gap: 6px;
     padding: 8px;
   }
@@ -2841,7 +2975,7 @@ main {
   }
 
   .football-match-status {
-    grid-column: 2 / -1;
+    grid-column: 1 / -1;
     text-align: center;
   }
 
@@ -4198,13 +4332,17 @@ main,
 }
 
 .chat-feed {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  align-content: end;
   min-width: 0;
   min-height: 240px;
   max-height: 420px;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   border-radius: 16px;
   padding: 10px;
   background:
@@ -5017,4 +5155,4 @@ main,
   font-size: 18px;
   font-weight: 850;
   color: var(--wc-ink);
-}
+}
