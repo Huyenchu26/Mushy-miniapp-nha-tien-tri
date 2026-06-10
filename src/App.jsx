@@ -148,6 +148,7 @@ export default function App() {
   const [editingPredictionMatch, setEditingPredictionMatch] = useState(null);
   const [showMyPredictions, setShowMyPredictions] = useState(false);
   const [myPredictionsTab, setMyPredictionsTab] = useState('scored'); // 'scored' | 'pending'
+  const [deepLinkRevision, setDeepLinkRevision] = useState(0);
 
   const addToast = (message, type = 'success') => {
     if (!message) return;
@@ -200,6 +201,29 @@ export default function App() {
     window.addEventListener('hashchange', openAdminFromLocation);
     return () => window.removeEventListener('hashchange', openAdminFromLocation);
   }, [canManageTournament]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    function refreshDeepLink() {
+      setDeepLinkRevision((value) => value + 1);
+    }
+
+    function refreshWhenVisible() {
+      if (document.visibilityState !== 'hidden') refreshDeepLink();
+    }
+
+    window.addEventListener('focus', refreshDeepLink);
+    window.addEventListener('popstate', refreshDeepLink);
+    window.addEventListener('hashchange', refreshDeepLink);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      window.removeEventListener('focus', refreshDeepLink);
+      window.removeEventListener('popstate', refreshDeepLink);
+      window.removeEventListener('hashchange', refreshDeepLink);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, []);
 
   useEffect(() => {
     if (activeTabScrollRef.current === activeTab) return;
@@ -888,14 +912,12 @@ export default function App() {
 
   useEffect(() => {
     if (loading) return;
-    const params = new URLSearchParams(window.location.search);
-    const signature = params.toString();
+    const params = getCurrentDeepLinkParams();
+    const deepLink = parseDeepLinkParams(params);
+    const { signature, screen, kind, matchNo, target } = deepLink;
     if (!signature || deepLinkHandledRef.current === signature) return;
 
-    const screen = params.get('screen');
-    const kind = params.get('kind');
-    const matchNo = Number(params.get('matchNo'));
-    const shouldOpenRoom = screen === 'room' || kind === 'chat_mention';
+    const shouldOpenRoom = target === 'room' || screen === 'room' || kind === 'chat_mention';
     if (screen === 'leaderboard') {
       deepLinkHandledRef.current = signature;
       setActiveTab('leaderboard');
@@ -913,7 +935,7 @@ export default function App() {
       setActiveTab('matches');
       window.setTimeout(() => document.getElementById(`match-card-${matchNo}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
     }
-  }, [loading, matchesWithLiveScores, predictionMap]);
+  }, [loading, matchesWithLiveScores, predictionMap, deepLinkRevision]);
 
   if (ctxError) {
     return <SetupScreen error={ctxError} />;
@@ -2763,9 +2785,6 @@ function DailyScreen({ questions, triviaQuestion, userId, answerMap, answers, lo
           <h2>Câu hỏi hôm nay và ngày mai</h2>
         </div>
       </div>
-      <p className="daily-question-note">
-        Đây là câu hỏi dự đoán theo ngày, khác với Hỏi vui. Trả lời trước giờ khóa, sau đó chờ admin chốt đáp án để tính điểm.
-      </p>
       {triviaQuestion ? (
         <TriviaCard
           question={triviaQuestion}
@@ -3862,7 +3881,9 @@ function notifyMentionedRoomMembers({ body, members, currentUserId, senderName, 
     data: {
       appSlug: 'nha-tien-tri',
       kind: 'chat_mention',
-      screen: 'room',
+      screen: 'match',
+      recordId: `room:${match.matchNo}`,
+      target: 'room',
       matchNo: String(match.matchNo),
     },
   }).catch((err) => {
@@ -4716,6 +4737,50 @@ function toMatchInsightState(payload) {
     model: payload?.model || '',
     cached: payload?.cached === true,
   };
+}
+
+function getCurrentDeepLinkParams() {
+  if (typeof window === 'undefined') return new URLSearchParams();
+
+  const params = new URLSearchParams(window.location.search);
+  const hash = String(window.location.hash || '').replace(/^#\??/, '');
+  if (hash.includes('=')) {
+    const hashParams = new URLSearchParams(hash);
+    hashParams.forEach((value, key) => {
+      if (!params.has(key)) params.set(key, value);
+    });
+  }
+  return params;
+}
+
+function parseDeepLinkParams(params) {
+  const recordId = params.get('recordId') || params.get('record_id') || params.get('id') || '';
+  const targetFromRecord = /^room[:_-]?\d+$/i.test(recordId) ? 'room' : '';
+  return {
+    signature: params.toString(),
+    screen: params.get('screen') || '',
+    kind: params.get('kind') || '',
+    target: params.get('target') || params.get('view') || params.get('open') || targetFromRecord,
+    matchNo: parseDeepLinkMatchNo(params, recordId),
+  };
+}
+
+function parseDeepLinkMatchNo(params, recordId = '') {
+  const candidates = [
+    params.get('matchNo'),
+    params.get('match_no'),
+    params.get('match'),
+    recordId,
+    params.get('record_id'),
+    params.get('id'),
+  ];
+
+  for (const candidate of candidates) {
+    const text = String(candidate || '').trim();
+    const match = text.match(/^(?:room|match)?[:_-]?(\d+)$/i);
+    if (match) return Number(match[1]);
+  }
+  return 0;
 }
 
 function isLocalSimulationEnabled() {
