@@ -21,13 +21,19 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
       .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime()),
     [matches, todayKey]
   );
+  const hypeMatches = useMemo(
+    () => matches
+      .filter((match) => !hasUnknownTeam(match))
+      .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime()),
+    [matches]
+  );
   const [matchNo, setMatchNo] = useState(String(upcoming?.matchNo || matches[0]?.matchNo || ''));
   const [hypeMatchNo, setHypeMatchNo] = useState('');
   const [hypeTitle, setHypeTitle] = useState('Kèo hot hôm nay');
   const [hypeBody, setHypeBody] = useState('');
   const selected = matches.find((match) => String(match.matchNo) === String(matchNo));
-  const hotMatchFallback = todayMatches[0] || null;
-  const hotMatch = todayMatches.find((match) => String(match.matchNo) === String(hypeMatchNo)) || hotMatchFallback;
+  const hotMatchFallback = todayMatches[0] || upcoming || hypeMatches[0] || null;
+  const hotMatch = hypeMatches.find((match) => String(match.matchNo) === String(hypeMatchNo)) || hotMatchFallback;
   const [homeScore, setHomeScore] = useState('');
   const [awayScore, setAwayScore] = useState('');
   const [homeTeam, setHomeTeam] = useState('');
@@ -60,7 +66,7 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
     value: String(match.matchNo),
     label: `#${match.matchNo} · ${match.homeTeam} - ${match.awayTeam}`,
   }));
-  const hypeOptions = todayMatches.map((match) => ({
+  const hypeOptions = hypeMatches.map((match) => ({
     value: String(match.matchNo),
     label: `#${match.matchNo} · ${match.homeTeam} - ${match.awayTeam} · ${formatAdminTime(match.kickoffAt)}`,
   }));
@@ -153,7 +159,7 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
   }
 
   function handleHypePush() {
-    if (!hotMatch) return dialog.info('Không có trận hôm nay', 'Chỉ gửi kích war cho trận diễn ra trong ngày.');
+    if (!hotMatch) return dialog.info('Không có trận để gửi', 'Chưa tìm thấy trận phù hợp trong lịch.');
     const title = normalizePushText(hypeTitle, 60) || 'Kèo hot hôm nay';
     const body = normalizePushText(hypeBody, 240);
     if (!body) return dialog.error('Thiếu nội dung', 'Nhập nội dung kích war trước khi gửi.');
@@ -210,7 +216,7 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
             <p>Nhắc riêng người chưa dự trận gần nhất hoặc gửi recap workspace.</p>
             <div className="admin-hype-box">
               <b>Kích war trận hot</b>
-              <small>{todayMatches.length ? `${todayMatches.length} trận hôm nay` : 'Hôm nay chưa có trận để gửi'}</small>
+              <small>{todayMatches.length ? `${todayMatches.length} trận hôm nay · có thể chọn bất kỳ trận nào` : 'Có thể gửi bất cứ lúc nào'}</small>
               <Select value={String(hotMatch?.matchNo || hypeMatchNo)} onChange={setHypeMatchNo} options={hypeOptions} placeholder="Chọn trận hot" />
               <input value={hypeTitle} onChange={(e) => setHypeTitle(e.target.value)} placeholder="Tiêu đề noti" maxLength={60} />
               <textarea
@@ -220,7 +226,7 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
                 maxLength={240}
                 rows={4}
               />
-              <button type="button" className="primary-btn" disabled={!!busy || !todayMatches.length} onClick={handleHypePush}>{busy === 'hype' ? 'Đang gửi...' : 'Gửi kích war'}</button>
+              <button type="button" className="primary-btn" disabled={!!busy || !hypeMatches.length} onClick={handleHypePush}>{busy === 'hype' ? 'Đang gửi...' : 'Gửi kích war'}</button>
             </div>
             <button type="button" className="secondary-btn" disabled={!!busy} onClick={handleReminder}>Nhắc deadline</button>
             <button type="button" className="secondary-btn" disabled={!!busy} onClick={handleRecap}>Gửi recap ngày</button>
