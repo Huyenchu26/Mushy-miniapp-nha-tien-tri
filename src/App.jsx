@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, ClipboardCheck, Flame, Home, PenLine, Scale, Star, Target, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, ClipboardCheck, Flame, Home, Minus, PenLine, Plus, Scale, Star, Target, Trophy } from 'lucide-react';
 import { DAILY_QUESTIONS, DATA_SOURCE, FIFA_RANKING_SOURCE, GROUPS, MATCHES, TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS } from './lib/app/worldcup-data.js';
 import {
   MOCK_SCORE_STEP_MS,
@@ -2529,9 +2529,13 @@ function MatchTeam({ team, score = null }) {
 function ScorePicker({ score, locked, ariaLabel, onDecrease, onIncrease }) {
   return (
     <div className="score-stepper score-stepper--side" aria-label={ariaLabel}>
-      <button type="button" disabled={locked} onClick={onDecrease} aria-label="Giảm tỉ số">-</button>
+      <button type="button" disabled={locked} onClick={onDecrease} aria-label="Giảm tỉ số">
+        <Minus size={16} />
+      </button>
       <span className="score-value">{score}</span>
-      <button type="button" disabled={locked} onClick={onIncrease} aria-label="Tăng tỉ số">+</button>
+      <button type="button" disabled={locked} onClick={onIncrease} aria-label="Tăng tỉ số">
+        <Plus size={16} />
+      </button>
     </div>
   );
 }
