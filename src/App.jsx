@@ -145,6 +145,7 @@ export default function App() {
   const [toasts, setToasts] = useState([]);
   const [error, setError] = useState('');
   const [editingPredictionMatch, setEditingPredictionMatch] = useState(null);
+  const [showMyPredictions, setShowMyPredictions] = useState(false);
 
   const addToast = (message, type = 'success') => {
     if (!message) return;
@@ -416,6 +417,15 @@ export default function App() {
   const currentUserAnswers = useMemo(
     () => answers.filter((answer) => answer.createdBy === ctx?.userId),
     [answers, ctx?.userId]
+  );
+  const scoreHistory = useMemo(
+    () => buildScoreHistory({
+      predictions: currentUserPredictions,
+      answers: currentUserAnswers,
+      matches: matchesWithOfficialScores,
+      currentStanding
+    }),
+    [currentUserPredictions, currentUserAnswers, matchesWithOfficialScores, currentStanding]
   );
   const pointNotifications = useMemo(
     () => buildPointNotifications({
@@ -883,6 +893,14 @@ export default function App() {
             }}
             onSend={handleSendRoomMessage}
           />
+        ) : showMyPredictions ? (
+          <MyPredictionsScreen
+            items={scoreHistory}
+            onBack={() => setShowMyPredictions(false)}
+            onEditPrediction={setEditingPredictionMatch}
+            currentStanding={currentStanding}
+            predictedCount={predictionMap.size}
+          />
         ) : (
           <>
             {activeTab === 'matches' && (
@@ -959,10 +977,9 @@ export default function App() {
                 currentParticipantId={ctx?.userId}
                 currentStanding={currentStanding}
                 predictedCount={predictionMap.size}
-                predictions={currentUserPredictions}
-                answers={currentUserAnswers}
+                scoreHistory={scoreHistory}
                 matches={matchesWithOfficialScores}
-                onEditPrediction={setEditingPredictionMatch}
+                onShowMyPredictions={() => setShowMyPredictions(true)}
               />
             )}
             {activeTab === 'results' && (
@@ -976,7 +993,7 @@ export default function App() {
         )}
       </main>
 
-      {!roomMatch && <nav className="tab-nav bottom-nav" aria-label="Điều hướng">
+      {!roomMatch && !showMyPredictions && <nav className="tab-nav bottom-nav" aria-label="Điều hướng">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -994,7 +1011,7 @@ export default function App() {
         ))}
       </nav>}
 
-      {!roomMatch && <footer className="app-footer">
+      {!roomMatch && !showMyPredictions && <footer className="app-footer">
         <span>Dữ liệu lịch: {DATA_SOURCE.label}</span>
         <a href={DATA_SOURCE.officialUrl} target="_blank" rel="noreferrer">FIFA</a>
         <span>BXH FIFA: {FIFA_RANKING_SOURCE.lastOfficialUpdate}</span>
@@ -1517,9 +1534,9 @@ function TodayChecklist({
       ? 'Trả lời câu hỏi'
       : noTasksToday
         ? 'Xem lịch trận'
-      : checklistDone
-        ? 'Xem BXH'
-        : 'Xem trận hôm nay';
+        : checklistDone
+          ? 'Xem BXH'
+          : 'Xem trận hôm nay';
 
   function scrollToMatch(match) {
     if (!match) return;
@@ -1647,10 +1664,10 @@ function LiveScorePanel({ liveScores, liveSync }) {
     : waitingForSchedule
       ? 'Chờ trận tiếp theo'
       : activeCount > 0
-      ? `${activeCount} trận đang live`
-      : scores.length > 0
-        ? `${scores.length} trận đã đồng bộ`
-        : 'Đang chờ dữ liệu trận';
+        ? `${activeCount} trận đang live`
+        : scores.length > 0
+          ? `${scores.length} trận đã đồng bộ`
+          : 'Đang chờ dữ liệu trận';
 
   const syncDetail = waitingForSchedule
     ? `Không gọi API ngoài giờ trận · bật lại ${liveSync?.nextFetchAt ? formatRelativeSyncTime(liveSync.nextFetchAt) : 'trước trận'}`
@@ -1925,12 +1942,12 @@ function MatchCardPrototype({
             {!teamsKnown
               ? 'Chờ xác định đội.'
               : locked
-              ? 'Đã khóa dự đoán'
-              : doubleDownReserved
-                ? `Ngày này đã chọn kèo tủ trận #${dailyDoubleMatchNo}.`
-                : isTodayMatchDay
-                  ? 'Mỗi ngày chỉ 1 kèo tủ.'
-                  : 'Kèo tủ chỉ mở đúng ngày thi đấu.'}
+                ? 'Đã khóa dự đoán'
+                : doubleDownReserved
+                  ? `Ngày này đã chọn kèo tủ trận #${dailyDoubleMatchNo}.`
+                  : isTodayMatchDay
+                    ? 'Mỗi ngày chỉ 1 kèo tủ.'
+                    : 'Kèo tủ chỉ mở đúng ngày thi đấu.'}
           </p>
         </>
       ) : (
@@ -2068,145 +2085,145 @@ function PredictionRoomScreen({
   }
 
   return (
-      <section className="prediction-room screen" aria-label={`Phòng dự đoán trận ${match.matchNo}`}>
-        <div className="room-head">
-          <button type="button" className="room-back" onClick={onBack} aria-label="Quay lại danh sách trận">
-            ←
-          </button>
-          <div>
-            <p className="section-label">Phòng dự đoán</p>
-            <h2>#{match.matchNo} {displayTeamName(match.homeTeam)} vs {displayTeamName(match.awayTeam)}</h2>
-          </div>
+    <section className="prediction-room screen" aria-label={`Phòng dự đoán trận ${match.matchNo}`}>
+      <div className="room-head">
+        <button type="button" className="room-back" onClick={onBack} aria-label="Quay lại danh sách trận">
+          ←
+        </button>
+        <div>
+          <p className="section-label">Phòng dự đoán</p>
+          <h2>#{match.matchNo} {displayTeamName(match.homeTeam)} vs {displayTeamName(match.awayTeam)}</h2>
         </div>
+      </div>
 
-        <div className="room-status-card">
-          <MatchRoomStatus match={match} />
+      <div className="room-status-card">
+        <MatchRoomStatus match={match} />
+      </div>
+
+      <div className="room-section">
+        <div className="room-section-head">
+          <h3>Phe nào đông</h3>
+          <span>{matchPredictions.length} dự đoán</span>
         </div>
+        <div className="prediction-split-bar" aria-label="Tỉ lệ phe dự đoán">
+          {split.map((item) => (
+            <span
+              key={item.key}
+              className={`split-segment ${item.key}`}
+              style={{ width: `${item.percent}%` }}
+              title={`${item.label}: ${item.percent}%`}
+            />
+          ))}
+        </div>
+        <div className="prediction-split-legend">
+          {split.map((item) => (
+            <span key={item.key} className={item.key}>
+              <i aria-hidden="true" />
+              {item.label} <b>{item.percent}%</b>
+            </span>
+          ))}
+        </div>
+      </div>
 
-        <div className="room-section">
-          <div className="room-section-head">
-            <h3>Phe nào đông</h3>
-            <span>{matchPredictions.length} dự đoán</span>
-          </div>
-          <div className="prediction-split-bar" aria-label="Tỉ lệ phe dự đoán">
-            {split.map((item) => (
-              <span
-                key={item.key}
-                className={`split-segment ${item.key}`}
-                style={{ width: `${item.percent}%` }}
-                title={`${item.label}: ${item.percent}%`}
-              />
-            ))}
-          </div>
-          <div className="prediction-split-legend">
-            {split.map((item) => (
-              <span key={item.key} className={item.key}>
-                <i aria-hidden="true" />
-                {item.label} <b>{item.percent}%</b>
+      <div className="room-section room-history-compact">
+        <div className="room-section-head">
+          <h3>Lịch sử dự đoán</h3>
+          <span>{prediction ? `Bạn: ${prediction.homePred}-${prediction.awayPred}` : 'Chưa có kèo'}</span>
+        </div>
+        <button
+          type="button"
+          className="prediction-history-row"
+          aria-expanded={showPredictionSheet}
+          onClick={() => setShowPredictionSheet((value) => !value)}
+        >
+          <strong>Xem danh sách · {matchPredictions.length} người</strong>
+        </button>
+        <div className="room-activity-list" aria-label="Dự đoán tỉ số gần nhất">
+          {visibleActivityItems.length === 0 ? (
+            <p className="room-empty compact">Chưa có dự đoán trong phòng.</p>
+          ) : visibleActivityItems.map((item) => (
+            <article key={item.id} className={`room-activity-item ${item.type}`}>
+              <i title={item.name}>{item.initials}</i>
+              <span>
+                <b>{item.name}</b>
+                <small>{item.label} · {formatRoomTime(item.createdAt)}</small>
               </span>
-            ))}
-          </div>
+              <strong>{item.body}</strong>
+            </article>
+          ))}
         </div>
-
-        <div className="room-section room-history-compact">
-          <div className="room-section-head">
-            <h3>Lịch sử dự đoán</h3>
-            <span>{prediction ? `Bạn: ${prediction.homePred}-${prediction.awayPred}` : 'Chưa có kèo'}</span>
-          </div>
+        {canExpandActivity ? (
           <button
             type="button"
-            className="prediction-history-row"
-            aria-expanded={showPredictionSheet}
-            onClick={() => setShowPredictionSheet((value) => !value)}
+            className="show-more-predictions room-more-btn"
+            onClick={() => setActivityLimit((value) => Math.min(value + 4, roomActivityItems.length))}
           >
-            <strong>Xem danh sách · {matchPredictions.length} người</strong>
+            Hiện thêm
           </button>
-          <div className="room-activity-list" aria-label="Dự đoán tỉ số gần nhất">
-            {visibleActivityItems.length === 0 ? (
-              <p className="room-empty compact">Chưa có dự đoán trong phòng.</p>
-            ) : visibleActivityItems.map((item) => (
-              <article key={item.id} className={`room-activity-item ${item.type}`}>
-                <i title={item.name}>{item.initials}</i>
-                <span>
-                  <b>{item.name}</b>
-                  <small>{item.label} · {formatRoomTime(item.createdAt)}</small>
-                </span>
-                <strong>{item.body}</strong>
-              </article>
-            ))}
-          </div>
-          {canExpandActivity ? (
-            <button
-              type="button"
-              className="show-more-predictions room-more-btn"
-              onClick={() => setActivityLimit((value) => Math.min(value + 4, roomActivityItems.length))}
-            >
-              Hiện thêm
-            </button>
-          ) : canCollapseActivity ? (
-            <button type="button" className="show-more-predictions room-more-btn" onClick={() => setActivityLimit(3)}>
-              Đóng hết
-            </button>
-          ) : null}
+        ) : canCollapseActivity ? (
+          <button type="button" className="show-more-predictions room-more-btn" onClick={() => setActivityLimit(3)}>
+            Đóng hết
+          </button>
+        ) : null}
+      </div>
+
+      <div className="room-chat">
+        <div className="room-section-head">
+          <h3>Cà khịa trực tiếp</h3>
+          <span>{loading ? 'Đang tải...' : `${messages.length} tin`}</span>
         </div>
 
-        <div className="room-chat">
-          <div className="room-section-head">
-            <h3>Cà khịa trực tiếp</h3>
-            <span>{loading ? 'Đang tải...' : `${messages.length} tin`}</span>
-          </div>
-
-          <p className="room-realtime-chip">{roomRealtimeLabel(realtimeState)}</p>
-          <div className="reaction-row" aria-label="Thả cảm xúc nhanh">
-            {['😂', '🔥', '😭', '🤝'].map((emoji) => (
-              <button key={emoji} type="button" disabled={cooldownLeft > 0} onClick={() => onSend({ kind: 'reaction', body: emoji, emoji })}>
-                {emoji}
-              </button>
-            ))}
-          </div>
-
-          <div className="chat-feed" ref={chatFeedRef}>
-            {messages.length === 0 ? (
-              <p className="room-empty">{error || 'Chưa có ai gáy. Bạn mở bát đi.'}</p>
-            ) : messages.slice(-30).map((message) => (
-              <article key={message.id} className={`chat-message ${message.createdBy === currentUserId ? 'mine' : ''} ${message.failed ? 'failed' : ''}`}>
-                <span>{memberDisplayName(memberMap, message.createdBy)}</span>
-                <p>{message.kind === 'reaction' ? `${message.emoji || message.body}` : message.body}</p>
-                <small>{message.failed ? 'Chưa gửi được' : formatRoomTime(message.createdAt)}</small>
-              </article>
-            ))}
-          </div>
-
-          {error && messages.length > 0 ? <p className="room-error">{error}</p> : null}
-          {cooldownLeft > 0 ? <p className="room-error">Chống spam: chờ khoảng {cooldownLeft}s.</p> : null}
-
-          <div className="chat-compose">
-            <input
-              value={draft}
-              maxLength={280}
-              placeholder="Cà khịa văn minh, đau nhưng vui..."
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') sendChat();
-              }}
-            />
-            <button type="button" disabled={!draft.trim() || cooldownLeft > 0 || sending} onClick={sendChat}>
-              {sending ? '...' : 'Gửi'}
+        <p className="room-realtime-chip">{roomRealtimeLabel(realtimeState)}</p>
+        <div className="reaction-row" aria-label="Thả cảm xúc nhanh">
+          {['😂', '🔥', '😭', '🤝'].map((emoji) => (
+            <button key={emoji} type="button" disabled={cooldownLeft > 0} onClick={() => onSend({ kind: 'reaction', body: emoji, emoji })}>
+              {emoji}
             </button>
-          </div>
+          ))}
         </div>
-        {showPredictionSheet && (
-          <PredictionHistorySheet
-            match={match}
-            memberMap={memberMap}
-            predictions={matchPredictions}
-            factionTabs={factionTabs}
-            initialFaction={activeFaction}
-            currentUserId={currentUserId}
-            onClose={() => setShowPredictionSheet(false)}
+
+        <div className="chat-feed" ref={chatFeedRef}>
+          {messages.length === 0 ? (
+            <p className="room-empty">{error || 'Chưa có ai gáy. Bạn mở bát đi.'}</p>
+          ) : messages.slice(-30).map((message) => (
+            <article key={message.id} className={`chat-message ${message.createdBy === currentUserId ? 'mine' : ''} ${message.failed ? 'failed' : ''}`}>
+              <span>{memberDisplayName(memberMap, message.createdBy)}</span>
+              <p>{message.kind === 'reaction' ? `${message.emoji || message.body}` : message.body}</p>
+              <small>{message.failed ? 'Chưa gửi được' : formatRoomTime(message.createdAt)}</small>
+            </article>
+          ))}
+        </div>
+
+        {error && messages.length > 0 ? <p className="room-error">{error}</p> : null}
+        {cooldownLeft > 0 ? <p className="room-error">Chống spam: chờ khoảng {cooldownLeft}s.</p> : null}
+
+        <div className="chat-compose">
+          <input
+            value={draft}
+            maxLength={280}
+            placeholder="Cà khịa văn minh, đau nhưng vui..."
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') sendChat();
+            }}
           />
-        )}
-      </section>
+          <button type="button" disabled={!draft.trim() || cooldownLeft > 0 || sending} onClick={sendChat}>
+            {sending ? '...' : 'Gửi'}
+          </button>
+        </div>
+      </div>
+      {showPredictionSheet && (
+        <PredictionHistorySheet
+          match={match}
+          memberMap={memberMap}
+          predictions={matchPredictions}
+          factionTabs={factionTabs}
+          initialFaction={activeFaction}
+          currentUserId={currentUserId}
+          onClose={() => setShowPredictionSheet(false)}
+        />
+      )}
+    </section>
   );
 }
 
@@ -2939,73 +2956,70 @@ function LeaderboardScreen({
   currentParticipantId,
   currentStanding,
   predictedCount,
-  predictions,
-  answers,
-  matches,
-  onEditPrediction,
+  scoreHistory = [],
+  matches = [],
+  onShowMyPredictions,
 }) {
   const [rankMode, setRankMode] = useState('total');
-  const [showHistory, setShowHistory] = useState(false);
-  const scoreHistory = useMemo(
-    () => buildScoreHistory({ predictions, answers, matches, currentStanding }),
-    [predictions, answers, matches, currentStanding]
-  );
   const rows = standingsByMode?.[rankMode] || standings;
   const selectedStanding = rows.find((row) => row.participantId === currentParticipantId) || currentStanding;
   const modeCopy = getLeaderboardModeCopy(rankMode, matches);
+  const pendingCount = useMemo(() => scoreHistory.filter((item) => item.status === 'saved').length, [scoreHistory]);
 
   return (
-    <section className="screen">
+    <section className="screen bxh-screen">
+      <section className="bxh-section">
+        <div className="leader-modes" role="tablist" aria-label="Chế độ bảng xếp hạng">
+          {[
+            ['total', 'Tổng'],
+            ['week', 'Theo tuần'],
+            ['stage', 'Theo vòng'],
+          ].map(([mode, label]) => (
+            <button
+              key={mode}
+              type="button"
+              className={rankMode === mode ? 'active' : ''}
+              onClick={() => setRankMode(mode)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <p className="leader-mode-copy">{modeCopy}</p>
+
+        <div className="leader-list">
+          {rows.length === 0 ? (
+            <p className="empty-state">Chưa có dự đoán nào. Mọi người mở app từ Mushy là chơi được ngay.</p>
+          ) : rows.map((row) => (
+            <article key={row.participantId} className={`lb-row ${row.participantId === currentParticipantId ? 'me' : ''}`}>
+              <span className={`lb-rank ${row.rank <= 3 ? `top-${row.rank}` : ''}`}>{row.rank}</span>
+              <span className="lb-avatar">{initials(row.displayName)}</span>
+              <span className="lb-person">
+                <strong>{row.displayName}</strong>
+                <small>{leaderSubtitle(row)}</small>
+              </span>
+              <b>{row.total}đ</b>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <ScoreHistoryPanel
-        items={scoreHistory}
         rank={selectedStanding?.rank}
         total={selectedStanding?.total ?? 0}
         predictedCount={predictedCount}
-        isOpen={showHistory}
-        onToggle={() => setShowHistory((value) => !value)}
-        onEditPrediction={onEditPrediction}
+        pendingCount={pendingCount}
+        onShowAll={onShowMyPredictions}
       />
 
-      <div className="leader-modes" role="tablist" aria-label="Chế độ bảng xếp hạng">
-        {[
-          ['total', 'Tổng'],
-          ['week', 'Theo tuần'],
-          ['stage', 'Theo vòng'],
-        ].map(([mode, label]) => (
-          <button
-            key={mode}
-            type="button"
-            className={rankMode === mode ? 'active' : ''}
-            onClick={() => setRankMode(mode)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <p className="leader-mode-copy">{modeCopy}</p>
-
-      <div className="leader-list">
-        {rows.length === 0 ? (
-          <p className="empty-state">Chưa có dự đoán nào. Mọi người mở app từ Mushy là chơi được ngay.</p>
-        ) : rows.map((row) => (
-          <article key={row.participantId} className={`lb-row ${row.participantId === currentParticipantId ? 'me' : ''}`}>
-            <span className={`lb-rank ${row.rank <= 3 ? `top-${row.rank}` : ''}`}>{row.rank}</span>
-            <span className="lb-avatar">{initials(row.displayName)}</span>
-            <span className="lb-person">
-              <strong>{row.displayName}</strong>
-              <small>{leaderSubtitle(row)}</small>
-            </span>
-            <b>{row.total}đ</b>
-          </article>
-        ))}
-      </div>
-
-      <p className="section-label fun-awards-label">Giải vui dự kiến</p>
-      <div className="fun-awards">
-        <Award icon="🃏" title="Thánh phán bừa" body="Lên top nhờ những kèo không ai dám nghĩ tới." />
-        <Award icon="🎯" title="Thủy chung" body="Dự đủ mọi trận, không bỏ lịch nào." />
-        <Award icon="🚀" title="Vua nước rút" body="Bùng nổ ở nửa sau vòng bảng." />
-      </div>
+      <section>
+        <p className="section-label fun-awards-label">Giải vui dự kiến</p>
+        <div className="fun-awards">
+          <Award icon="🃏" title="Thánh phán bừa" body="Lên top nhờ những kèo không ai dám nghĩ tới." />
+          <Award icon="🎯" title="Thủy chung" body="Dự đủ mọi trận, không bỏ lịch nào." />
+          <Award icon="🚀" title="Vua nước rút" body="Bùng nổ ở nửa sau vòng bảng." />
+        </div>
+      </section>
     </section>
   );
 }
@@ -3044,11 +3058,7 @@ function currentTournamentStage(matches = []) {
   return match ? matchStageLabel(match).toLowerCase() : 'giai đoạn hiện tại';
 }
 
-function ScoreHistoryPanel({ items, rank, total, predictedCount, isOpen, onToggle, onEditPrediction }) {
-  const pendingItems = items.filter((item) => item.status === 'saved');
-  const scoredItems = items.filter((item) => item.status !== 'saved');
-  const totalItems = items.length;
-
+function ScoreHistoryPanel({ rank, total, predictedCount, pendingCount, onShowAll }) {
   return (
     <section className="score-history-panel" aria-label="Dự đoán của tôi">
       <div className="score-history-head">
@@ -3059,72 +3069,13 @@ function ScoreHistoryPanel({ items, rank, total, predictedCount, isOpen, onToggl
         <div className="score-history-metrics" aria-label="Tóm tắt điểm">
           <span>{rank ? `#${rank}` : '-'}</span>
           <span>{predictedCount} đã dự</span>
-          <span>{pendingItems.length} chờ kết quả</span>
+          <span>{pendingCount} chờ kết quả</span>
         </div>
       </div>
 
-      <button className="secondary-btn score-history-toggle" type="button" onClick={onToggle} aria-expanded={isOpen}>
-        {isOpen ? 'Ẩn danh sách' : 'Xem tất cả dự đoán'}
+      <button className="secondary-btn score-history-toggle" type="button" onClick={onShowAll}>
+        Xem tất cả dự đoán
       </button>
-
-      {isOpen && (
-        totalItems === 0 ? (
-          <p className="empty-state compact">Chưa có dự đoán nào. Hãy vào Trang chủ để đặt kèo trận nào đó đi!</p>
-        ) : (
-          <div className="score-history-list">
-            {pendingItems.length > 0 && (
-              <>
-                <p className="score-history-section-label">Chờ kết quả ({pendingItems.length} trận)</p>
-                {pendingItems.map((item) => (
-                  <article key={item.key} className="score-history-row saved">
-                    <span className="score-history-type">{item.type}</span>
-                    <span className="score-history-copy">
-                      {item.kind === 'match' ? (
-                        <ScoreHistoryMatchLabel item={item} />
-                      ) : (
-                        <strong>{item.label}</strong>
-                      )}
-                      <small>{item.detail}</small>
-                    </span>
-                    <div className="score-history-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {item.kind === 'match' && !isPredictionLocked(item.match) && (
-                        <button
-                          type="button"
-                          className="score-history-edit-btn"
-                          onClick={() => onEditPrediction?.(item.match)}
-                          aria-label="Sửa dự đoán"
-                        >
-                          <PenLine size={16} strokeWidth={2.5} />
-                        </button>
-                      )}
-                      <span className="score-history-pending-badge">Chờ</span>
-                    </div>
-                  </article>
-                ))}
-              </>
-            )}
-            {scoredItems.length > 0 && (
-              <>
-                <p className="score-history-section-label">Đã tính điểm ({scoredItems.length} mục)</p>
-                {scoredItems.map((item) => (
-                  <article key={item.key} className={`score-history-row ${item.status === 'zero' ? 'zero' : ''}`}>
-                    <span className="score-history-type">{item.type}</span>
-                    <span className="score-history-copy">
-                      {item.kind === 'match' ? (
-                        <ScoreHistoryMatchLabel item={item} />
-                      ) : (
-                        <strong>{item.label}</strong>
-                      )}
-                      <small>{item.detail}</small>
-                    </span>
-                    <b className={item.points > 0 ? '' : 'zero-pts'}>{item.points > 0 ? `+${item.points}đ` : '+0đ'}</b>
-                  </article>
-                ))}
-              </>
-            )}
-          </div>
-        )
-      )}
     </section>
   );
 }
@@ -4416,5 +4367,128 @@ function PredictionEditModal({ match, prediction, dailyDoubleMatchNo, onClose, o
         </div>
       </div>
     </div>
+  );
+}
+
+function MyPredictionsScreen({ items, onBack, onEditPrediction, currentStanding, predictedCount }) {
+  const [subTab, setSubTab] = useState('scored'); // 'scored' | 'pending'
+
+  const pendingItems = useMemo(() => items.filter((item) => item.status === 'saved'), [items]);
+  const scoredItems = useMemo(() => items.filter((item) => item.status !== 'saved'), [items]);
+
+  const total = currentStanding?.total ?? 0;
+  const rank = currentStanding?.rank;
+
+  return (
+    <section className="screen my-predictions-screen">
+      <div className="my-predictions-header-card">
+        <div className="my-predictions-header-top">
+          <button type="button" className="room-back" onClick={onBack} aria-label="Quay lại" style={{ margin: 0 }}>
+            ←
+          </button>
+          <div className="my-predictions-title-group">
+            <p className="section-label" style={{ padding: 0 }}>BXH</p>
+            <h2 style={{ margin: 0 }}>Dự đoán của tôi</h2>
+          </div>
+        </div>
+
+        <div className="score-history-head" style={{ borderTop: '1px solid var(--wc-line)', paddingTop: '12px', marginTop: '12px' }}>
+          <div>
+            <p className="section-label" style={{ padding: 0 }}>Tổng điểm</p>
+            <h3>{total}đ</h3>
+          </div>
+          <div className="score-history-metrics" aria-label="Tóm tắt điểm">
+            <span>{rank ? `#${rank}` : '-'}</span>
+            <span>{predictedCount} đã dự</span>
+            <span>{pendingItems.length} chờ kết quả</span>
+          </div>
+        </div>
+
+        <div style={{ borderTop: '1px solid var(--wc-line)', paddingTop: '16px', marginTop: '16px' }}>
+          <div className="leader-modes" role="tablist" aria-label="Phân loại dự đoán">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={subTab === 'scored'}
+              className={subTab === 'scored' ? 'active' : ''}
+              onClick={() => setSubTab('scored')}
+            >
+              Đã tính điểm ({scoredItems.length})
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={subTab === 'pending'}
+              className={subTab === 'pending' ? 'active' : ''}
+              onClick={() => setSubTab('pending')}
+            >
+              Chờ kết quả ({pendingItems.length})
+            </button>
+          </div>
+
+          <div className="predictions-list">
+            {subTab === 'pending' ? (
+              pendingItems.length === 0 ? (
+                <p className="empty-state compact" style={{ padding: '40px 20px' }}>
+                  Không có trận đấu nào đang chờ kết quả.
+                </p>
+              ) : (
+                <div className="score-history-list" style={{ marginTop: '12px' }}>
+                  {pendingItems.map((item) => (
+                    <article key={item.key} className="score-history-row saved">
+                      <span className="score-history-type">{item.type}</span>
+                      <span className="score-history-copy">
+                        {item.kind === 'match' ? (
+                          <ScoreHistoryMatchLabel item={item} />
+                        ) : (
+                          <strong>{item.label}</strong>
+                        )}
+                        <small>{item.detail}</small>
+                      </span>
+                      <div className="score-history-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {item.kind === 'match' && !isPredictionLocked(item.match) && (
+                          <button
+                            type="button"
+                            className="score-history-edit-btn"
+                            onClick={() => onEditPrediction?.(item.match)}
+                            aria-label="Sửa dự đoán"
+                          >
+                            <PenLine size={16} strokeWidth={2.5} />
+                          </button>
+                        )}
+                        <span className="score-history-pending-badge">Chờ</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )
+            ) : (
+              scoredItems.length === 0 ? (
+                <p className="empty-state compact" style={{ padding: '40px 20px' }}>
+                  Chưa có dự đoán nào được tính điểm.
+                </p>
+              ) : (
+                <div className="score-history-list" style={{ marginTop: '12px' }}>
+                  {scoredItems.map((item) => (
+                    <article key={item.key} className={`score-history-row ${item.status === 'zero' ? 'zero' : ''}`}>
+                      <span className="score-history-type">{item.type}</span>
+                      <span className="score-history-copy">
+                        {item.kind === 'match' ? (
+                          <ScoreHistoryMatchLabel item={item} />
+                        ) : (
+                          <strong>{item.label}</strong>
+                        )}
+                        <small>{item.detail}</small>
+                      </span>
+                      <b className={item.points > 0 ? '' : 'zero-pts'}>{item.points > 0 ? `+${item.points}đ` : '+0đ'}</b>
+                    </article>
+                  ))}
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
