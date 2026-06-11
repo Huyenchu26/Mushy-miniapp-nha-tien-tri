@@ -1025,6 +1025,10 @@ export default function App() {
               setRoomRealtimeState('idle');
             }}
             onSend={handleSendRoomMessage}
+            onEditPrediction={setEditingPredictionMatch}
+            aiInsightsEnabled={aiInsightsEnabled || localSimulation}
+            aiInsight={matchInsights?.[Number(roomMatch.matchNo)]}
+            onLoadInsight={handleLoadMatchInsight}
           />
         ) : showMyPredictions ? (
           <MyPredictionsScreen
@@ -2232,6 +2236,10 @@ function PredictionRoomScreen({
   currentUserId,
   onBack,
   onSend,
+  onEditPrediction,
+  aiInsightsEnabled,
+  aiInsight,
+  onLoadInsight,
 }) {
   const [draft, setDraft] = useState('');
   const [mentionCursor, setMentionCursor] = useState(0);
@@ -2289,9 +2297,11 @@ function PredictionRoomScreen({
     () => buildRoomPredictionItems({ match, predictions: matchPredictions, memberMap }),
     [match, matchPredictions, memberMap]
   );
-  const visibleActivityItems = roomActivityItems.slice(0, activityLimit);
-  const canExpandActivity = activityLimit < roomActivityItems.length;
-  const canCollapseActivity = !canExpandActivity && activityLimit > 3;
+  const visibleActivityItems = roomActivityItems.length <= 4
+    ? roomActivityItems
+    : roomActivityItems.slice(0, activityLimit);
+  const canExpandActivity = roomActivityItems.length > 4 && activityLimit < roomActivityItems.length;
+  const canCollapseActivity = roomActivityItems.length > 4 && !canExpandActivity && activityLimit > 3;
   const cooldownLeft = Math.max(0, Math.ceil((Number(spamBlockedUntil || 0) - Date.now()) / 1000));
 
   useEffect(() => {
@@ -2362,6 +2372,10 @@ function PredictionRoomScreen({
     }
   }
 
+  const finished = isFinished(match);
+  const liveScore = shouldShowLiveScore(match) ? match.liveScore : null;
+  const started = finished || liveScore;
+
   return (
     <section className="prediction-room screen" aria-label={`Phòng dự đoán trận ${match.matchNo}`}>
       <div className="room-head">
@@ -2378,12 +2392,33 @@ function PredictionRoomScreen({
         <MatchRoomStatus match={match} />
       </div>
 
-      <div className="room-section">
-        <div className="room-section-head">
-          <h3>Phe nào đông</h3>
-          <span>{matchPredictions.length} dự đoán</span>
+      <MatchAiInsightBox
+        match={match}
+        aiInsight={aiInsight}
+        aiInsightsEnabled={aiInsightsEnabled}
+        onLoadInsight={onLoadInsight}
+      />
+
+      {!started && (
+        <div className="room-prematch-controls" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button
+            type="button"
+            className="secondary-btn small"
+            style={{ width: '100%', minHeight: '38px', borderRadius: '12px', justifyContent: 'center', fontWeight: 'bold' }}
+            onClick={() => onEditPrediction?.(match)}
+          >
+            {prediction ? '✍️ Sửa dự đoán' : '✍️ Dự đoán tỉ số'}
+          </button>
         </div>
-        <div className="prediction-split-bar" aria-label="Tỉ lệ phe dự đoán">
+      )}
+
+      <div className="room-section room-history-compact">
+        <div className="room-section-head">
+          <h3>Phe phái & Dự đoán</h3>
+          <span>{prediction ? `Bạn: ${prediction.homePred}-${prediction.awayPred}` : 'Chưa có kèo'}</span>
+        </div>
+        
+        <div className="prediction-split-bar" aria-label="Tỉ lệ phe dự đoán" style={{ marginTop: '8px' }}>
           {split.map((item) => (
             <span
               key={item.key}
@@ -2393,7 +2428,8 @@ function PredictionRoomScreen({
             />
           ))}
         </div>
-        <div className="prediction-split-legend">
+        
+        <div className="prediction-split-legend" style={{ marginBottom: '14px' }}>
           {split.map((item) => (
             <span key={item.key} className={item.key}>
               <i aria-hidden="true" />
@@ -2401,22 +2437,19 @@ function PredictionRoomScreen({
             </span>
           ))}
         </div>
-      </div>
 
-      <div className="room-section room-history-compact">
-        <div className="room-section-head">
-          <h3>Lịch sử dự đoán</h3>
-          <span>{prediction ? `Bạn: ${prediction.homePred}-${prediction.awayPred}` : 'Chưa có kèo'}</span>
-        </div>
+        <div style={{ borderTop: '1px solid rgba(245, 54, 87, 0.08)', margin: '12px 0 10px' }} />
+
         <button
           type="button"
           className="prediction-history-row"
           aria-expanded={showPredictionSheet}
           onClick={() => setShowPredictionSheet((value) => !value)}
         >
-          <strong>Xem danh sách · {matchPredictions.length} người</strong>
+          <strong>Xem toàn bộ · {matchPredictions.length} người</strong>
         </button>
-        <div className="room-activity-list" aria-label="Dự đoán tỉ số gần nhất">
+        
+        <div className="room-activity-list" aria-label="Dự đoán tỉ số gần nhất" style={{ marginTop: '8px' }}>
           {visibleActivityItems.length === 0 ? (
             <p className="room-empty compact">Chưa có dự đoán trong phòng.</p>
           ) : visibleActivityItems.map((item) => (
@@ -2430,6 +2463,7 @@ function PredictionRoomScreen({
             </article>
           ))}
         </div>
+        
         {canExpandActivity ? (
           <button
             type="button"
@@ -4149,6 +4183,7 @@ function truncateText(value, maxLength) {
 function buildRoomPredictionItems({ match, predictions = [], memberMap = new Map() }) {
   return predictions.map((prediction) => {
     const name = memberDisplayName(memberMap, prediction.createdBy);
+    const dateVal = prediction.updatedAt || prediction.createdAt || new Date();
     return {
       id: `prediction-${prediction.createdBy}-${prediction.matchNo}`,
       type: 'prediction',
@@ -4157,11 +4192,10 @@ function buildRoomPredictionItems({ match, predictions = [], memberMap = new Map
       initials: initialsFromName(name),
       label: 'Dự đoán',
       body: `${prediction.homePred}-${prediction.awayPred}`,
-      createdAt: prediction.updatedAt || prediction.createdAt,
-      sortAt: prediction.updatedAt || prediction.createdAt,
+      createdAt: dateVal,
+      sortAt: dateVal,
     };
   })
-    .filter((item) => Number.isFinite(new Date(item.sortAt).getTime()))
     .sort((a, b) => new Date(b.sortAt).getTime() - new Date(a.sortAt).getTime())
     .map((item) => ({
       ...item,
