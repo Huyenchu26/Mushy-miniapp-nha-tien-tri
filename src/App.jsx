@@ -2004,20 +2004,6 @@ function MatchCardPrototype({
     await handleSaveClick();
   }
 
-  function handleCardOpen(event) {
-    if (event.target.closest('button')) return;
-    if (!canOpenRoom) return;
-    onOpenRoom?.(match);
-  }
-
-  function handleCardKeyDown(event) {
-    if (event.target.closest('button')) return;
-    if (!canOpenRoom) return;
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-    onOpenRoom?.(match);
-  }
-
   function handleInsightClick(event) {
     event.stopPropagation();
     const nextOpen = !insightOpen;
@@ -2030,12 +2016,7 @@ function MatchCardPrototype({
   return (
     <article
       id={`match-card-${match.matchNo}`}
-      className={`match-card match-card--prototype ${canOpenRoom ? 'has-room' : ''}`}
-      role="button"
-      tabIndex={0}
-      aria-label={canOpenRoom ? `Mở phòng dự đoán trận ${match.matchNo}` : `Trận ${match.matchNo}, lưu dự đoán để mở phòng`}
-      onClick={handleCardOpen}
-      onKeyDown={handleCardKeyDown}
+      className="match-card match-card--prototype"
     >
       <div className="match-card-head">
         <span className="mstage">#{match.matchNo} · {matchStageLabel(match)}</span>
