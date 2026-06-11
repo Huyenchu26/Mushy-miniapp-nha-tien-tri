@@ -1879,6 +1879,54 @@ function LiveScorePanel({ liveScores, liveSync }) {
   );
 }
 
+function MatchAiInsightBox({ match, aiInsight, aiInsightsEnabled, onLoadInsight }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (!aiInsightsEnabled || !match) return null;
+
+  const finished = isFinished(match);
+  const liveScore = shouldShowLiveScore(match) ? match.liveScore : null;
+  if (finished || liveScore) return null;
+
+  const handleToggle = (event) => {
+    event.stopPropagation();
+    const nextOpen = !isOpen;
+    setIsOpen(nextOpen);
+    if (nextOpen && !aiInsight?.summary && !aiInsight?.loading) {
+      onLoadInsight?.(match);
+    }
+  };
+
+  return (
+    <div
+      className={`prediction-done match-ai-box ${isOpen ? 'expanded' : 'collapsed'}`}
+      onClick={handleToggle}
+    >
+      <div className="match-ai-box-header">
+        <strong>
+          <span>🤖</span> Nhận định AI
+        </strong>
+        <span>
+          {isOpen ? 'Ẩn ▲' : 'Xem ▼'}
+        </span>
+      </div>
+      {isOpen && (
+        <div className="match-ai-box-content" onClick={(e) => e.stopPropagation()}>
+          {aiInsight?.loading ? (
+            <span>AI đang soi trận, chờ chút...</span>
+          ) : aiInsight?.error ? (
+            <span style={{ color: 'var(--danger-v3, #c13515)' }}>{aiInsight.error}</span>
+          ) : aiInsight?.summary ? (
+            <p>{aiInsight.summary}</p>
+          ) : (
+            <span>Bấm để nghe AI đọc vị trận này.</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MatchCardPrototype({
   match,
   prediction,
@@ -1905,8 +1953,6 @@ function MatchCardPrototype({
   const [doubleDown, setDoubleDown] = useState(prediction?.doubleDown ?? false);
   const [saving, setSaving] = useState(false);
   const [editingPrediction, setEditingPrediction] = useState(false);
-  const [insightOpen, setInsightOpen] = useState(false);
-  const insightWrapRef = useRef(null);
   const base = matchBasePoints(prediction, match);
   const breakdown = matchScoreBreakdown(prediction, match);
   const displayHomeScore = finished ? match.homeScore : liveScore?.homeScore;
@@ -1921,26 +1967,6 @@ function MatchCardPrototype({
   useEffect(() => {
     setEditingPrediction(false);
   }, [match.matchNo, prediction?.id]);
-
-  useEffect(() => {
-    if (!insightOpen) return undefined;
-
-    function handlePointerDown(event) {
-      if (insightWrapRef.current?.contains(event.target)) return;
-      setInsightOpen(false);
-    }
-
-    function handleKeyDown(event) {
-      if (event.key === 'Escape') setInsightOpen(false);
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [insightOpen]);
 
   const homeScore = normalizeDraftScore(homePred);
   const awayScore = normalizeDraftScore(awayPred);
@@ -2002,15 +2028,6 @@ function MatchCardPrototype({
       return;
     }
     await handleSaveClick();
-  }
-
-  function handleInsightClick(event) {
-    event.stopPropagation();
-    const nextOpen = !insightOpen;
-    setInsightOpen(nextOpen);
-    if (nextOpen && !aiInsight?.summary && !aiInsight?.loading) {
-      onLoadInsight?.(match);
-    }
   }
 
   return (
@@ -2084,6 +2101,13 @@ function MatchCardPrototype({
             </div>
           </div>
 
+          <MatchAiInsightBox
+            match={match}
+            aiInsight={aiInsight}
+            aiInsightsEnabled={aiInsightsEnabled && teamsKnown}
+            onLoadInsight={onLoadInsight}
+          />
+
           <div className={`match-actions compact-actions ${!prediction ? 'room-preview-actions' : ''}`}>
             <button
               type="button"
@@ -2124,38 +2148,18 @@ function MatchCardPrototype({
               </button>
             ) : null}
           </div>
-          {teamsKnown && (aiInsightsEnabled || (!prediction && canOpenRoom)) ? (
-            <div ref={insightWrapRef} className="match-ai match-ai--inline">
-              {aiInsightsEnabled ? (
-                <button type="button" className="match-ai-btn" aria-expanded={insightOpen} onClick={handleInsightClick}>
-                  {insightOpen ? 'Ẩn nhận định AI' : 'Nhận định AI'}
-                </button>
-              ) : null}
-              {!prediction && canOpenRoom ? (
-                <button
-                  type="button"
-                  className="match-room-link"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onOpenRoom?.(match);
-                  }}
-                >
-                  Phòng dự đoán
-                </button>
-              ) : null}
-              {insightOpen ? (
-                <div className={`match-ai-panel ${aiInsight?.error ? 'error' : ''}`}>
-                  {aiInsight?.loading ? (
-                    <p>AI đang soi trận, chờ chút...</p>
-                  ) : aiInsight?.error ? (
-                    <p>{aiInsight.error}</p>
-                  ) : aiInsight?.summary ? (
-                    <p>{aiInsight.summary}</p>
-                  ) : (
-                    <p>Bấm để nghe AI đọc vị trận này.</p>
-                  )}
-                </div>
-              ) : null}
+          {!prediction && canOpenRoom ? (
+            <div className="match-ai match-ai--inline" style={{ marginTop: '8px', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="match-room-link"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onOpenRoom?.(match);
+                }}
+              >
+                Phòng dự đoán
+              </button>
             </div>
           ) : null}
           <p className="double-hint">
@@ -2182,6 +2186,12 @@ function MatchCardPrototype({
             <small>Bạn dự <b>{prediction.homePred}-{prediction.awayPred}</b>{prediction.doubleDown ? ' · kèo tủ x2' : ''}</small>
             <strong>Chờ trận đấu diễn ra</strong>
           </div>
+          <MatchAiInsightBox
+            match={match}
+            aiInsight={aiInsight}
+            aiInsightsEnabled={aiInsightsEnabled && teamsKnown}
+            onLoadInsight={onLoadInsight}
+          />
           <div className="match-actions compact-actions saved-actions">
             <button
               type="button"
@@ -2219,38 +2229,6 @@ function MatchCardPrototype({
           >
             Phòng dự đoán
           </button>
-        </div>
-      ) : null}
-      {aiInsightsEnabled && teamsKnown ? (
-        <div ref={insightWrapRef} className="match-ai">
-          <button type="button" className="match-ai-btn" aria-expanded={insightOpen} onClick={handleInsightClick}>
-            {insightOpen ? 'Ẩn nhận định AI' : 'Nhận định AI'}
-          </button>
-          {!prediction && canOpenRoom ? (
-            <button
-              type="button"
-              className="match-room-link"
-              onClick={(event) => {
-                event.stopPropagation();
-                onOpenRoom?.(match);
-              }}
-            >
-              Phòng dự đoán
-            </button>
-          ) : null}
-          {insightOpen ? (
-            <div className={`match-ai-panel ${aiInsight?.error ? 'error' : ''}`}>
-              {aiInsight?.loading ? (
-                <p>AI đang soi trận, chờ chút...</p>
-              ) : aiInsight?.error ? (
-                <p>{aiInsight.error}</p>
-              ) : aiInsight?.summary ? (
-                <p>{aiInsight.summary}</p>
-              ) : (
-                <p>Bấm để nghe AI đọc vị trận này.</p>
-              )}
-            </div>
-          ) : null}
         </div>
       ) : null}
     </article>

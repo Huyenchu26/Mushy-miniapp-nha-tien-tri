@@ -1306,6 +1306,53 @@ button.today-checklist-item:hover {
   color: var(--wc-muted);
 }
 
+.prediction-done.match-ai-box {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.prediction-done.match-ai-box:hover {
+  background: rgba(230, 57, 70, 0.08);
+}
+
+.match-ai-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.match-ai-box-header strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--wc-primary) !important;
+  font-size: 11px;
+}
+
+.match-ai-box-header span {
+  font-size: 10px;
+  color: var(--wc-muted);
+  font-weight: bold;
+}
+
+.match-ai-box-content {
+  margin-top: 6px;
+  text-align: left;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding-top: 6px;
+  width: 100%;
+  color: var(--wc-ink);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.match-ai-box-content p {
+  margin: 0;
+  white-space: pre-line;
+}
+
 .teams {
   display: grid;
   gap: 8px;
