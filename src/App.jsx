@@ -1884,6 +1884,36 @@ function LiveScorePanel({ liveScores, liveSync }) {
   );
 }
 
+function PredictionScoreEditor({ match, homeScore, awayScore, locked, onBumpScore, className = '' }) {
+  return (
+    <div className={`fixture prediction-fixture ${className}`}>
+      <div className="prediction-side">
+        <MatchTeam team={match.homeTeam} />
+        <ScorePicker
+          score={homeScore}
+          locked={locked}
+          ariaLabel={`Dự đoán tỉ số ${displayTeamName(match.homeTeam)}`}
+          onDecrease={() => onBumpScore?.('home', -1)}
+          onIncrease={() => onBumpScore?.('home', 1)}
+        />
+      </div>
+      <span className="score-vs" aria-hidden="true">
+        <ColonIcon size={16}/>
+      </span>
+      <div className="prediction-side">
+        <MatchTeam team={match.awayTeam} />
+        <ScorePicker
+          score={awayScore}
+          locked={locked}
+          ariaLabel={`Dự đoán tỉ số ${displayTeamName(match.awayTeam)}`}
+          onDecrease={() => onBumpScore?.('away', -1)}
+          onIncrease={() => onBumpScore?.('away', 1)}
+        />
+      </div>
+    </div>
+  );
+}
+
 function MatchAiInsightBox({ match, aiInsight, aiInsightsEnabled, onLoadInsight }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -2094,31 +2124,13 @@ function MatchCardPrototype({
         </>
       ) : showPredictionEditor ? (
         <>
-          <div className="fixture prediction-fixture">
-            <div className="prediction-side">
-              <MatchTeam team={match.homeTeam} />
-              <ScorePicker
-                score={homeScore}
-                locked={locked}
-                ariaLabel={`Dự đoán tỉ số ${displayTeamName(match.homeTeam)}`}
-                onDecrease={() => bumpScore('home', -1)}
-                onIncrease={() => bumpScore('home', 1)}
-              />
-            </div>
-            <span className="score-vs" aria-hidden="true">
-              <ColonIcon size={16}/>
-            </span>
-            <div className="prediction-side">
-              <MatchTeam team={match.awayTeam} />
-              <ScorePicker
-                score={awayScore}
-                locked={locked}
-                ariaLabel={`Dự đoán tỉ số ${displayTeamName(match.awayTeam)}`}
-                onDecrease={() => bumpScore('away', -1)}
-                onIncrease={() => bumpScore('away', 1)}
-              />
-            </div>
-          </div>
+          <PredictionScoreEditor
+            match={match}
+            homeScore={homeScore}
+            awayScore={awayScore}
+            locked={locked}
+            onBumpScore={bumpScore}
+          />
 
           <MatchAiInsightBox
             match={match}
@@ -5258,31 +5270,14 @@ function PredictionEditModal({ match, prediction, dailyDoubleMatchNo, onClose, o
           <strong>{formatTime(match.kickoffAt)}</strong>
         </div>
 
-        <div className="fixture prediction-fixture edit-fixture">
-          <div className="prediction-side">
-            <MatchTeam team={match.homeTeam} />
-            <ScorePicker
-              score={homeScore}
-              locked={locked}
-              ariaLabel={`Dự đoán tỉ số ${displayTeamName(match.homeTeam)}`}
-              onDecrease={() => bumpScore('home', -1)}
-              onIncrease={() => bumpScore('home', 1)}
-            />
-          </div>
-          <span className="score-vs" aria-hidden="true">
-            <ColonIcon size={16}/>
-          </span>
-          <div className="prediction-side">
-            <MatchTeam team={match.awayTeam} />
-            <ScorePicker
-              score={awayScore}
-              locked={locked}
-              ariaLabel={`Dự đoán tỉ số ${displayTeamName(match.awayTeam)}`}
-              onDecrease={() => bumpScore('away', -1)}
-              onIncrease={() => bumpScore('away', 1)}
-            />
-          </div>
-        </div>
+        <PredictionScoreEditor
+          match={match}
+          homeScore={homeScore}
+          awayScore={awayScore}
+          locked={locked}
+          onBumpScore={bumpScore}
+          className="edit-fixture"
+        />
 
         <div className="prediction-edit-options">
           <button
