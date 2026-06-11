@@ -39,6 +39,39 @@ const LIVE_STATES = {
   ],
 };
 
+const MOCK_GOALS = {
+  1: [
+    { side: 'home', team: 'Mexico', name: 'Julián Quiñones', minute: 9 },
+    { side: 'home', team: 'Mexico', name: 'Santiago Giménez', minute: 72 },
+    { side: 'away', team: 'South Africa', name: 'Percy Tau', minute: 81 },
+  ],
+  2: [
+    { side: 'home', team: 'Korea Republic', name: 'Son Heung-min', minute: 34 },
+    { side: 'away', team: 'Czechia', name: 'Patrik Schick', minute: 67 },
+  ],
+  3: [
+    { side: 'home', team: 'United States', name: 'Christian Pulisic', minute: 18 },
+    { side: 'home', team: 'United States', name: 'Folarin Balogun', minute: 54 },
+    { side: 'home', team: 'United States', name: 'Gio Reyna', minute: 88 },
+  ],
+  4: [
+    { side: 'home', team: 'Canada', name: 'Jonathan David', minute: 61 },
+    { side: 'away', team: 'Qatar', name: 'Akram Afif', minute: 74 },
+    { side: 'home', team: 'Canada', name: 'Alphonso Davies', minute: 89 },
+  ],
+  5: [
+    { side: 'away', team: 'Uruguay', name: 'Darwin Núñez', minute: 54 },
+    { side: 'home', team: 'Tunisia', name: 'Hannibal Mejbri', minute: 78 },
+    { side: 'away', team: 'Uruguay', name: 'Federico Valverde', minute: 86 },
+  ],
+  6: [
+    { side: 'home', team: 'England', name: 'Harry Kane', minute: 47 },
+    { side: 'away', team: 'Croatia', name: 'Luka Modrić', minute: 58 },
+    { side: 'home', team: 'England', name: 'Jude Bellingham', minute: 71 },
+    { side: 'away', team: 'Croatia', name: 'Joško Gvardiol', minute: 88 },
+  ],
+};
+
 const PLAYER_PREDICTIONS = {
   current: [
     [1, 2, 1, false],
@@ -178,6 +211,7 @@ function rowsForPlayer(playerKey, userId, workspaceId) {
 
 function toMockLiveScore(match, step, nowMs) {
   const state = scoreStateFor(match, step, nowMs);
+  const goals = visibleMockGoals(Number(match.matchNo), state.homeScore, state.awayScore);
   return {
     externalId: `mock-${match.matchNo}`,
     matchNo: match.matchNo,
@@ -190,7 +224,29 @@ function toMockLiveScore(match, step, nowMs) {
     status: state.status,
     minute: state.minute,
     rawClock: state.rawClock,
+    goals,
+    goalScorers: goals,
+    homeScorers: goals.filter((goal) => goal.side === 'home'),
+    awayScorers: goals.filter((goal) => goal.side === 'away'),
   };
+}
+
+function visibleMockGoals(matchNo, homeScore, awayScore) {
+  const goals = MOCK_GOALS[matchNo] || [];
+  let homeLeft = Number(homeScore || 0);
+  let awayLeft = Number(awayScore || 0);
+
+  return goals.filter((goal) => {
+    if (goal.side === 'home' && homeLeft > 0) {
+      homeLeft -= 1;
+      return true;
+    }
+    if (goal.side === 'away' && awayLeft > 0) {
+      awayLeft -= 1;
+      return true;
+    }
+    return false;
+  });
 }
 
 function scoreStateFor(match, step, nowMs) {

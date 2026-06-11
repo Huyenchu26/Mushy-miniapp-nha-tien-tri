@@ -2659,6 +2659,7 @@ function MatchRoomStatus({ match }) {
   const hasStarted = finished || liveInProgress;
   const homeScorers = teamScorersText(match, 'home', homeScore, hasStarted);
   const awayScorers = teamScorersText(match, 'away', awayScore, hasStarted);
+  const goalTimeline = extractGoalTimeline(match);
 
   return (
     <div className="room-scoreboard">
@@ -2683,7 +2684,11 @@ function MatchRoomStatus({ match }) {
       {hasStarted ? (
         <div className="goal-timeline" aria-label="Diễn biến ghi bàn">
           <span />
-          <p>Đang chờ cập nhật cầu thủ ghi bàn</p>
+          {goalTimeline.length > 0 ? (
+            <p>{goalTimeline.join(' · ')}</p>
+          ) : (
+            <p>Đang chờ cập nhật cầu thủ ghi bàn</p>
+          )}
         </div>
       ) : (
         <small className="room-kickoff">Bắt đầu {formatTime(match.kickoffAt)}</small>
@@ -2721,6 +2726,33 @@ function extractTeamScorers(match, side) {
       return goalSide === side || canonicalTeamName(goalTeam) === canonicalTeamName(teamName);
     })
     .map(formatGoalScorer)
+    .filter(Boolean);
+}
+
+function extractGoalTimeline(match) {
+  const goals = [
+    ...(Array.isArray(match?.goals) ? match.goals : []),
+    ...(Array.isArray(match?.goalScorers) ? match.goalScorers : []),
+    ...(Array.isArray(match?.liveScore?.goals) ? match.liveScore.goals : []),
+    ...(Array.isArray(match?.liveScore?.goalScorers) ? match.liveScore.goalScorers : []),
+  ];
+  const seen = new Set();
+  return goals
+    .map((goal) => {
+      const name = formatGoalScorer(goal);
+      if (!name) return '';
+      const side = String(goal?.side || goal?.homeAway || goal?.teamSide || '').toLowerCase();
+      const team = side === 'home'
+        ? displayTeamName(match?.homeTeam)
+        : side === 'away'
+          ? displayTeamName(match?.awayTeam)
+          : displayTeamName(goal?.team || goal?.teamName || '');
+      const label = team ? `${team}: ${name}` : name;
+      const key = canonicalTeamName(label);
+      if (seen.has(key)) return '';
+      seen.add(key);
+      return label;
+    })
     .filter(Boolean);
 }
 
@@ -4633,6 +4665,12 @@ function applyAutomaticScores(matches, liveScores) {
       statusDetail: liveScore.statusDetail || '',
       rawClock: liveScore.rawClock || '',
       period: liveScore.period || null,
+      goals: liveScore.goals || liveScore.goalScorers || [],
+      goalScorers: liveScore.goalScorers || liveScore.goals || [],
+      homeScorers: liveScore.homeScorers || liveScore.homeGoalScorers || [],
+      awayScorers: liveScore.awayScorers || liveScore.awayGoalScorers || [],
+      homeGoalScorers: liveScore.homeGoalScorers || liveScore.homeScorers || [],
+      awayGoalScorers: liveScore.awayGoalScorers || liveScore.awayScorers || [],
     };
   });
 }
