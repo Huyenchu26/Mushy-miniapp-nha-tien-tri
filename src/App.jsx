@@ -2664,10 +2664,10 @@ const ColonIcon = ({size=24}) => {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      class="lucide lucide-divide-icon lucide-divide"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="lucide lucide-divide-icon lucide-divide"
     >
       <circle cx="12" cy="6" r="1" />
       <circle cx="12" cy="18" r="1" />
@@ -2770,12 +2770,49 @@ function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
 }
 
 function DailyScreen({ questions, triviaQuestion, userId, answerMap, answers, longTermBet, longTermLocked, onSave, onSaveLongTerm }) {
-  const visibleQuestions = useMemo(() => {
-    const today = getLocalDateKey();
-    const tomorrow = addDaysToDateKey(today, 1);
-    return questions.filter((question) => question.date === today || question.date === tomorrow);
-  }, [questions]);
+  const today = getLocalDateKey();
+  const tomorrow = addDaysToDateKey(today, 1);
+  const [expandedQuestionKey, setExpandedQuestionKey] = useState(null);
+  const [showAllHistory, setShowAllHistory] = useState(false);
+  const { todayQuestions, upcomingQuestions, historyQuestions } = useMemo(() => {
+    const sorted = [...questions].sort((a, b) => `${a.date || ''}-${a.key}`.localeCompare(`${b.date || ''}-${b.key}`));
+    return {
+      todayQuestions: sorted.filter((question) => question.date === today),
+      upcomingQuestions: sorted.filter((question) => question.date === tomorrow),
+      historyQuestions: sorted.filter((question) => question.date < today).reverse(),
+    };
+  }, [questions, today, tomorrow]);
+  const availableQuestions = useMemo(
+    () => questions.filter((question) => question.date <= today),
+    [questions, today]
+  );
+  const answeredCount = availableQuestions.filter((question) => answerMap.has(question.key)).length;
+  const pendingCount = availableQuestions.filter((question) => getDailyQuestionState(question, answerMap.get(question.key)).state === 'pending').length;
+  const openTodayCount = todayQuestions.filter((question) => getDailyQuestionState(question, answerMap.get(question.key)).state === 'open').length;
+  const visibleHistoryQuestions = showAllHistory ? historyQuestions : historyQuestions.slice(0, 6);
   const streak = triviaStreak(answers, getLocalDateKey(), userId);
+
+  function toggleQuestion(questionKey) {
+    setExpandedQuestionKey((current) => (current === questionKey ? null : questionKey));
+  }
+
+  function renderQuestionCard(question, origin = 'history') {
+    const answer = answerMap.get(question.key);
+    const { state } = getDailyQuestionState(question, answer);
+    const forceExpanded = origin === 'today' && state === 'open';
+    const expanded = forceExpanded || expandedQuestionKey === question.key;
+    return (
+      <QuestionCard
+        key={question.key}
+        question={question}
+        answer={answer}
+        onSave={onSave}
+        displayMode={expanded ? 'expanded' : 'compact'}
+        isToggleable={!forceExpanded}
+        onToggle={() => toggleQuestion(question.key)}
+      />
+    );
+  }
 
   return (
     <section className="screen">
@@ -2793,14 +2830,73 @@ function DailyScreen({ questions, triviaQuestion, userId, answerMap, answers, lo
           onSave={onSave}
         />
       ) : null}
-      <div className="question-list">
-        {visibleQuestions.length === 0 ? (
-          <p className="empty-state">Chưa có câu hỏi cho hôm nay hoặc ngày mai.</p>
-        ) : visibleQuestions.map((question) => (
-          <QuestionCard key={question.key} question={question} answer={answerMap.get(question.key)} onSave={onSave} />
-        ))}
+      <div className="daily-question-board">
+        <div className="daily-question-overview" aria-label="Tổng quan câu hỏi dự đoán">
+          <div className="daily-question-stat primary">
+            <span>Hôm nay</span>
+            <strong>{openTodayCount ? `${openTodayCount} câu mở` : todayQuestions.length ? 'Đã gọn' : 'Không có'}</strong>
+          </div>
+          <div className="daily-question-stat">
+            <span>Đã trả lời</span>
+            <strong>{answeredCount}/{availableQuestions.length || 0}</strong>
+          </div>
+          <div className="daily-question-stat">
+            <span>Chờ kết quả</span>
+            <strong>{pendingCount}</strong>
+          </div>
+        </div>
+
+        <DailyQuestionGroup
+          title="Thử thách hôm nay"
+          subtitle=""
+          count={todayQuestions.length}
+          emptyText="Hôm nay chưa có câu hỏi dự đoán."
+        >
+          {todayQuestions.map((question) => renderQuestionCard(question, 'today'))}
+        </DailyQuestionGroup>
+
+        <DailyQuestionGroup
+          title="Sắp mở"
+          subtitle="Xem trước ngày mai, tap để mở nếu muốn chuẩn bị đáp án."
+          count={upcomingQuestions.length}
+          emptyText="Chưa có câu hỏi cho ngày mai."
+        >
+          {upcomingQuestions.map((question) => renderQuestionCard(question, 'upcoming'))}
+        </DailyQuestionGroup>
+
+        <DailyQuestionGroup
+          title="Lịch sử câu hỏi"
+          subtitle="Các ngày cũ được thu gọn thành timeline, tap từng dòng để xem chi tiết."
+          count={historyQuestions.length}
+          emptyText="Chưa có lịch sử câu hỏi."
+        >
+          {visibleHistoryQuestions.map((question) => renderQuestionCard(question, 'history'))}
+          {historyQuestions.length > 6 ? (
+            <button type="button" className="history-toggle-btn" onClick={() => setShowAllHistory((value) => !value)}>
+              {showAllHistory ? 'Thu gọn lịch sử' : `Xem thêm ${historyQuestions.length - 6} câu cũ`}
+            </button>
+          ) : null}
+        </DailyQuestionGroup>
       </div>
       <LongTermBetCard bet={longTermBet} locked={longTermLocked} onSave={onSaveLongTerm} />
+    </section>
+  );
+}
+
+function DailyQuestionGroup({ title, subtitle, count, emptyText, children }) {
+  const hasContent = React.Children.count(children) > 0;
+  return (
+    <section className="daily-question-section">
+      <div className="daily-question-section__header">
+        <div>
+          <h3>{title}</h3>
+          {subtitle ? <p>{subtitle}</p> : null}
+        </div>
+        <span>{count}</span>
+      </div>
+      <div className="question-list">
+        {hasContent ? children : <p className="empty-state compact">{emptyText}</p>}
+      </div>
     </section>
   );
 }
@@ -2872,21 +2968,18 @@ function TriviaCard({ question, answer, streak, onSave }) {
   );
 }
 
-function QuestionCard({ question, answer, onSave }) {
+function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isToggleable = false, onToggle }) {
   const optionItems = useMemo(() => normalizeQuestionOptions(question.options), [question.options]);
-  const hasOfficialAnswer = !!question.correctAnswer;
-  const answered = !!answer;
-  const expired = Date.now() >= new Date(question.closesAt).getTime();
+  const { hasOfficialAnswer, answered, expired, points, isCorrect, state } = getDailyQuestionState(question, answer);
   const locked = expired || hasOfficialAnswer || answered;
   const [draft, setDraft] = useState(answer?.answer || '');
   const [loading, setLoading] = useState(false);
-  const points = dailyPoints(answer, question);
-  const isCorrect = hasOfficialAnswer && answered && points > 0;
-  const state = hasOfficialAnswer ? (isCorrect ? 'correct' : 'wrong') : answered ? 'pending' : expired ? 'locked' : 'open';
+  const compact = displayMode === 'compact';
   const answerLabel = questionAnswerLabel(answer?.answer, optionItems);
   const officialAnswerLabel = questionAnswerLabel(question.correctAnswer, optionItems);
   const footerText = questionFooterText({ answerLabel, officialAnswerLabel, answered, expired, hasOfficialAnswer });
   const resultText = questionResultText({ officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points });
+  const summaryText = questionSummaryText({ answerLabel, officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points, question });
 
   useEffect(() => setDraft(answer?.answer || ''), [answer?.answer]);
 
@@ -2900,40 +2993,33 @@ function QuestionCard({ question, answer, onSave }) {
     }
   }
 
-  return (
-    <article className={`question-card daily-question-card ${state}`}>
-      <div>
-        <div className="question-card-meta">
-          <span className="date-chip">{formatDate(question.date)}</span>
-          <span className={`question-status-pill ${state}`}>{questionStatusLabel(state)}</span>
-        </div>
-        <h3>{question.prompt}</h3>
-        <p>Khóa trả lời: {formatTime(question.closesAt)} · Đúng +{question.points || 2}đ</p>
-      </div>
+  const answerControls = optionItems.length ? (
+    <div className="option-grid">
+      {optionItems.map((option) => {
+        const selected = normalizeAnswer(draft) === normalizeAnswer(option.value);
+        const correct = hasOfficialAnswer && normalizeAnswer(option.value) === normalizeAnswer(question.correctAnswer);
+        const missed = hasOfficialAnswer && selected && !correct;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            disabled={locked}
+            className={`${selected ? 'active' : ''} ${correct ? 'is-answer' : ''} ${missed ? 'is-missed' : ''}`}
+            onClick={() => setDraft(option.value)}
+          >
+            <span>{option.label}</span>
+            {correct ? <strong>Đáp án</strong> : null}
+          </button>
+        );
+      })}
+    </div>
+  ) : (
+    <input className="answer-input" disabled={locked} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Nhập câu trả lời của bạn" />
+  );
 
-      {optionItems.length ? (
-        <div className="option-grid">
-          {optionItems.map((option) => {
-            const selected = normalizeAnswer(draft) === normalizeAnswer(option.value);
-            const correct = hasOfficialAnswer && normalizeAnswer(option.value) === normalizeAnswer(question.correctAnswer);
-            const missed = hasOfficialAnswer && selected && !correct;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                disabled={locked}
-                className={`${selected ? 'active' : ''} ${correct ? 'is-answer' : ''} ${missed ? 'is-missed' : ''}`}
-                onClick={() => setDraft(option.value)}
-              >
-                <span>{option.label}</span>
-                {correct ? <strong>Đáp án</strong> : null}
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <input className="answer-input" disabled={locked} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Nhập câu trả lời của bạn" />
-      )}
+  const detailBody = (
+    <>
+      {answerControls}
 
       {resultText ? (
         <div className={`question-result ${state}`} role="status">
@@ -2948,8 +3034,62 @@ function QuestionCard({ question, answer, onSave }) {
           {loading ? 'Đang lưu...' : answered ? 'Đã trả lời' : 'Chốt câu trả lời'}
         </button>
       </div>
+    </>
+  );
+
+  if (compact) {
+    return (
+      <article className={`question-card daily-question-card compact ${state}`}>
+        <button type="button" className="daily-question-summary" onClick={onToggle} aria-expanded="false">
+          <span className={`question-timeline-dot ${state}`} aria-hidden="true" />
+          <span className="question-summary-main">
+            <span className="question-card-meta">
+              <span className="date-chip">{formatDate(question.date)}</span>
+              <span className={`question-status-pill ${state}`}>{questionStatusLabel(state)}</span>
+            </span>
+            <strong>{question.prompt}</strong>
+            <span>{summaryText}</span>
+          </span>
+          <span className="question-summary-action" aria-hidden="true">
+            <Plus size={16} />
+          </span>
+        </button>
+      </article>
+    );
+  }
+
+  return (
+    <article className={`question-card daily-question-card expanded ${state}`}>
+      <div className="question-card-headline">
+        <div>
+          <div className="question-card-meta">
+            <span className="date-chip">{formatDate(question.date)}</span>
+            <span className={`question-status-pill ${state}`}>{questionStatusLabel(state)}</span>
+          </div>
+          <h3>{question.prompt}</h3>
+          <p>Khóa trả lời: {formatTime(question.closesAt)} · Đúng +{question.points || 2}đ</p>
+        </div>
+        {isToggleable ? (
+          <button type="button" className="question-collapse-btn" onClick={onToggle}>
+            <Minus size={15} />
+            Thu gọn
+          </button>
+        ) : null}
+      </div>
+
+      {detailBody}
     </article>
   );
+}
+
+function getDailyQuestionState(question, answer) {
+  const hasOfficialAnswer = !!question.correctAnswer;
+  const answered = !!answer;
+  const expired = Date.now() >= new Date(question.closesAt).getTime();
+  const points = dailyPoints(answer, question);
+  const isCorrect = hasOfficialAnswer && answered && points > 0;
+  const state = hasOfficialAnswer ? (isCorrect ? 'correct' : 'wrong') : answered ? 'pending' : expired ? 'locked' : 'open';
+  return { hasOfficialAnswer, answered, expired, points, isCorrect, state };
 }
 
 function normalizeQuestionOptions(options = []) {
@@ -2992,6 +3132,17 @@ function questionResultText({ officialAnswerLabel, answered, expired, hasOfficia
   if (answered) return '';
   if (expired) return 'Câu hỏi đã khóa và bạn chưa trả lời.';
   return '';
+}
+
+function questionSummaryText({ answerLabel, officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points, question }) {
+  if (hasOfficialAnswer) {
+    if (!answered) return `Đáp án: ${officialAnswerLabel || 'đang cập nhật'} · Bạn chưa trả lời`;
+    if (isCorrect) return `Bạn chọn ${answerLabel} · Chính xác +${points}đ`;
+    return `Bạn chọn ${answerLabel} · Đáp án: ${officialAnswerLabel || 'đang cập nhật'}`;
+  }
+  if (answered) return `Bạn chọn ${answerLabel || 'đáp án đã lưu'} · Chờ kết quả`;
+  if (expired) return `Đã khóa lúc ${formatTime(question.closesAt)} · Chưa trả lời`;
+  return `Khóa lúc ${formatTime(question.closesAt)} · Đúng +${question.points || 2}đ`;
 }
 
 function LongTermBetCard({ bet, locked, onSave }) {
