@@ -664,9 +664,23 @@ export default function App() {
 
   async function handleLoadMatchInsight(match) {
     const matchNo = Number(match?.matchNo);
-    if (!matchNo || !ctx?.token || !scope?.workspaceId) return;
+    if (!matchNo) return;
     const current = matchInsights[matchNo];
     if (current?.loading || current?.summary) return;
+
+    if (localSimulation && isMockContext(ctx)) {
+      setMatchInsights((rows) => ({
+        ...rows,
+        [matchNo]: {
+          loading: false,
+          error: '',
+          summary: mockMatchInsightSummary(match),
+        },
+      }));
+      return;
+    }
+
+    if (!ctx?.token || !scope?.workspaceId) return;
 
     setMatchInsights((rows) => ({
       ...rows,
@@ -1062,7 +1076,7 @@ export default function App() {
                 onOpenDaily={() => setActiveTab('daily')}
                 onOpenLeaderboard={() => setActiveTab('leaderboard')}
                 liveSync={liveSync}
-                aiInsightsEnabled={aiInsightsEnabled && !(localSimulation && isMockContext(ctx))}
+                aiInsightsEnabled={aiInsightsEnabled || localSimulation}
                 matchInsights={matchInsights}
                 onLoadMatchInsight={handleLoadMatchInsight}
                 onEditPrediction={setEditingPredictionMatch}
@@ -2129,6 +2143,40 @@ function MatchCardPrototype({
               </button>
             ) : null}
           </div>
+          {teamsKnown && (aiInsightsEnabled || (!prediction && canOpenRoom)) ? (
+            <div ref={insightWrapRef} className="match-ai match-ai--inline">
+              {aiInsightsEnabled ? (
+                <button type="button" className="match-ai-btn" aria-expanded={insightOpen} onClick={handleInsightClick}>
+                  {insightOpen ? 'Ẩn nhận định AI' : 'Nhận định AI'}
+                </button>
+              ) : null}
+              {!prediction && canOpenRoom ? (
+                <button
+                  type="button"
+                  className="match-room-link"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onOpenRoom?.(match);
+                  }}
+                >
+                  Phòng dự đoán
+                </button>
+              ) : null}
+              {insightOpen ? (
+                <div className={`match-ai-panel ${aiInsight?.error ? 'error' : ''}`}>
+                  {aiInsight?.loading ? (
+                    <p>AI đang soi trận, chờ chút...</p>
+                  ) : aiInsight?.error ? (
+                    <p>{aiInsight.error}</p>
+                  ) : aiInsight?.summary ? (
+                    <p>{aiInsight.summary}</p>
+                  ) : (
+                    <p>Bấm để nghe AI đọc vị trận này.</p>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           <p className="double-hint">
             {!teamsKnown
               ? 'Chờ xác định đội.'
@@ -5039,6 +5087,21 @@ function toMatchInsightState(payload) {
     model: payload?.model || '',
     cached: payload?.cached === true,
   };
+}
+
+function mockMatchInsightSummary(match) {
+  const home = displayTeamName(match?.homeTeam);
+  const away = displayTeamName(match?.awayTeam);
+  const homeRank = TEAM_META[match?.homeTeam]?.fifaRank;
+  const awayRank = TEAM_META[match?.awayTeam]?.fifaRank;
+  const rankLine = homeRank && awayRank
+    ? `FIFA #${homeRank} vs #${awayRank}`
+    : 'DEV mock';
+  const favorite = homeRank && awayRank
+    ? homeRank <= awayRank ? home : away
+    : home;
+
+  return `${home} gặp ${away} (${rankLine}). Mock AI nghiêng nhẹ về ${favorite}, nhưng kèo này vẫn đáng xem vì chỉ số phong độ trong dev có thể đảo chiều bất cứ lúc nào.`;
 }
 
 function getCurrentDeepLinkParams() {

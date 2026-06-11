@@ -1475,6 +1475,10 @@ button.today-checklist-item:hover {
   gap: 12px;
 }
 
+.match-card--prototype > .match-ai:not(.match-ai--inline) {
+  display: none;
+}
+
 .match-room-link-row {
   display: none;
 }
