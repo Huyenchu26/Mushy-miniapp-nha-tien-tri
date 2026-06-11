@@ -1483,18 +1483,19 @@ button.today-checklist-item:hover {
   display: inline-flex;
   min-height: 30px;
   align-items: center;
-  border: 0;
-  padding: 0;
-  background: transparent;
+  border: 1px solid rgba(230, 57, 70, 0.18);
+  border-radius: 12px;
+  padding: 8px 11px;
+  background: rgba(230, 57, 70, 0.08);
   color: var(--wc-primary);
-  font: 850 12px/1 var(--font-body);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  font: 800 12px/1 var(--font-body);
+  text-decoration: none;
   cursor: pointer;
 }
 
 .match-room-link:hover {
   color: var(--brand-pressed);
+  background: rgba(230, 57, 70, 0.13);
 }
 
 .match-ai-btn {
