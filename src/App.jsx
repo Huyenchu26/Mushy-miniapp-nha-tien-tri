@@ -2178,11 +2178,37 @@ function MatchCardPrototype({
           </div>
         </>
       )}
+      {!prediction && canOpenRoom ? (
+        <div className="match-room-link-row">
+          <button
+            type="button"
+            className="match-room-link"
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenRoom?.(match);
+            }}
+          >
+            Phòng dự đoán
+          </button>
+        </div>
+      ) : null}
       {aiInsightsEnabled && teamsKnown ? (
         <div ref={insightWrapRef} className="match-ai">
           <button type="button" className="match-ai-btn" aria-expanded={insightOpen} onClick={handleInsightClick}>
             {insightOpen ? 'Ẩn nhận định AI' : 'Nhận định AI'}
           </button>
+          {!prediction && canOpenRoom ? (
+            <button
+              type="button"
+              className="match-room-link"
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenRoom?.(match);
+              }}
+            >
+              Phòng dự đoán
+            </button>
+          ) : null}
           {insightOpen ? (
             <div className={`match-ai-panel ${aiInsight?.error ? 'error' : ''}`}>
               {aiInsight?.loading ? (

@@ -1173,14 +1173,17 @@ button.today-checklist-item:hover {
 }
 
 .compact-actions.room-preview-actions {
-  grid-template-columns: 46px minmax(132px, 0.72fr) minmax(150px, 1fr);
+  grid-template-columns: 46px minmax(0, 1fr);
 }
 
-.room-preview-actions .primary-btn.small,
-.room-preview-actions .secondary-btn.small {
+.room-preview-actions .primary-btn.small {
   min-width: 0;
   padding-inline: 10px;
   white-space: nowrap;
+}
+
+.room-preview-actions .secondary-btn.small {
+  display: none;
 }
 
 .room-action-btn {
@@ -1464,13 +1467,39 @@ button.today-checklist-item:hover {
 }
 
 .match-ai {
-  margin-top: 10px;
-  display: grid;
-  gap: 8px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.match-room-link-row {
+  display: none;
+}
+
+.match-room-link {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--wc-primary);
+  font: 850 12px/1 var(--font-body);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.match-room-link:hover {
+  color: var(--brand-pressed);
 }
 
 .match-ai-btn {
   width: fit-content;
+  min-height: 30px;
   border: 1px solid rgba(230, 57, 70, 0.18);
   border-radius: 12px;
   padding: 8px 11px;
@@ -1485,6 +1514,7 @@ button.today-checklist-item:hover {
 }
 
 .match-ai-panel {
+  flex: 1 0 100%;
   border: 1px solid rgba(15, 15, 18, 0.08);
   border-radius: 12px;
   padding: 10px 12px;
@@ -4034,7 +4064,7 @@ main,
 }
 
 .compact-actions.room-preview-actions {
-  grid-template-columns: 46px minmax(132px, 0.72fr) minmax(150px, 1fr);
+  grid-template-columns: 46px minmax(0, 1fr);
 }
 
 .compact-actions.saved-actions {
