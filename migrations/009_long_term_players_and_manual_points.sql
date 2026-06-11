@@ -21,25 +21,27 @@ alter table app_nha_tien_tri.app_config
   add column if not exists young_player_actual text,
   add column if not exists golden_ball_actual text;
 
--- @realtime
 create table if not exists app_nha_tien_tri.manual_point_adjustments (
-  id             uuid primary key default gen_random_uuid(),
-  workspace_id   uuid not null references public.workspaces(id) on delete cascade,
-  created_by     uuid not null references auth.users(id),
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references public.workspaces(id) on delete cascade,
+  created_by uuid not null references auth.users(id),
   target_user_id uuid not null references auth.users(id),
-  delta_points   int not null check (delta_points between -999 and 999 and delta_points <> 0),
-  reason         text check (char_length(reason) <= 180),
-  created_at     timestamptz not null default now()
+  delta_points int not null check (delta_points between -999 and 999 and delta_points <> 0),
+  reason text check (char_length(reason) <= 180),
+  created_at timestamptz not null default now()
 );
 
+create index if not exists idx_manual_point_adjustments_workspace
+  on app_nha_tien_tri.manual_point_adjustments (workspace_id);
 create index if not exists idx_wc_manual_points_ws_time
   on app_nha_tien_tri.manual_point_adjustments (workspace_id, created_at desc);
 create index if not exists idx_wc_manual_points_target
   on app_nha_tien_tri.manual_point_adjustments (workspace_id, target_user_id);
 
-grant select, insert, delete on app_nha_tien_tri.manual_point_adjustments to authenticated;
+grant select, insert, update, delete on app_nha_tien_tri.manual_point_adjustments to authenticated;
 alter table app_nha_tien_tri.manual_point_adjustments enable row level security;
 
+drop policy if exists "workspace_isolation" on app_nha_tien_tri.manual_point_adjustments;
 drop policy if exists "manual_points_select" on app_nha_tien_tri.manual_point_adjustments;
 create policy "manual_points_select" on app_nha_tien_tri.manual_point_adjustments
 for select using (public.can_access_app_data(workspace_id, 'nha-tien-tri'));
@@ -47,17 +49,32 @@ for select using (public.can_access_app_data(workspace_id, 'nha-tien-tri'));
 drop policy if exists "manual_points_insert" on app_nha_tien_tri.manual_point_adjustments;
 create policy "manual_points_insert" on app_nha_tien_tri.manual_point_adjustments
 for insert with check (
-  app_nha_tien_tri.can_manage_group_results(workspace_id)
+  public.can_access_app_data(workspace_id, 'nha-tien-tri')
+  and app_nha_tien_tri.can_manage_group_results(workspace_id)
   and created_by = auth.uid()
+);
+
+drop policy if exists "manual_points_update" on app_nha_tien_tri.manual_point_adjustments;
+create policy "manual_points_update" on app_nha_tien_tri.manual_point_adjustments
+for update using (
+  public.can_access_app_data(workspace_id, 'nha-tien-tri')
+  and app_nha_tien_tri.can_manage_group_results(workspace_id)
+) with check (
+  public.can_access_app_data(workspace_id, 'nha-tien-tri')
+  and app_nha_tien_tri.can_manage_group_results(workspace_id)
 );
 
 drop policy if exists "manual_points_delete" on app_nha_tien_tri.manual_point_adjustments;
 create policy "manual_points_delete" on app_nha_tien_tri.manual_point_adjustments
-for delete using (app_nha_tien_tri.can_manage_group_results(workspace_id));
+for delete using (
+  public.can_access_app_data(workspace_id, 'nha-tien-tri')
+  and app_nha_tien_tri.can_manage_group_results(workspace_id)
+);
 
 create or replace function app_nha_tien_tri.enforce_long_term_deadline()
 returns trigger
 language plpgsql
+security invoker
 as $$
 declare
   v_lock_at timestamptz;
