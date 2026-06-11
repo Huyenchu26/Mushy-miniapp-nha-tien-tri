@@ -1168,22 +1168,8 @@ button.today-checklist-item:hover {
 }
 
 .compact-actions {
-  grid-template-columns: 46px minmax(0, 1fr);
+  grid-template-columns: 46px minmax(0, 1fr) minmax(0, 1fr);
   align-items: stretch;
-}
-
-.compact-actions.room-preview-actions {
-  grid-template-columns: 46px minmax(0, 1fr);
-}
-
-.room-preview-actions .primary-btn.small {
-  min-width: 0;
-  padding-inline: 10px;
-  white-space: nowrap;
-}
-
-.room-preview-actions .secondary-btn.small {
-  display: none;
 }
 
 .room-action-btn {
@@ -4110,13 +4096,9 @@ main,
 }
 
 .compact-actions {
-  grid-template-columns: 46px minmax(0, 1fr);
+  grid-template-columns: 46px minmax(0, 1fr) minmax(0, 1fr);
   align-items: stretch;
   margin-top: 8px;
-}
-
-.compact-actions.room-preview-actions {
-  grid-template-columns: 46px minmax(0, 1fr);
 }
 
 .compact-actions.saved-actions {

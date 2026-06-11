@@ -2072,6 +2072,20 @@ function MatchCardPrototype({
               </>
             )}
           </div>
+          <div className="match-actions" style={{ marginTop: '8px' }}>
+            <button
+              type="button"
+              className="primary-btn small room-action-btn room-ready"
+              style={{ gridColumn: '1 / -1' }}
+              disabled={!canOpenRoom}
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenRoom?.(match);
+              }}
+            >
+              Vào phòng dự đoán
+            </button>
+          </div>
         </>
       ) : showPredictionEditor ? (
         <>
@@ -2108,7 +2122,7 @@ function MatchCardPrototype({
             onLoadInsight={onLoadInsight}
           />
 
-          <div className={`match-actions compact-actions ${!prediction ? 'room-preview-actions' : ''}`}>
+          <div className="match-actions compact-actions">
             <button
               type="button"
               className={`double-btn star-btn ${doubleDown ? 'active' : ''}`}
@@ -2134,34 +2148,18 @@ function MatchCardPrototype({
             >
               {predictionButtonLabel}
             </button>
-            {!prediction ? (
-              <button
-                type="button"
-                className="secondary-btn small"
-                disabled={!canOpenRoom}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onOpenRoom?.(match);
-                }}
-              >
-                Phòng dự đoán
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className="secondary-btn small"
+              disabled={!canOpenRoom}
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenRoom?.(match);
+              }}
+            >
+              Phòng dự đoán
+            </button>
           </div>
-          {!prediction && canOpenRoom ? (
-            <div className="match-ai match-ai--inline" style={{ marginTop: '8px', justifyContent: 'center' }}>
-              <button
-                type="button"
-                className="match-room-link"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onOpenRoom?.(match);
-                }}
-              >
-                Phòng dự đoán
-              </button>
-            </div>
-          ) : null}
           <p className="double-hint">
             {!teamsKnown
               ? 'Chờ xác định đội.'
@@ -2217,20 +2215,6 @@ function MatchCardPrototype({
           </div>
         </>
       )}
-      {!prediction && canOpenRoom ? (
-        <div className="match-room-link-row">
-          <button
-            type="button"
-            className="match-room-link"
-            onClick={(event) => {
-              event.stopPropagation();
-              onOpenRoom?.(match);
-            }}
-          >
-            Phòng dự đoán
-          </button>
-        </div>
-      ) : null}
     </article>
   );
 }
