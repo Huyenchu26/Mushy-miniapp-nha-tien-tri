@@ -36,6 +36,7 @@ const DEFAULT_TAB = 'matches';
 const LIVE_SCORE_POLL_MS = 3 * 60 * 1000;
 const APP_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 const PREDICTION_LOCK_BEFORE_MS = 15 * 60 * 1000;
+const DOUBLE_DOWN_OPEN_BEFORE_MS = 24 * 60 * 60 * 1000;
 const ROOM_POLL_FALLBACK_MS = 30000;
 const CHAT_REPEAT_WINDOW_MS = 45000;
 const CHAT_REPEAT_LIMIT = 2;
@@ -609,8 +610,8 @@ export default function App() {
       }
 
       if (draft.doubleDown) {
-        if (match.matchDay !== getLocalDateKey()) {
-          throw new Error('Kèo tủ chỉ mở trong ngày thi đấu của trận đó.');
+        if (!isDoubleDownWindowOpen(match)) {
+          throw new Error('Kèo tủ chỉ mở trong 1 ngày trước khi trận đấu diễn ra.');
         }
         const existingDailyDouble = predictions.find(
           (prediction) =>
@@ -1950,7 +1951,6 @@ function MatchCardPrototype({
   const liveScore = shouldShowLiveScore(match) ? match.liveScore : null;
   const liveInProgress = isLiveInProgress(liveScore);
   const liveFinished = liveScore?.status === 'finished';
-  const isTodayMatchDay = match.matchDay === getLocalDateKey();
   const doubleDownReserved = !!dailyDoubleMatchNo && dailyDoubleMatchNo !== Number(match.matchNo);
   const [homePred, setHomePred] = useState(prediction?.homePred ?? 0);
   const [awayPred, setAwayPred] = useState(prediction?.awayPred ?? 0);
@@ -1974,7 +1974,8 @@ function MatchCardPrototype({
 
   const homeScore = normalizeDraftScore(homePred);
   const awayScore = normalizeDraftScore(awayPred);
-  const canUseDoubleDown = teamsKnown && !locked && isTodayMatchDay && !doubleDownReserved;
+  const doubleDownWindowOpen = isDoubleDownWindowOpen(match);
+  const canUseDoubleDown = teamsKnown && !locked && doubleDownWindowOpen && !doubleDownReserved;
   const canOpenRoom = teamsKnown;
   const draftIsSaved = !!prediction
     && Number(prediction.homePred) === homeScore
@@ -2004,9 +2005,9 @@ function MatchCardPrototype({
       ? 'Đã khóa trước giờ bóng lăn 15 phút.'
       : doubleDownReserved
         ? `Kèo tủ x2 đã dùng ở trận #${dailyDoubleMatchNo}.`
-        : isTodayMatchDay
+        : doubleDownWindowOpen
           ? 'Mỗi ngày chỉ 1 kèo tủ.'
-          : 'Kèo tủ chỉ mở đúng ngày thi đấu.';
+          : 'Kèo tủ chỉ mở trong 1 ngày trước khi trận đấu diễn ra.';
 
   function bumpScore(side, delta) {
     if (locked) return;
@@ -2171,9 +2172,9 @@ function MatchCardPrototype({
                 ? 'Đã khóa dự đoán'
                 : doubleDownReserved
                   ? `Ngày này đã chọn kèo tủ trận #${dailyDoubleMatchNo}.`
-                  : isTodayMatchDay
+                  : doubleDownWindowOpen
                     ? 'Mỗi ngày chỉ 1 kèo tủ.'
-                    : 'Kèo tủ chỉ mở đúng ngày thi đấu.'}
+                    : 'Kèo tủ chỉ mở trong 1 ngày trước khi trận đấu diễn ra.'}
           </p>
         </>
       ) : (
@@ -2791,8 +2792,8 @@ function ScorePicker({ score, locked, ariaLabel, onDecrease, onIncrease }) {
 
 function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
   const locked = isPredictionLocked(match);
-  const isTodayMatchDay = match.matchDay === getLocalDateKey();
   const doubleDownReserved = !!dailyDoubleMatchNo && dailyDoubleMatchNo !== Number(match.matchNo);
+  const doubleDownWindowOpen = isDoubleDownWindowOpen(match);
   const [homePred, setHomePred] = useState(prediction?.homePred ?? 0);
   const [awayPred, setAwayPred] = useState(prediction?.awayPred ?? 0);
   const [doubleDown, setDoubleDown] = useState(prediction?.doubleDown ?? false);
@@ -2846,7 +2847,7 @@ function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
         <button
           type="button"
           className={`double-btn ${doubleDown ? 'active' : ''}`}
-          disabled={locked || !isTodayMatchDay || doubleDownReserved}
+          disabled={locked || !doubleDownWindowOpen || doubleDownReserved}
           onClick={() => setDoubleDown((value) => !value)}
         >
           Kèo tủ x2
@@ -2859,9 +2860,9 @@ function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
         <p className="double-hint">
           {doubleDownReserved
             ? `Ngày này đã chọn kèo tủ trận #${dailyDoubleMatchNo}.`
-            : isTodayMatchDay
+            : doubleDownWindowOpen
               ? 'Mỗi ngày chỉ 1 kèo tủ.'
-              : 'Kèo tủ chỉ mở đúng ngày thi đấu.'}
+              : 'Kèo tủ chỉ mở trong 1 ngày trước khi trận đấu diễn ra.'}
         </p>
       )}
     </article>
@@ -4334,8 +4335,8 @@ function RulesScreen() {
     },
     {
       icon: Star,
-      title: 'Kèo tủ mỗi ngày',
-      body: 'Mỗi người chỉ có 1 kèo tủ trong ngày thi đấu, và chỉ chọn được trong lượt trận của ngày đó.',
+      title: 'Kèo tủ trước trận',
+      body: 'Mỗi người có 1 kèo tủ x2 mỗi ngày. Kèo tủ chỉ mở trong 1 ngày trước khi trận đấu diễn ra và tự khóa trước giờ bóng lăn 15 phút.',
     },
     {
       icon: Flame,
@@ -4993,6 +4994,13 @@ function isPredictionLocked(match, nowMs = Date.now()) {
   return nowMs >= getPredictionLockAt(match).getTime();
 }
 
+function isDoubleDownWindowOpen(match, nowMs = Date.now()) {
+  const kickoffMs = new Date(match?.kickoffAt).getTime();
+  if (!Number.isFinite(kickoffMs)) return false;
+  return nowMs >= kickoffMs - DOUBLE_DOWN_OPEN_BEFORE_MS
+    && nowMs < kickoffMs - PREDICTION_LOCK_BEFORE_MS;
+}
+
 function isMushyAdmin(ctx) {
   return ctx?.role === 'owner' || ctx?.role === 'admin';
 }
@@ -5160,9 +5168,9 @@ function PredictionEditModal({ match, prediction, dailyDoubleMatchNo, onClose, o
 
   const locked = isPredictionLocked(match);
   const teamsKnown = !hasUnknownTeam(match);
-  const isTodayMatchDay = match.matchDay === getLocalDateKey();
   const doubleDownReserved = !!dailyDoubleMatchNo && dailyDoubleMatchNo !== Number(match.matchNo);
-  const canUseDoubleDown = teamsKnown && !locked && isTodayMatchDay && !doubleDownReserved;
+  const doubleDownWindowOpen = isDoubleDownWindowOpen(match);
+  const canUseDoubleDown = teamsKnown && !locked && doubleDownWindowOpen && !doubleDownReserved;
 
   const homeScore = normalizeDraftScore(homePred);
   const awayScore = normalizeDraftScore(awayPred);
@@ -5173,9 +5181,9 @@ function PredictionEditModal({ match, prediction, dailyDoubleMatchNo, onClose, o
       ? 'Đã khóa trước giờ bóng lăn 15 phút.'
       : doubleDownReserved
         ? `Kèo tủ x2 đã dùng ở trận #${dailyDoubleMatchNo}.`
-        : isTodayMatchDay
+        : doubleDownWindowOpen
           ? 'Mỗi ngày chỉ 1 kèo tủ.'
-          : 'Kèo tủ chỉ mở đúng ngày thi đấu.';
+          : 'Kèo tủ chỉ mở trong 1 ngày trước khi trận đấu diễn ra.';
 
   function bumpScore(side, delta) {
     if (locked) return;
