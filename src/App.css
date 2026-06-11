@@ -2462,6 +2462,9 @@ button.today-checklist-item:hover {
 }
 
 .top-scorer-panel button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-height: 42px;
   border: 0;
   border-radius: 12px;
@@ -2471,6 +2474,33 @@ button.today-checklist-item:hover {
   font: inherit;
   font-weight: 800;
   text-align: left;
+}
+
+.top-scorer-option-icon {
+  flex: 0 0 auto;
+  width: 24px;
+  font-size: 18px;
+  line-height: 1;
+  text-align: center;
+}
+
+.top-scorer-option-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.top-scorer-option-copy strong,
+.top-scorer-option-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-scorer-option-copy small {
+  color: var(--wc-muted);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .top-scorer-panel button.active,
@@ -3205,18 +3235,9 @@ button.today-checklist-item:hover {
     padding: 10px 6px;
   }
 
-  .football-table th:nth-child(3),
-  .football-table td:nth-child(3),
-  .football-table th:nth-child(4),
-  .football-table td:nth-child(4),
-  .football-table th:nth-child(5),
-  .football-table td:nth-child(5) {
-    display: none;
-  }
-
   .football-table th:first-child,
   .football-table td:first-child {
-    width: 62%;
+    width: 68%;
   }
 
   .table-team {
@@ -5412,6 +5433,28 @@ main,
   border-radius: 7px;
   background: rgba(15, 15, 18, 0.06);
   font-size: 0.92em;
+}
+
+.admin-toggle-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.admin-toggle-row button {
+  min-height: 40px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-button-v3);
+  background: var(--surface);
+  color: var(--fg-secondary);
+  font: inherit;
+  font-weight: 850;
+}
+
+.admin-toggle-row button.active {
+  border-color: rgba(245, 54, 87, 0.38);
+  background: rgba(245, 54, 87, 0.1);
+  color: var(--wc-primary);
 }
 
 .admin-danger-zone {

@@ -87,9 +87,17 @@ test('daily points compare answers case-insensitively', () => {
 });
 
 test('long-term picks score only after matching answers are configured', () => {
-  assert.deepEqual(longTermPoints({ champion: 'France', topScorer: 'Mbappe', shockTeam: 'Canada' }, {
-    championActual: 'france', topScorerActual: 'Mbappe', shockTeamActual: '',
-  }), { total: 30, champion: 20, topScorer: 10, shockTeam: 0 });
+  assert.deepEqual(longTermPoints({
+    champion: 'France',
+    topScorer: '🇫🇷 Kylian Mbappe · Pháp',
+    youngPlayer: 'Lamine Yamal',
+    goldenBall: 'Neymar Junior',
+  }, {
+    championActual: 'france',
+    topScorerActual: 'Kylian Mbappe',
+    youngPlayerActual: '🇪🇸 Lamine Yamal · Tây Ban Nha',
+    goldenBallActual: '',
+  }), { total: 40, champion: 20, topScorer: 10, youngPlayer: 10, goldenBall: 0 });
 });
 
 test('weekly and stage windows filter matches and predictions for real leaderboard modes', () => {
@@ -125,6 +133,22 @@ test('computeStandings ranks by total, exact count, then predicted count', () =>
   assert.equal(standings[0].displayName, 'Lan');
   assert.equal(standings[0].total, 8);
   assert.equal(standings[1].total, 6);
+});
+
+test('manual point adjustments are included in standings totals', () => {
+  const standings = computeStandings({
+    participants: [{ id: 'p1', displayName: 'Lan' }],
+    predictions: [],
+    dailyAnswers: [],
+    matches: [],
+    manualAdjustments: [
+      { participantId: 'p1', deltaPoints: 5 },
+      { participantId: 'p1', deltaPoints: -2 },
+    ],
+  });
+
+  assert.equal(standings[0].manualPts, 3);
+  assert.equal(standings[0].total, 3);
 });
 
 test('local mock simulation covers six matches and recalculates standings', () => {

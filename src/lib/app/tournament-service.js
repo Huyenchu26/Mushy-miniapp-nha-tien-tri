@@ -1,16 +1,19 @@
 import { db } from '../supabase.js';
+import { dateKeyInVietnamTimeZone } from './worldcup-data.js';
 
 export async function fetchTournamentState(workspaceId) {
-  const [matchesResult, configResult, longTermResult] = await Promise.all([
+  const [matchesResult, configResult, longTermResult, adjustmentResult] = await Promise.all([
     db.from('matches').select('*').eq('workspace_id', workspaceId).order('match_no'),
     db.from('app_config').select('*').eq('workspace_id', workspaceId).maybeSingle(),
     db.from('long_term_bets').select('*').eq('workspace_id', workspaceId),
+    db.from('manual_point_adjustments').select('*').eq('workspace_id', workspaceId).order('created_at', { ascending: true }),
   ]);
 
   return {
     matches: tolerateMissing(matchesResult).map(toRuntimeMatch),
     config: configResult.error ? null : toAppConfig(configResult.data),
     longTermBets: tolerateMissing(longTermResult).map(toLongTermBet),
+    manualAdjustments: tolerateMissing(adjustmentResult).map(toManualPointAdjustment),
   };
 }
 
@@ -73,7 +76,8 @@ export async function saveTournamentConfig({ workspaceId, userId, config }) {
     opening_kickoff_at: config.openingKickoffAt,
     champion_actual: clean(config.championActual),
     top_scorer_actual: clean(config.topScorerActual),
-    shock_team_actual: clean(config.shockTeamActual),
+    young_player_actual: clean(config.youngPlayerActual),
+    golden_ball_actual: clean(config.goldenBallActual),
     predictions_hidden_until_kickoff: config.predictionsHiddenUntilKickoff !== false,
     reminders_enabled: config.remindersEnabled !== false,
   };
@@ -89,6 +93,27 @@ export async function fetchMissingPredictionUserIds(workspaceId, matchNo) {
   });
   if (error) throw error;
   return (data || []).map((row) => row.user_id).filter(Boolean);
+}
+
+export async function saveManualPointAdjustment({ workspaceId, userId, targetUserId, deltaPoints, reason }) {
+  const payload = {
+    workspace_id: workspaceId,
+    created_by: userId,
+    target_user_id: targetUserId,
+    delta_points: Number(deltaPoints),
+    reason: clean(reason) || null,
+  };
+  const { data, error } = await db.from('manual_point_adjustments').insert(payload).select('*').single();
+  if (error) throw error;
+  await writeAudit({
+    workspaceId,
+    userId,
+    action: 'manual_points_adjusted',
+    entityType: 'leaderboard',
+    entityKey: targetUserId,
+    afterData: payload,
+  });
+  return toManualPointAdjustment(data);
 }
 
 export async function resetTodayTriviaAnswers({ workspaceId, userId, dateKey }) {
@@ -162,7 +187,7 @@ function toRuntimeMatch(row) {
     homeTeam: row.home_team,
     awayTeam: row.away_team,
     kickoffAt: row.kickoff_at,
-    matchDay: String(row.kickoff_at || '').slice(0, 10),
+    matchDay: dateKeyInVietnamTimeZone(row.kickoff_at),
     homeScore: row.home_score,
     awayScore: row.away_score,
     status: row.status,
@@ -179,6 +204,8 @@ function toAppConfig(row) {
     openingKickoffAt: row.opening_kickoff_at,
     championActual: row.champion_actual || '',
     topScorerActual: row.top_scorer_actual || '',
+    youngPlayerActual: row.young_player_actual || '',
+    goldenBallActual: row.golden_ball_actual || '',
     shockTeamActual: row.shock_team_actual || '',
     predictionsHiddenUntilKickoff: row.predictions_hidden_until_kickoff !== false,
     remindersEnabled: row.reminders_enabled !== false,
@@ -192,7 +219,21 @@ function toLongTermBet(row) {
     createdBy: row.created_by,
     champion: row.champion || '',
     topScorer: row.top_scorer || '',
+    youngPlayer: row.young_player || '',
+    goldenBall: row.golden_ball || '',
     shockTeam: row.shock_team || '',
+  };
+}
+
+function toManualPointAdjustment(row) {
+  return {
+    id: row.id,
+    workspaceId: row.workspace_id,
+    createdBy: row.created_by,
+    targetUserId: row.target_user_id,
+    deltaPoints: Number(row.delta_points || 0),
+    reason: row.reason || '',
+    createdAt: row.created_at,
   };
 }
 

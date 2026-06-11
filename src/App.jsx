@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Bell, BookOpen, CalendarDays, ClipboardCheck, Flame, Home, MessagesSquare, Minus, PenLine, Plus, Scale, Star, Target, Trophy } from 'lucide-react';
-import { DAILY_QUESTIONS, DATA_SOURCE, FIFA_RANKING_SOURCE, GROUPS, MATCHES, TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS } from './lib/app/worldcup-data.js';
+import { DAILY_QUESTIONS, DATA_SOURCE, FIFA_RANKING_SOURCE, GROUPS, MATCHES, TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS, dateKeyInVietnamTimeZone } from './lib/app/worldcup-data.js';
 import {
   MOCK_SCORE_STEP_MS,
   buildMockLiveScorePayload,
@@ -41,6 +41,21 @@ const CHAT_REPEAT_WINDOW_MS = 45000;
 const CHAT_REPEAT_LIMIT = 2;
 const MATCH_INSIGHT_WARMUP_DELAY_MS = 1500;
 const MATCH_INSIGHT_WARMUP_LIMIT = 3;
+const FEATURED_PLAYER_NAMES = [
+  'Lionel Messi',
+  'Mbappe',
+  'Cristiano Ronaldo',
+  'Neymar Jr',
+  'Lamine Yamal',
+  'Kane',
+  'Vinicius Junior',
+  'Bellingham',
+  'Mohamed Salah',
+  'Haaland',
+  'De Bruyne',
+  'Heung-Min Son',
+];
+const FEATURED_PLAYER_ORDER = new Map(FEATURED_PLAYER_NAMES.map((name, index) => [normalizeAnswer(name), index]));
 
 function SoccerBallIcon({ size = 15 }) {
   return (
@@ -126,6 +141,7 @@ export default function App() {
   const [answers, setAnswers] = useState([]);
   const [longTermBet, setLongTermBet] = useState(null);
   const [allLongTermBets, setAllLongTermBets] = useState([]);
+  const [manualAdjustments, setManualAdjustments] = useState([]);
   const [officialMatches, setOfficialMatches] = useState([]);
   const [appConfig, setAppConfig] = useState(null);
   const [adminOpen, setAdminOpen] = useState(false);
@@ -431,8 +447,16 @@ export default function App() {
     [matchesWithOfficialScores, liveScores]
   );
   const standings = useMemo(
-    () => buildStandings({ members, predictions, answers, matches: matchesWithOfficialScores, longTermBets: allLongTermBets, appConfig }),
-    [members, predictions, answers, matchesWithOfficialScores, allLongTermBets, appConfig]
+    () => buildStandings({
+      members,
+      predictions,
+      answers,
+      matches: matchesWithOfficialScores,
+      longTermBets: allLongTermBets,
+      appConfig,
+      manualAdjustments,
+    }),
+    [members, predictions, answers, matchesWithOfficialScores, allLongTermBets, appConfig, manualAdjustments]
   );
   const standingsByMode = useMemo(() => {
     const result = { total: standings };
@@ -514,8 +538,15 @@ export default function App() {
       setAnswers([]);
       setLongTermBet(createMockLongTermBet(ctx, scope.workspaceId));
       setAllLongTermBets([createMockLongTermBet(ctx, scope.workspaceId)]);
+      setManualAdjustments([]);
       setOfficialMatches([]);
-      setAppConfig({ openingKickoffAt: getLongTermLockAt(tournamentMatches), championActual: '', topScorerActual: '', shockTeamActual: '' });
+      setAppConfig({
+        openingKickoffAt: getLongTermLockAt(tournamentMatches),
+        championActual: '',
+        topScorerActual: '',
+        youngPlayerActual: '',
+        goldenBallActual: '',
+      });
       setMembers(mergeMockMembers([], ctx));
       setNotice('DEV mock: sample predictions and 6 match scores loaded.');
       setLoading(false);
@@ -539,6 +570,7 @@ export default function App() {
         nextTournamentState = await fetchTournamentState(scope.workspaceId);
       }
       setAllLongTermBets(nextTournamentState.longTermBets);
+      setManualAdjustments(nextTournamentState.manualAdjustments || []);
       setOfficialMatches(nextTournamentState.matches);
       setAppConfig(nextTournamentState.config);
       const ensuredMembers = ensureCurrentMember(memberRows, ctx);
@@ -548,6 +580,8 @@ export default function App() {
         setPredictions(mergeMockPredictions([], ctx, scope.workspaceId));
         setAnswers([]);
         setLongTermBet(createMockLongTermBet(ctx, scope.workspaceId));
+        setAllLongTermBets([createMockLongTermBet(ctx, scope.workspaceId)]);
+        setManualAdjustments([]);
         setMembers(mergeMockMembers([], ctx));
         setNotice('DEV mock: DB unavailable, using local sample data.');
         return;
@@ -740,10 +774,11 @@ export default function App() {
   async function handleSaveLongTermBet(draft) {
     try {
       const champion = String(draft.champion || '').trim();
-      const topScorer = String(draft.topScorer || '').trim().replace(/\s+/g, ' ').slice(0, 80);
-      const shockTeam = String(draft.shockTeam || '').trim();
-      if (!champion || !topScorer || !shockTeam) {
-        throw new Error('Bạn cần chọn đủ vô địch, vua phá lưới và đội gây sốc.');
+      const topScorer = cleanPlayerAnswer(draft.topScorer);
+      const youngPlayer = cleanPlayerAnswer(draft.youngPlayer);
+      const goldenBall = cleanPlayerAnswer(draft.goldenBall);
+      if (!champion || !topScorer || !youngPlayer || !goldenBall) {
+        throw new Error('Bạn cần chọn đủ vô địch, vua phá lưới, cầu thủ trẻ xuất sắc nhất và Quả bóng vàng WORLD CUP.');
       }
       const longTermLockAt = getLongTermLockAt(tournamentMatches, appConfig);
       if (longTermLockAt && Date.now() >= new Date(longTermLockAt).getTime()) {
@@ -757,7 +792,8 @@ export default function App() {
           createdBy: ctx.userId,
           champion,
           topScorer,
-          shockTeam,
+          youngPlayer,
+          goldenBall,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
@@ -771,7 +807,8 @@ export default function App() {
           created_by: ctx.userId,
           champion,
           top_scorer: topScorer,
-          shock_team: shockTeam,
+          young_player: youngPlayer,
+          golden_ball: goldenBall,
         },
         { onConflict: 'workspace_id,created_by' }
       );
@@ -1121,6 +1158,7 @@ export default function App() {
         ctx={ctx}
         workspaceId={scope?.workspaceId}
         matches={matchesWithOfficialScores}
+        members={members}
         standings={standings}
         config={appConfig}
         canManage={canManageTournament}
@@ -3147,29 +3185,38 @@ function questionSummaryText({ answerLabel, officialAnswerLabel, answered, expir
 
 function LongTermBetCard({ bet, locked, onSave }) {
   const [champion, setChampion] = useState(bet?.champion || '');
-  const [topScorer, setTopScorer] = useState(bet?.topScorer || '');
-  const [shockTeam, setShockTeam] = useState(bet?.shockTeam || '');
+  const [topScorer, setTopScorer] = useState(cleanPlayerDisplayValue(bet?.topScorer));
+  const [youngPlayer, setYoungPlayer] = useState(cleanPlayerDisplayValue(bet?.youngPlayer));
+  const [goldenBall, setGoldenBall] = useState(cleanPlayerDisplayValue(bet?.goldenBall));
   const teamOptions = useMemo(
     () => TEAM_OPTIONS.map((team) => ({
       value: team,
       label: `${displayTeamName(team)} · FIFA #${TEAM_META[team]?.fifaRank ?? '-'}`,
-      icon: TEAM_META[team]?.flag || null,
+      icon: null,
     })),
     []
   );
   const scorerOptions = useMemo(
-    () => TOP_SCORER_OPTIONS.map((player) => ({ value: player.name, label: player.label })),
+    () => TOP_SCORER_OPTIONS.map((player) => ({
+      value: player.value || player.name,
+      label: player.label || player.name,
+      icon: null,
+      meta: player.nationality || player.team || '',
+      searchText: player.searchText || `${player.name || ''} ${player.nationality || ''}`,
+      featuredRank: getFeaturedPlayerRank(player),
+    })),
     []
   );
   const longTermChanged = normalizeAnswer(champion) !== normalizeAnswer(bet?.champion)
     || normalizeAnswer(topScorer) !== normalizeAnswer(bet?.topScorer)
-    || normalizeAnswer(shockTeam) !== normalizeAnswer(bet?.shockTeam);
-  const longTermReady = !!champion && !!topScorer.trim() && !!shockTeam;
+    || normalizeAnswer(youngPlayer) !== normalizeAnswer(bet?.youngPlayer)
+    || normalizeAnswer(goldenBall) !== normalizeAnswer(bet?.goldenBall);
+  const longTermReady = !!champion && !!topScorer.trim() && !!youngPlayer.trim() && !!goldenBall.trim();
   const saveDisabled = locked || !longTermChanged || !longTermReady;
   const footerLabel = locked
     ? 'Đã khóa trước vòng play-off'
     : !longTermReady
-      ? 'Chọn đủ 3 mục để lưu'
+      ? 'Chọn đủ 4 mục để lưu'
       : bet && !longTermChanged
         ? 'Đã lưu, chưa có thay đổi'
         : bet
@@ -3178,16 +3225,17 @@ function LongTermBetCard({ bet, locked, onSave }) {
 
   useEffect(() => {
     setChampion(bet?.champion || '');
-    setTopScorer(bet?.topScorer || '');
-    setShockTeam(bet?.shockTeam || '');
-  }, [bet?.champion, bet?.topScorer, bet?.shockTeam]);
+    setTopScorer(cleanPlayerDisplayValue(bet?.topScorer));
+    setYoungPlayer(cleanPlayerDisplayValue(bet?.youngPlayer));
+    setGoldenBall(cleanPlayerDisplayValue(bet?.goldenBall));
+  }, [bet?.champion, bet?.topScorer, bet?.youngPlayer, bet?.goldenBall]);
 
   return (
     <article className="question-card long-term-card">
       <div>
         <span className="date-chip">Dài hạn</span>
         <h3>Dự đoán dài hạn</h3>
-        <p>Chọn trước giải. Đúng vô địch +20đ, vua phá lưới +10đ, đội gây sốc +10đ.</p>
+        <p>Chọn trước giải. Đúng vô địch +20đ, vua phá lưới +10đ, cầu thủ trẻ +10đ, Quả bóng vàng +10đ.</p>
       </div>
 
       <div className="long-term-fields">
@@ -3206,15 +3254,30 @@ function LongTermBetCard({ bet, locked, onSave }) {
           />
         </label>
         <label>
-          <span>Đội gây sốc</span>
-          <small className="field-hint">Đội bị đánh giá thấp nhưng đi sâu hơn kỳ vọng, tạo bất ngờ lớn so với BXH FIFA và tương quan bảng đấu.</small>
-          <Select value={shockTeam} onChange={setShockTeam} options={teamOptions} placeholder="Chọn đội gây sốc" disabled={locked} />
+          <span>Cầu thủ trẻ xuất sắc nhất</span>
+          <TopScorerCombobox
+            value={youngPlayer}
+            onChange={setYoungPlayer}
+            options={scorerOptions}
+            placeholder="Nhập hoặc chọn cầu thủ trẻ"
+            disabled={locked}
+          />
+        </label>
+        <label>
+          <span>Quả bóng vàng WORLD CUP</span>
+          <TopScorerCombobox
+            value={goldenBall}
+            onChange={setGoldenBall}
+            options={scorerOptions}
+            placeholder="Nhập hoặc chọn cầu thủ"
+            disabled={locked}
+          />
         </label>
       </div>
 
       <div className="question-footer">
         <span>{footerLabel}</span>
-        <button type="button" className="primary-btn small" disabled={saveDisabled} onClick={() => onSave({ champion, topScorer, shockTeam })}>
+        <button type="button" className="primary-btn small" disabled={saveDisabled} onClick={() => onSave({ champion, topScorer, youngPlayer, goldenBall })}>
           {locked ? 'Đã khóa' : bet && !longTermChanged ? 'Đã lưu' : 'Lưu'}
         </button>
       </div>
@@ -3234,12 +3297,22 @@ function TopScorerCombobox({ value, onChange, options = [], placeholder, disable
     [options]
   );
   const filteredOptions = useMemo(() => {
-    const ranked = normalizedOptions.filter((option) => (
-      normalizeAnswer(option.value).includes(needle) || normalizeAnswer(option.label).includes(needle)
+    const source = needle ? normalizedOptions : normalizedOptions
+      .filter((option) => Number.isFinite(option.featuredRank))
+      .sort((left, right) => left.featuredRank - right.featuredRank);
+    const ranked = source.filter((option) => (
+      normalizeAnswer([
+        option.value,
+        option.label,
+        option.meta,
+        option.searchText,
+      ].filter(Boolean).join(' ')).includes(needle)
     ));
-    return (needle ? ranked : normalizedOptions).slice(0, 8);
+    return (needle ? ranked : source).slice(0, 10);
   }, [needle, normalizedOptions]);
-  const exactMatch = normalizedOptions.some((option) => normalizeAnswer(option.value) === needle);
+  const exactMatch = normalizedOptions.some((option) => (
+    normalizeAnswer(option.value) === needle || normalizeAnswer(option.label) === needle
+  ));
 
   useEffect(() => {
     if (!open) return undefined;
@@ -3324,7 +3397,11 @@ function TopScorerCombobox({ value, onChange, options = [], placeholder, disable
                 pick(option);
               }}
             >
-              {option.label}
+              {option.icon ? <span className="top-scorer-option-icon" aria-hidden="true">{option.icon}</span> : null}
+              <span className="top-scorer-option-copy">
+                <strong>{option.label}</strong>
+                {option.meta ? <small>{option.meta}</small> : null}
+              </span>
             </button>
           )) : (
             <p>Không có gợi ý phù hợp. Bạn vẫn có thể tự nhập tên.</p>
@@ -3414,12 +3491,8 @@ function FootballStandingTable({ rows }) {
         <thead>
           <tr>
             <th>Đội</th>
-            <th>Tr</th>
-            <th>T</th>
-            <th>H</th>
-            <th>B</th>
-            <th>HS</th>
-            <th>Đ</th>
+            <th>Hiệu số</th>
+            <th>Điểm</th>
           </tr>
         </thead>
         <tbody>
@@ -3433,14 +3506,10 @@ function FootballStandingTable({ rows }) {
                   </span>
                   <span>
                     <strong>{displayTeamName(row.team)}</strong>
-                    <small>{row.won}T {row.drawn}H {row.lost}B{row.liveMatches > 0 ? ' · LIVE tạm' : ''}</small>
+                    <small>{row.played} trận · {row.won}T {row.drawn}H {row.lost}B{row.liveMatches > 0 ? ' · LIVE tạm' : ''}</small>
                   </span>
                 </span>
               </td>
-              <td>{row.played}</td>
-              <td>{row.won}</td>
-              <td>{row.drawn}</td>
-              <td>{row.lost}</td>
               <td>{formatGoalDifference(row.goalDifference)}</td>
               <td><strong>{row.points}</strong></td>
             </tr>
@@ -3658,7 +3727,8 @@ function initials(name) {
 }
 
 function leaderSubtitle(row) {
-  return `${row.matchPts} trận · ${row.upsetPts} cửa dưới · ${row.streakPts} streak · ${row.dailyPts} vui · ${row.longTermPts || 0} dài hạn`;
+  const manual = row.manualPts ? ` · ${row.manualPts > 0 ? '+' : ''}${row.manualPts} admin` : '';
+  return `${row.matchPts} trận · ${row.upsetPts} cửa dưới · ${row.streakPts} streak · ${row.dailyPts} vui · ${row.longTermPts || 0} dài hạn${manual}`;
 }
 
 function findTriviaAnswerForDate(answers = [], dateKey) {
@@ -3765,7 +3835,8 @@ function buildScoreHistory({ predictions = [], answers = [], matches = [], curre
     const hits = [
       breakdown.champion ? 'vô địch' : '',
       breakdown.topScorer ? 'vua phá lưới' : '',
-      breakdown.shockTeam ? 'đội gây sốc' : '',
+      breakdown.youngPlayer ? 'cầu thủ trẻ' : '',
+      breakdown.goldenBall ? 'Quả bóng vàng' : '',
     ].filter(Boolean);
     items.unshift({
       key: 'long-term-bonus',
@@ -4322,12 +4393,23 @@ function getLiveScoreSyncPlan(matches = [], nowMs = Date.now()) {
   };
 }
 
-function buildStandings({ members, predictions, answers, matches, questions = [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS], longTermBets = [], appConfig = null }) {
+function buildStandings({
+  members,
+  predictions,
+  answers,
+  matches,
+  questions = [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS],
+  longTermBets = [],
+  appConfig = null,
+  manualAdjustments = [],
+}) {
   const memberMap = new Map(members.map((member) => [member.user_id, member]));
   const userIds = new Set([
     ...members.map((member) => member.user_id),
     ...predictions.map((prediction) => prediction.createdBy),
     ...answers.map((answer) => answer.createdBy),
+    ...longTermBets.map((bet) => bet.createdBy),
+    ...manualAdjustments.map((adjustment) => adjustment.targetUserId),
   ]);
 
   const participants = [...userIds].map((userId) => ({
@@ -4343,10 +4425,20 @@ function buildStandings({ members, predictions, answers, matches, questions = [.
     questions,
     longTermBets: longTermBets.map((bet) => ({ ...bet, participantId: bet.createdBy })),
     appConfig,
+    manualAdjustments: manualAdjustments.map((adjustment) => ({ ...adjustment, participantId: adjustment.targetUserId })),
   });
 }
 
-function computeStandingsForUsers({ participants, predictions, dailyAnswers, matches, questions = [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS], longTermBets = [], appConfig = null }) {
+function computeStandingsForUsers({
+  participants,
+  predictions,
+  dailyAnswers,
+  matches,
+  questions = [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS],
+  longTermBets = [],
+  appConfig = null,
+  manualAdjustments = [],
+}) {
   return computeStandings({
     participants,
     predictions,
@@ -4355,6 +4447,7 @@ function computeStandingsForUsers({ participants, predictions, dailyAnswers, mat
     questions,
     longTermBets,
     appConfig,
+    manualAdjustments,
   });
 }
 
@@ -4368,7 +4461,7 @@ function mergeTournamentMatches(staticMatches, persistedMatches) {
       ...persisted,
       group: persisted.group || match.group,
       stageLabel: match.stageLabel,
-      matchDay: String(persisted.kickoffAt || match.kickoffAt).slice(0, 10),
+      matchDay: dateKeyInAppTimeZone(persisted.kickoffAt || match.kickoffAt),
     };
   });
 }
@@ -4666,6 +4759,30 @@ function normalizeScore(value) {
   return number;
 }
 
+function cleanPlayerAnswer(value) {
+  return cleanPlayerDisplayValue(value).slice(0, 120);
+}
+
+function cleanPlayerDisplayValue(value) {
+  return String(value || '')
+    .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function getFeaturedPlayerRank(player) {
+  const keys = [
+    player?.name,
+    player?.label,
+    String(player?.searchText || '').replace(/\bJr\b\.?/gi, 'Junior'),
+  ];
+  for (const key of keys) {
+    const rank = FEATURED_PLAYER_ORDER.get(normalizeAnswer(key));
+    if (Number.isFinite(rank)) return rank;
+  }
+  return null;
+}
+
 function normalizeDraftScore(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return 0;
@@ -4779,14 +4896,7 @@ function getLocalDateKey(date = new Date()) {
 }
 
 function dateKeyInAppTimeZone(value = new Date()) {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: APP_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date(value));
-  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${byType.year}-${byType.month}-${byType.day}`;
+  return dateKeyInVietnamTimeZone(value);
 }
 
 function addDaysToDateKey(dateKey, days) {

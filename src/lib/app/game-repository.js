@@ -59,7 +59,11 @@ export function mapDailyAnswer(row) {
 export function mapLongTermBet(row) {
   return {
     id: row.id, workspaceId: row.workspace_id, createdBy: row.created_by,
-    champion: row.champion || '', topScorer: row.top_scorer || '', shockTeam: row.shock_team || '',
+    champion: row.champion || '',
+    topScorer: row.top_scorer || '',
+    youngPlayer: row.young_player || '',
+    goldenBall: row.golden_ball || '',
+    shockTeam: row.shock_team || '',
     createdAt: row.created_at, updatedAt: row.updated_at,
   };
 }

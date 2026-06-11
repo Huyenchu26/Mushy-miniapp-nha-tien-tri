@@ -14,7 +14,8 @@ export const SCORE_RULES = {
   streakBonus: 5,
   champion: 20,
   topScorer: 10,
-  shockTeam: 10,
+  youngPlayer: 10,
+  goldenBall: 10,
 };
 
 export function outcome(home, away) {
@@ -27,8 +28,11 @@ export function normalizeAnswer(value) {
   return String(value ?? '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '')
     .replace(/đ/g, 'd')
     .replace(/Đ/g, 'd')
+    .replace(/[()·.,]/g, ' ')
+    .replace(/[-_]/g, ' ')
     .trim()
     .toLowerCase()
     .replace(/\s+/g, ' ');
@@ -123,11 +127,12 @@ export function dailyPoints(answer, question) {
 }
 
 export function longTermPoints(bet, config) {
-  if (!bet || !config) return { total: 0, champion: 0, topScorer: 0, shockTeam: 0 };
+  if (!bet || !config) return { total: 0, champion: 0, topScorer: 0, youngPlayer: 0, goldenBall: 0 };
   const champion = matchesAnswer(bet.champion, config.championActual) ? SCORE_RULES.champion : 0;
   const topScorer = matchesAnswer(bet.topScorer, config.topScorerActual) ? SCORE_RULES.topScorer : 0;
-  const shockTeam = matchesAnswer(bet.shockTeam, config.shockTeamActual) ? SCORE_RULES.shockTeam : 0;
-  return { total: champion + topScorer + shockTeam, champion, topScorer, shockTeam };
+  const youngPlayer = matchesAnswer(bet.youngPlayer, config.youngPlayerActual) ? SCORE_RULES.youngPlayer : 0;
+  const goldenBall = matchesAnswer(bet.goldenBall, config.goldenBallActual) ? SCORE_RULES.goldenBall : 0;
+  return { total: champion + topScorer + youngPlayer + goldenBall, champion, topScorer, youngPlayer, goldenBall };
 }
 
 export function filterCompetitionWindow({ matches = MATCHES, predictions = [], answers = [], questions = DAILY_QUESTIONS, mode = 'total', now = new Date() } = {}) {
@@ -157,6 +162,7 @@ export function computeStandings({
   questions = DAILY_QUESTIONS,
   longTermBets = [],
   appConfig = null,
+  manualAdjustments = [],
   includeLongTerm = true,
 } = {}) {
   const matchesByNo = new Map(matches.map((match) => [Number(match.matchNo), match]));
@@ -164,6 +170,7 @@ export function computeStandings({
   const predictionsByParticipant = groupBy(predictions, (prediction) => prediction.participantId);
   const answersByParticipant = groupBy(dailyAnswers, (answer) => answer.participantId);
   const betsByParticipant = new Map(longTermBets.map((bet) => [bet.participantId, bet]));
+  const manualPointsByParticipant = groupManualPoints(manualAdjustments);
 
   const rows = participants.map((participant) => {
     const participantPredictions = predictionsByParticipant.get(participant.id) || [];
@@ -195,16 +202,18 @@ export function computeStandings({
     }, 0);
     const longTerm = includeLongTerm
       ? longTermPoints(betsByParticipant.get(participant.id), appConfig)
-      : { total: 0, champion: 0, topScorer: 0, shockTeam: 0 };
+      : { total: 0, champion: 0, topScorer: 0, youngPlayer: 0, goldenBall: 0 };
+    const manualPts = manualPointsByParticipant.get(participant.id) || 0;
 
     return {
       participantId: participant.id,
       displayName: participant.displayName,
-      total: matchPts + streakPts + dailyPts + longTerm.total,
+      total: matchPts + streakPts + dailyPts + longTerm.total + manualPts,
       matchPts,
       upsetPts,
       streakPts,
       dailyPts,
+      manualPts,
       longTermPts: longTerm.total,
       longTermBreakdown: longTerm,
       predictedCount: participantPredictions.length,
@@ -225,7 +234,25 @@ export function computeStandings({
 }
 
 function matchesAnswer(value, actual) {
-  return !!normalizeAnswer(actual) && normalizeAnswer(value) === normalizeAnswer(actual);
+  const normalizedActual = normalizeAnswer(actual);
+  if (!normalizedActual) return false;
+  const normalizedValue = normalizeAnswer(value);
+  if (normalizedValue === normalizedActual) return true;
+  return answerCore(value) === answerCore(actual);
+}
+
+function answerCore(value) {
+  return normalizeAnswer(String(value || '').split(/[·(]/)[0]);
+}
+
+function groupManualPoints(adjustments = []) {
+  const map = new Map();
+  for (const adjustment of adjustments) {
+    const participantId = adjustment.participantId || adjustment.targetUserId;
+    if (!participantId) continue;
+    map.set(participantId, (map.get(participantId) || 0) + Number(adjustment.deltaPoints || 0));
+  }
+  return map;
 }
 
 function normalizeStage(stage) {

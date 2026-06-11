@@ -103,7 +103,7 @@ export function buildMockLiveScorePayload({
     sourceUrl: 'local-simulation',
     fetchedAt: new Date(nowMs).toISOString(),
     fallbackReason: '',
-    matches: MATCHES.slice(0, 6).map((match) => toMockLiveScore(match, step)),
+    matches: MATCHES.slice(0, 6).map((match) => toMockLiveScore(match, step, nowMs)),
   };
 }
 
@@ -133,8 +133,9 @@ export function createMockLongTermBet(ctx = createMockContext(), workspaceId = c
     workspaceId,
     createdBy: ctx.userId || MOCK_USER_ID,
     champion: 'France',
-    topScorer: 'Kylian Mbappe',
-    shockTeam: 'Haiti',
+    topScorer: 'Mbappe · Pháp',
+    youngPlayer: 'Lamine Yamal · Tây Ban Nha',
+    goldenBall: 'Mbappe · Pháp',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -175,8 +176,8 @@ function rowsForPlayer(playerKey, userId, workspaceId) {
   });
 }
 
-function toMockLiveScore(match, step) {
-  const state = scoreStateFor(match.matchNo, step);
+function toMockLiveScore(match, step, nowMs) {
+  const state = scoreStateFor(match, step, nowMs);
   return {
     externalId: `mock-${match.matchNo}`,
     matchNo: match.matchNo,
@@ -192,8 +193,21 @@ function toMockLiveScore(match, step) {
   };
 }
 
-function scoreStateFor(matchNo, step) {
-  if (matchNo <= 3 || step >= matchNo - 3) {
+function scoreStateFor(match, step, nowMs) {
+  const matchNo = Number(match.matchNo);
+  const kickoffMs = new Date(match.kickoffAt).getTime();
+  if (!Number.isFinite(kickoffMs) || nowMs < kickoffMs) {
+    return {
+      homeScore: 0,
+      awayScore: 0,
+      status: 'scheduled',
+      minute: 0,
+      rawClock: '',
+    };
+  }
+
+  const elapsedMinutes = Math.floor((nowMs - kickoffMs) / 60000);
+  if (elapsedMinutes >= 105) {
     const [homeScore, awayScore] = FINAL_SCORES[matchNo];
     return {
       homeScore,
@@ -205,7 +219,8 @@ function scoreStateFor(matchNo, step) {
   }
 
   const liveStates = LIVE_STATES[matchNo] || [];
-  const state = liveStates[Math.min(step, liveStates.length - 1)] || { homeScore: 0, awayScore: 0, minute: 1 };
+  const liveIndex = Math.max(0, Math.min(step, liveStates.length - 1));
+  const state = liveStates[liveIndex] || { homeScore: 0, awayScore: 0, minute: Math.max(1, Math.min(90, elapsedMinutes + 1)) };
   return {
     ...state,
     status: 'in_progress',

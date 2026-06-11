@@ -3,17 +3,17 @@ import Select from './Select.jsx';
 import { useDialog } from './Dialog.jsx';
 import { mushyApi } from '../lib/mushy-api.js';
 import { track } from '../lib/analytics.js';
+import { TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS, dateKeyInVietnamTimeZone } from '../lib/app/worldcup-data.js';
 import { buildDailyRecap, nearestReminderMatch } from '../lib/app/engagement.js';
 import {
   fetchMissingPredictionUserIds,
-  resetTodayTriviaAnswers,
-  resetWorkspaceLeaderboardData,
+  saveManualPointAdjustment,
   saveOfficialMatch,
   saveTournamentConfig,
   syncTournamentSchedule,
 } from '../lib/app/tournament-service.js';
 
-export default function TournamentAdmin({ open, onClose, ctx, workspaceId, matches, standings, config, canManage = false, onChanged }) {
+export default function TournamentAdmin({ open, onClose, ctx, workspaceId, matches, members = [], standings, config, canManage = false, onChanged }) {
   const dialog = useDialog();
   const upcoming = useMemo(() => nearestReminderMatch(matches), [matches]);
   const todayKey = getLocalDateKey();
@@ -42,7 +42,12 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
   const [awayTeam, setAwayTeam] = useState('');
   const [championActual, setChampionActual] = useState('');
   const [topScorerActual, setTopScorerActual] = useState('');
-  const [shockTeamActual, setShockTeamActual] = useState('');
+  const [youngPlayerActual, setYoungPlayerActual] = useState('');
+  const [goldenBallActual, setGoldenBallActual] = useState('');
+  const [adjustUserId, setAdjustUserId] = useState('');
+  const [adjustMode, setAdjustMode] = useState('add');
+  const [adjustAmount, setAdjustAmount] = useState('');
+  const [adjustReason, setAdjustReason] = useState('');
   const [busy, setBusy] = useState('');
 
   useEffect(() => {
@@ -55,14 +60,13 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
   useEffect(() => {
     setChampionActual(config?.championActual || '');
     setTopScorerActual(config?.topScorerActual || '');
-    setShockTeamActual(config?.shockTeamActual || '');
+    setYoungPlayerActual(config?.youngPlayerActual || '');
+    setGoldenBallActual(config?.goldenBallActual || '');
   }, [config]);
 
   useEffect(() => {
     if (!hypeMatchNo && hotMatchFallback?.matchNo) setHypeMatchNo(String(hotMatchFallback.matchNo));
   }, [hotMatchFallback?.matchNo, hypeMatchNo]);
-
-  if (!open || !canManage) return null;
 
   const options = matches.map((match) => ({
     value: String(match.matchNo),
@@ -72,6 +76,24 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
     value: String(match.matchNo),
     label: `#${match.matchNo} · ${match.homeTeam} - ${match.awayTeam} · ${formatAdminTime(match.kickoffAt)}`,
   }));
+  const teamOptions = useMemo(() => TEAM_OPTIONS.map((team) => ({
+    value: team,
+    label: `${TEAM_META[team]?.viName || team} · FIFA #${TEAM_META[team]?.fifaRank ?? '-'}`,
+    icon: null,
+  })), []);
+  const playerOptions = useMemo(() => TOP_SCORER_OPTIONS.map((player) => ({
+    value: player.value || player.name,
+    label: `${player.label || player.name}${player.nationality ? ` · ${player.nationality}` : ''}`,
+    icon: null,
+    subLabel: player.nationality || player.team || '',
+  })), []);
+  const memberOptions = useMemo(() => buildMemberOptions({ members, standings, ctx }), [members, standings, ctx]);
+
+  useEffect(() => {
+    if (!adjustUserId && memberOptions[0]?.value) setAdjustUserId(memberOptions[0].value);
+  }, [adjustUserId, memberOptions]);
+
+  if (!open || !canManage) return null;
 
   async function run(key, action, success) {
     setBusy(key);
@@ -112,17 +134,47 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
   function handleConfig() {
     return dialog.confirm(
       'Lưu đáp án dài hạn?',
-      'Các đáp án này sẽ được dùng để chấm điểm vô địch, vua phá lưới và đội gây sốc.',
+      'Các đáp án này sẽ được dùng để chấm điểm vô địch, vua phá lưới, cầu thủ trẻ xuất sắc nhất và Quả bóng vàng WORLD CUP.',
       { danger: true, confirmLabel: 'Lưu đáp án', cancelLabel: 'Huỷ' }
     ).then((ok) => ok && run('config', async () => {
       await saveTournamentConfig({ workspaceId, userId: ctx.userId, config: {
         openingKickoffAt: config?.openingKickoffAt || matches[0]?.kickoffAt,
-        championActual, topScorerActual, shockTeamActual,
+        championActual,
+        topScorerActual,
+        youngPlayerActual,
+        goldenBallActual,
         predictionsHiddenUntilKickoff: true,
         remindersEnabled: true,
       } });
       track('tournament_answers_saved');
     }, 'Đã lưu đáp án dài hạn và cấu hình giải.'));
+  }
+
+  function handleManualAdjustment() {
+    const target = memberOptions.find((option) => option.value === adjustUserId);
+    const amount = Math.trunc(Number(adjustAmount));
+    if (!target) return dialog.error('Chưa chọn người chơi', 'Chọn một thành viên trước khi cộng/trừ điểm.');
+    if (!Number.isInteger(amount) || amount <= 0) return dialog.error('Điểm chưa hợp lệ', 'Nhập số điểm nguyên lớn hơn 0.');
+    const signedPoints = adjustMode === 'subtract' ? -amount : amount;
+    const confirmLabel = signedPoints > 0 ? 'Cộng điểm' : 'Trừ điểm';
+    const reason = normalizePushText(adjustReason, 180);
+
+    return dialog.confirm(
+      `${confirmLabel} cho ${target.label}?`,
+      `${signedPoints > 0 ? '+' : ''}${signedPoints} điểm${reason ? ` · ${reason}` : ''}. Thao tác này sẽ được lưu vào lịch sử admin.`,
+      { danger: signedPoints < 0, confirmLabel, cancelLabel: 'Huỷ' }
+    ).then((ok) => ok && run('manual-points', async () => {
+      await saveManualPointAdjustment({
+        workspaceId,
+        userId: ctx.userId,
+        targetUserId: adjustUserId,
+        deltaPoints: signedPoints,
+        reason,
+      });
+      setAdjustAmount('');
+      setAdjustReason('');
+      track('manual_points_adjusted', { delta_points: signedPoints });
+    }, `Đã ${signedPoints > 0 ? 'cộng' : 'trừ'} ${Math.abs(signedPoints)} điểm cho ${target.label}.`));
   }
 
   function handleReminder() {
@@ -185,32 +237,6 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
     }, `Đã gửi kích war trận #${hotMatch.matchNo} tới workspace.`));
   }
 
-  function handleResetTodayTrivia() {
-    return dialog.confirm(
-      'Reset Hỏi vui hôm nay?',
-      `Xoá toàn bộ câu trả lời Hỏi vui ngày ${todayKey} trong workspace hiện tại. Người chơi có thể trả lời lại câu hôm nay.`,
-      { danger: true, confirmLabel: 'Reset Hỏi vui', cancelLabel: 'Huỷ' }
-    ).then((ok) => ok && run('reset-trivia', async () => {
-      const deletedCount = await resetTodayTriviaAnswers({ workspaceId, userId: ctx.userId, dateKey: todayKey });
-      track('today_trivia_answers_reset', { date_key: todayKey, deleted_count: deletedCount });
-      return deletedCount;
-    }, (deletedCount) => `Đã xoá ${deletedCount} câu trả lời Hỏi vui hôm nay.`));
-  }
-
-  function handleResetLeaderboard() {
-    return dialog.confirm(
-      'Reset toàn bộ leaderboard workspace?',
-      'Xoá dự đoán trận, câu trả lời và dự đoán dài hạn của workspace hiện tại. Thao tác này đưa điểm leaderboard của workspace về gần 0 và không thể hoàn tác từ app.',
-      { danger: true, confirmLabel: 'Reset leaderboard', cancelLabel: 'Huỷ' }
-    ).then((ok) => ok && run('reset-leaderboard', async () => {
-      const summary = await resetWorkspaceLeaderboardData({ workspaceId, userId: ctx.userId });
-      track('workspace_leaderboard_reset', summary);
-      return summary;
-    }, (summary) => (
-      `Đã xoá ${summary.groupDailyAnswers} câu trả lời, ${summary.groupPredictions} dự đoán trận và ${summary.longTermBets} dự đoán dài hạn.`
-    )));
-  }
-
   return (
     <div className="admin-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="admin-panel" role="dialog" aria-modal="true" aria-label="Trung tâm điều hành giải">
@@ -233,9 +259,10 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
 
           <article className="admin-card">
             <h3>Đáp án dài hạn</h3>
-            <input value={championActual} onChange={(e) => setChampionActual(e.target.value)} placeholder="Đội vô địch" />
-            <input value={topScorerActual} onChange={(e) => setTopScorerActual(e.target.value)} placeholder="Vua phá lưới" />
-            <input value={shockTeamActual} onChange={(e) => setShockTeamActual(e.target.value)} placeholder="Đội gây sốc" />
+            <Select value={championActual} onChange={setChampionActual} options={teamOptions} placeholder="Đội vô địch" />
+            <Select value={topScorerActual} onChange={setTopScorerActual} options={playerOptions} placeholder="Vua phá lưới" />
+            <Select value={youngPlayerActual} onChange={setYoungPlayerActual} options={playerOptions} placeholder="Cầu thủ trẻ xuất sắc nhất" />
+            <Select value={goldenBallActual} onChange={setGoldenBallActual} options={playerOptions} placeholder="Quả bóng vàng WORLD CUP" />
             <button type="button" className="primary-btn" disabled={!!busy} onClick={handleConfig}>{busy === 'config' ? 'Đang lưu...' : 'Lưu và chấm điểm'}</button>
           </article>
 
@@ -260,14 +287,18 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
             <button type="button" className="secondary-btn" disabled={!!busy} onClick={handleRecap}>Gửi recap ngày</button>
           </article>
 
-          <article className="admin-card admin-danger-zone">
-            <h3>Reset dữ liệu workspace</h3>
-            <p>Chạy trực tiếp trong workspace hiện tại, có filter <code>workspace_id</code> và đi qua RLS. Không dùng tab Migrations.</p>
-            <button type="button" className="secondary-btn danger" disabled={!!busy} onClick={handleResetTodayTrivia}>
-              {busy === 'reset-trivia' ? 'Đang reset...' : 'Reset Hỏi vui hôm nay'}
-            </button>
-            <button type="button" className="secondary-btn danger" disabled={!!busy} onClick={handleResetLeaderboard}>
-              {busy === 'reset-leaderboard' ? 'Đang reset...' : 'Reset leaderboard workspace'}
+          <article className="admin-card admin-score-adjust-card">
+            <h3>Sửa điểm cá nhân</h3>
+            <p>Chọn thành viên, nhập số điểm rồi xác nhận cộng hoặc trừ. Mỗi lần chỉnh sẽ được ghi audit.</p>
+            <Select value={adjustUserId} onChange={setAdjustUserId} options={memberOptions} placeholder="Chọn người chơi" />
+            <div className="admin-toggle-row" role="group" aria-label="Kiểu sửa điểm">
+              <button type="button" className={adjustMode === 'add' ? 'active' : ''} onClick={() => setAdjustMode('add')}>Cộng điểm</button>
+              <button type="button" className={adjustMode === 'subtract' ? 'active' : ''} onClick={() => setAdjustMode('subtract')}>Trừ điểm</button>
+            </div>
+            <input type="number" min="1" step="1" value={adjustAmount} onChange={(event) => setAdjustAmount(event.target.value)} placeholder="Số điểm" />
+            <textarea value={adjustReason} onChange={(event) => setAdjustReason(event.target.value)} placeholder="Lý do chỉnh điểm" rows={3} maxLength={180} />
+            <button type="button" className="primary-btn" disabled={!!busy || !memberOptions.length} onClick={handleManualAdjustment}>
+              {busy === 'manual-points' ? 'Đang lưu...' : adjustMode === 'subtract' ? 'Trừ điểm' : 'Cộng điểm'}
             </button>
           </article>
         </div>
@@ -276,12 +307,37 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
   );
 }
 
+function buildMemberOptions({ members = [], standings = [], ctx }) {
+  const byId = new Map();
+  for (const member of members) {
+    if (!member?.user_id) continue;
+    byId.set(member.user_id, {
+      value: member.user_id,
+      label: member.full_name || `Người chơi ${String(member.user_id).slice(0, 4)}`,
+    });
+  }
+  for (const row of standings) {
+    if (!row?.participantId || byId.has(row.participantId)) continue;
+    byId.set(row.participantId, {
+      value: row.participantId,
+      label: row.displayName || `Người chơi ${String(row.participantId).slice(0, 4)}`,
+    });
+  }
+  if (ctx?.userId && !byId.has(ctx.userId)) {
+    byId.set(ctx.userId, {
+      value: ctx.userId,
+      label: ctx.fullName || `Người chơi ${String(ctx.userId).slice(0, 4)}`,
+    });
+  }
+  return [...byId.values()].sort((a, b) => String(a.label).localeCompare(String(b.label), 'vi'));
+}
+
 function getLocalDateKey() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date());
 }
 
 function getMatchDateKey(match) {
-  return match?.matchDay || String(match?.kickoffAt || '').slice(0, 10);
+  return match?.matchDay || dateKeyInVietnamTimeZone(match?.kickoffAt);
 }
 
 function hasUnknownTeam(match) {

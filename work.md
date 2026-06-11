@@ -19,34 +19,41 @@
 
 ### 4. Architecture & Flow
 - **Core Flow:** `Mushy Shell/App Context -> src/lib/context.js -> src/App.jsx -> Supabase app schema/API routes -> UI state / scoreboard / room / admin tools`
-- **Data Flow:** `Static match + quiz datasets -> runtime merge with Supabase matches/app_config/predictions -> optional live-score enrichment -> scoring/leaderboard/prediction room render -> persist updates back to Supabase`
-- **Rules:** Query app data through schema-scoped `db`; use workspace-scoped reads/writes; admin tools flow through `src/components/TournamentAdmin.jsx` + `src/lib/app/tournament-service.js`; long-term predictions now lock before playoff via `getLongTermLockAt()` in `src/App.jsx`; live score polling is currently every 3 minutes from `src/App.jsx`; tests exist for scoring/quiz/AI parsing but `npm test` is currently blocked in this environment by `spawn EPERM`.
+- **Data Flow:** `Static match + quiz datasets -> runtime merge with Supabase matches/app_config/predictions/manual adjustments -> optional live-score enrichment -> scoring/leaderboard/prediction room render -> persist updates back to Supabase`
+- **Rules:** Query app data through schema-scoped `db`; use workspace-scoped reads/writes; admin tools flow through `src/components/TournamentAdmin.jsx` + `src/lib/app/tournament-service.js`; long-term predictions lock before playoff via `getLongTermLockAt()` in `src/App.jsx` and DB trigger replacement in `migrations/009_long_term_players_and_manual_points.sql`; live score polling is currently every 3 minutes from `src/App.jsx`; tests exist for scoring/quiz/AI parsing but `npm test` is currently blocked in this environment by `spawn EPERM`.
 
 ### 5. Progress (State: Implemented vs Planned)
-**✅ Completed (Implemented):**
+**Completed (Implemented):**
 - Main mini-app shell, tab navigation, match cards, daily questions, long-term card, leaderboard, rules, and prediction room are implemented in `src/App.jsx`.
 - Supabase runtime state loading and admin tournament sync/config/result flows are implemented in `src/lib/app/tournament-service.js` and `src/components/TournamentAdmin.jsx`.
 - Serverless live score proxy with primary/fallback providers is implemented in `api/live-scores.js`.
 - Match AI insight generation, cache, quota, and validation are implemented in `api/match-insight.js` and `src/lib/app/match-insight.js`.
 - Core schema/migrations for predictions, results, room messages, AI insights, tournament ops, and visibility rules exist in `migrations/002_nha_tien_tri_schema.sql` through `migrations/008_prediction_room_visibility.sql`.
 - Recent UI changes include responsive notification bell handling, saved-prediction card state, compact team labels, and custom select behavior in `src/App.jsx`, `src/App.css`, and `src/components/Select.jsx`.
+- Long-term predictions now use player awards (`top_scorer`, `young_player`, `golden_ball`) with country-name player suggestions in `src/App.jsx` and full 48-team roster data from Bongdaplus in `src/lib/app/worldcup-data.js`; player values intentionally omit country flags.
+- Admin manual point adjustments are implemented through `src/components/TournamentAdmin.jsx`, `src/lib/app/tournament-service.js`, `src/lib/app/scoring.js`, and `migrations/009_long_term_players_and_manual_points.sql`.
+- Football group standings UI now shows only `Doi`, `Hieu so`, and `Diem` columns in `src/App.jsx`.
 
-**🚧 Intention / In Progress (WIP & Planned):**
+**Intention / In Progress (WIP & Planned):**
 - UI is still being actively trimmed and refined in `src/App.jsx` / `src/App.css`; current worktree has uncommitted frontend changes.
-- `work.md` did not previously exist; this file is the first formal handoff snapshot.
+- Migration `migrations/009_long_term_players_and_manual_points.sql` still needs submission through the Mushy Admin Portal reviewer before DB-backed new fields/manual points work in shared environments.
 - Automated tests need rerun in an environment that allows Node test child-process spawning; current `npm test` result is inconclusive for application correctness.
-- Long-term playoff lock currently lives in frontend helper logic `src/App.jsx`; if the rule must be DB-enforced, `src/lib/app/tournament-service.js` plus migrations may need follow-up.
 
 ### 6. Changelog
 *(Keep only the 5-10 most recent changes. Always replace YYYY-MM-DD with the actual current date)*
+- `[2026-06-11]` [IN PROGRESS] Added long-term player-award fields, expanded player suggestions with flags, admin manual point adjustments, compact standings columns, and migration `migrations/009_long_term_players_and_manual_points.sql`.
+- `[2026-06-11]` [STABLE] Updated `src/lib/app/worldcup-data.js` to generate 1,255 player suggestions from 48 World Cup squads and sort team dropdown options A-Z with country flags.
+- `[2026-06-11]` [STABLE] Updated player comboboxes to omit flags in selected/player option text and show only featured players by default, while search still covers all 1,255 players.
+- `[2026-06-11]` [STABLE] Updated team select options to sort by FIFA ranking and omit flag icons, showing labels like `Phap · FIFA #1`.
+- `[2026-06-11]` [STABLE] `npm run build` completed successfully after long-term/admin/scoring updates; browser verification passed for long-term form, player suggestions, standings columns, and admin panel.
 - `[2026-06-11]` [IN PROGRESS] Added `work.md` handoff context based on current repo inspection and command verification.
 - `[2026-06-11]` [IN PROGRESS] Frontend iteration in `src/App.jsx` and `src/App.css` removed the hero CTA button and continued trimming non-essential UI text/actions.
 - `[2026-06-11]` [IN PROGRESS] Notification bell sizing/placement was made more responsive in `src/App.css` to reduce mobile overflow risk.
-- `[2026-06-11]` [IN PROGRESS] Long-term prediction locking was shifted to pre-playoff timing in `src/App.jsx` via `getLongTermLockAt()`.
+- `[2026-06-11]` [IN PROGRESS] Long-term prediction locking was shifted to pre-playoff timing in `src/App.jsx`.
 - `[2026-06-11]` [IN PROGRESS] Saved prediction cards and compact team-name rendering were updated in `src/App.jsx` and `src/App.css`.
 - `[2026-06-11]` [STABLE] `npm run build` completed successfully.
 - `[2026-06-11]` [IN PROGRESS] `npm test` failed due to environment-level `spawn EPERM`, affecting `src/lib/app/scoring.test.js`, `src/lib/app/match-insight.test.js`, and `src/lib/app/quiz-data.test.js`.
 
 ### 7. Current Focus
-- **Problem:** The repo is mid-iteration on prediction-card and room UI polish, and automated test execution is currently blocked by environment permissions rather than assertion failures.
-- **Next Action:** Continue UI cleanup in `src/App.jsx` / `src/App.css`, then rerun `npm test` in a shell that permits Node child-process spawning and verify long-term playoff lock behavior against real match data.
+- **Problem:** Code-level build/browser verification is passing, but DB-backed new long-term columns and manual point adjustments require applying `migrations/009_long_term_players_and_manual_points.sql`; automated test execution is still blocked by environment permissions rather than assertion failures.
+- **Next Action:** Submit migration 009 through Admin Portal, then rerun `npm test` in a shell that permits Node child-process spawning and sanity-check manual point adjustment against real Supabase data.
