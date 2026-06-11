@@ -1172,6 +1172,17 @@ button.today-checklist-item:hover {
   align-items: stretch;
 }
 
+.compact-actions.room-preview-actions {
+  grid-template-columns: 46px minmax(132px, 0.72fr) minmax(150px, 1fr);
+}
+
+.room-preview-actions .primary-btn.small,
+.room-preview-actions .secondary-btn.small {
+  min-width: 0;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
 .room-action-btn {
   width: 100%;
   min-width: 0;
@@ -4020,6 +4031,10 @@ main,
   grid-template-columns: 46px minmax(0, 1fr);
   align-items: stretch;
   margin-top: 8px;
+}
+
+.compact-actions.room-preview-actions {
+  grid-template-columns: 46px minmax(132px, 0.72fr) minmax(150px, 1fr);
 }
 
 .compact-actions.saved-actions {

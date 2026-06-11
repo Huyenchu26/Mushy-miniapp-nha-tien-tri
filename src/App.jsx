@@ -825,11 +825,6 @@ export default function App() {
   }
 
   function handleOpenPredictionRoom(match) {
-    const prediction = predictionMap.get(Number(match.matchNo));
-    if (!prediction) {
-      setNotice('Bạn cần lưu dự đoán trước khi vào phòng trận này.');
-      return;
-    }
     setRoomMatch(match);
     setRoomError('');
     if (localSimulation && isMockContext(ctx)) {
@@ -1936,7 +1931,7 @@ function MatchCardPrototype({
   const homeScore = normalizeDraftScore(homePred);
   const awayScore = normalizeDraftScore(awayPred);
   const canUseDoubleDown = teamsKnown && !locked && isTodayMatchDay && !doubleDownReserved;
-  const canOpenRoom = !!prediction;
+  const canOpenRoom = teamsKnown;
   const draftIsSaved = !!prediction
     && Number(prediction.homePred) === homeScore
     && Number(prediction.awayPred) === awayScore
@@ -1997,11 +1992,13 @@ function MatchCardPrototype({
 
   function handleCardOpen(event) {
     if (event.target.closest('button')) return;
+    if (!canOpenRoom) return;
     onOpenRoom?.(match);
   }
 
   function handleCardKeyDown(event) {
     if (event.target.closest('button')) return;
+    if (!canOpenRoom) return;
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
     onOpenRoom?.(match);
@@ -2092,7 +2089,7 @@ function MatchCardPrototype({
             </div>
           </div>
 
-          <div className="match-actions compact-actions">
+          <div className={`match-actions compact-actions ${!prediction ? 'room-preview-actions' : ''}`}>
             <button
               type="button"
               className={`double-btn star-btn ${doubleDown ? 'active' : ''}`}
@@ -2118,6 +2115,19 @@ function MatchCardPrototype({
             >
               {predictionButtonLabel}
             </button>
+            {!prediction ? (
+              <button
+                type="button"
+                className="secondary-btn small"
+                disabled={!canOpenRoom}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onOpenRoom?.(match);
+                }}
+              >
+                Phòng dự đoán
+              </button>
+            ) : null}
           </div>
           <p className="double-hint">
             {!teamsKnown
@@ -4279,7 +4289,12 @@ function RulesScreen() {
     {
       icon: Flame,
       title: 'Streak',
-      body: 'Cứ 3 trận liên tiếp đúng tỉ số chính xác sẽ được cộng thêm 5đ.',
+      body: 'Streak là điểm thưởng theo chuỗi trận: cứ 3 trận liên tiếp đoán đúng tỉ số chính xác thì cộng thêm 5đ. Điểm này chạy theo từng trận, không phải kết quả dự đoán trước giải.',
+    },
+    {
+      icon: Trophy,
+      title: 'BXH dài hạn',
+      body: 'Dài hạn là nhóm kèo chọn trước vòng play-off như đội vô địch, vua phá lưới, cầu thủ trẻ xuất sắc nhất và Quả bóng vàng World Cup. Điểm chỉ được cộng khi BTC nhập kết quả chính thức, khác với streak là bonus phát sinh từ từng trận.',
     },
     {
       icon: BookOpen,
