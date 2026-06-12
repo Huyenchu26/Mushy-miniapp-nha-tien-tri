@@ -3317,7 +3317,7 @@ function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isTo
     <>
       {answerControls}
 
-      {resultText ? (
+      {resultText && !hasOfficialAnswer ? (
         <div className={`question-result ${state}`} role="status">
           {resultText}
         </div>
