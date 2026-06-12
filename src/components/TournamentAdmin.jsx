@@ -204,7 +204,7 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
         remindersEnabled: config?.remindersEnabled !== false,
       } });
       track('daily_question_answer_saved', { question_key: selectedDailyQuestion.key });
-    }, `Đã chốt đáp án câu hỏi ngày ${formatAdminDate(selectedDailyQuestion.date)}.`));
+    }, `Đã chốt đáp án ngày ${formatAdminDate(selectedDailyQuestion.date)} và đồng bộ điểm vui cho BXH.`));
   }
 
   function handleManualAdjustment() {

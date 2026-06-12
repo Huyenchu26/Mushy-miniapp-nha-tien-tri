@@ -10,7 +10,7 @@ import {
   mergeMockMembers,
   mergeMockPredictions,
 } from './lib/app/mock-simulation.js';
-import { computeStandings, dailyPoints, filterCompetitionWindow, isFinished, matchBasePoints, matchScoreBreakdown, normalizeAnswer, outcome } from './lib/app/scoring.js';
+import { computeStandings, dailyPoints, filterCompetitionWindow, isFinished, isQuestionScorable, matchBasePoints, matchScoreBreakdown, normalizeAnswer, outcome } from './lib/app/scoring.js';
 import { ALL_SCORING_QUESTIONS, getTriviaQuestionForUserDate, triviaStreak } from './lib/app/quiz-data.js';
 import { selectInsightWarmupMatches } from './lib/app/match-insight.js';
 import Select from './components/Select.jsx';
@@ -197,6 +197,7 @@ export default function App() {
   const chatSendTimesRef = useRef([]);
   const chatRepeatRef = useRef([]);
   const tournamentRefreshTimerRef = useRef(null);
+  const tournamentRefreshNeedsAnswersRef = useRef(false);
   const tournamentResumeRefreshRef = useRef(0);
   const matchInsightRequestsRef = useRef(new Map());
   const matchInsightWarmupKeyRef = useRef('');
@@ -324,23 +325,27 @@ export default function App() {
     if (!ctx?.userId || !scope?.workspaceId) return undefined;
     if (localSimulation && isMockContext(ctx)) return undefined;
 
-    const scheduleRefresh = () => {
+    const scheduleRefresh = ({ includeAnswers = false } = {}) => {
+      if (includeAnswers) tournamentRefreshNeedsAnswersRef.current = true;
       if (tournamentRefreshTimerRef.current) {
         window.clearTimeout(tournamentRefreshTimerRef.current);
       }
       tournamentRefreshTimerRef.current = window.setTimeout(() => {
         tournamentRefreshTimerRef.current = null;
-        refreshTournamentState({ silent: true });
+        const shouldRefreshAnswers = tournamentRefreshNeedsAnswersRef.current;
+        tournamentRefreshNeedsAnswersRef.current = false;
+        refreshTournamentState({ silent: true, includeAnswers: shouldRefreshAnswers });
       }, TOURNAMENT_REALTIME_DEBOUNCE_MS);
     };
 
     const unsubscribers = [
-      subscribeToTable('matches', scope.workspaceId, scheduleRefresh),
-      subscribeToTable('long_term_bets', scope.workspaceId, scheduleRefresh),
-      subscribeToTable('app_config', scope.workspaceId, scheduleRefresh),
+      subscribeToTable('matches', scope.workspaceId, () => scheduleRefresh()),
+      subscribeToTable('long_term_bets', scope.workspaceId, () => scheduleRefresh()),
+      subscribeToTable('app_config', scope.workspaceId, () => scheduleRefresh({ includeAnswers: true })),
+      subscribeToTable('group_daily_answers', scope.workspaceId, () => scheduleRefresh({ includeAnswers: true })),
     ];
     const interval = window.setInterval(() => {
-      refreshTournamentState({ silent: true });
+      refreshTournamentState({ silent: true, includeAnswers: true });
     }, TOURNAMENT_POLL_FALLBACK_MS);
 
     return () => {
@@ -348,6 +353,7 @@ export default function App() {
         window.clearTimeout(tournamentRefreshTimerRef.current);
         tournamentRefreshTimerRef.current = null;
       }
+      tournamentRefreshNeedsAnswersRef.current = false;
       unsubscribers.forEach((unsubscribe) => unsubscribe?.());
       window.clearInterval(interval);
     };
@@ -363,7 +369,7 @@ export default function App() {
       const now = Date.now();
       if (now - tournamentResumeRefreshRef.current < TOURNAMENT_RESUME_REFRESH_THROTTLE_MS) return;
       tournamentResumeRefreshRef.current = now;
-      refreshTournamentState({ silent: true });
+      refreshTournamentState({ silent: true, includeAnswers: true });
     };
 
     document.addEventListener('visibilitychange', refreshOnResume);
@@ -533,8 +539,9 @@ export default function App() {
       longTermBets: allLongTermBets,
       appConfig,
       manualAdjustments,
+      now: new Date(nowMs),
     }),
-    [members, predictions, answers, matchesWithOfficialScores, dailyQuestions, allLongTermBets, appConfig, manualAdjustments]
+    [members, predictions, answers, matchesWithOfficialScores, dailyQuestions, allLongTermBets, appConfig, manualAdjustments, nowMs]
   );
   const standingsByMode = useMemo(() => {
     const result = { total: standings };
@@ -554,10 +561,11 @@ export default function App() {
         questions: window.questions,
         longTermBets: [],
         appConfig: null,
+        now: new Date(nowMs),
       });
     }
     return result;
-  }, [standings, members, predictions, answers, matchesWithOfficialScores, dailyQuestions]);
+  }, [standings, members, predictions, answers, matchesWithOfficialScores, dailyQuestions, nowMs]);
   const currentStanding = standings.find((row) => row.participantId === ctx?.userId);
   const currentUserPredictions = useMemo(
     () => predictions.filter((prediction) => prediction.createdBy === ctx?.userId),
@@ -583,9 +591,10 @@ export default function App() {
       answers: currentUserAnswers,
       matches: matchesWithOfficialScores,
       questions: [...dailyQuestions, ...ALL_SCORING_QUESTIONS],
-      currentStanding
+      currentStanding,
+      now: new Date(nowMs),
     }),
-    [currentUserPredictions, currentUserAnswers, matchesWithOfficialScores, dailyQuestions, currentStanding]
+    [currentUserPredictions, currentUserAnswers, matchesWithOfficialScores, dailyQuestions, currentStanding, nowMs]
   );
   const pointNotifications = useMemo(
     () => buildPointNotifications({
@@ -593,8 +602,9 @@ export default function App() {
       answers: currentUserAnswers,
       matches: matchesWithOfficialScores,
       questions: [...dailyQuestions, ...ALL_SCORING_QUESTIONS],
+      now: new Date(nowMs),
     }),
-    [currentUserPredictions, currentUserAnswers, matchesWithOfficialScores, dailyQuestions]
+    [currentUserPredictions, currentUserAnswers, matchesWithOfficialScores, dailyQuestions, nowMs]
   );
   const filteredMatches = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -822,11 +832,15 @@ export default function App() {
     if (ownLongTermBet) setLongTermBet(ownLongTermBet);
   }
 
-  async function refreshTournamentState({ silent = false } = {}) {
+  async function refreshTournamentState({ silent = false, includeAnswers = false } = {}) {
     if (!scope?.workspaceId || (localSimulation && isMockContext(ctx))) return;
     try {
-      const nextTournamentState = await fetchTournamentState(scope.workspaceId);
+      const [nextTournamentState, answerRows] = await Promise.all([
+        fetchTournamentState(scope.workspaceId),
+        includeAnswers ? fetchDailyAnswers(scope.workspaceId) : Promise.resolve(null),
+      ]);
       applyTournamentState(nextTournamentState);
+      if (answerRows) setAnswers(answerRows);
     } catch (err) {
       if (!silent) {
         setError(err.message || 'Khong tai duoc du lieu giai dau.');
@@ -850,7 +864,7 @@ export default function App() {
       if (existingTriviaAnswerForDate) {
         throw new Error('Hỏi vui hôm nay chỉ được trả lời một lần.');
       }
-      if (Date.now() >= new Date(question.closesAt).getTime() || (question.correctAnswer && question.kind !== 'trivia')) {
+      if (Date.now() >= new Date(question.closesAt).getTime()) {
         throw new Error('Câu hỏi này đã khóa.');
       }
       const cleanAnswer = String(answer || '').trim().replace(/\s+/g, ' ').slice(0, 280);
@@ -1858,7 +1872,7 @@ function TodayChecklist({
     .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime())[0] || null;
   const todayQuestion = dailyQuestions.find((question) => question.date === today);
   const dailyAnswered = todayQuestion ? answerMap.has(todayQuestion.key) : false;
-  const dailyLocked = todayQuestion ? Date.now() >= new Date(todayQuestion.closesAt).getTime() || !!todayQuestion.correctAnswer : false;
+  const dailyLocked = todayQuestion ? Date.now() >= new Date(todayQuestion.closesAt).getTime() : false;
   const triviaAnswered = triviaQuestion ? answerMap.has(triviaQuestion.key) : false;
   const triviaLocked = triviaQuestion ? Date.now() >= new Date(triviaQuestion.closesAt).getTime() : false;
   const doubleDownUsed = !!dailyDoubleDownMap.get(today);
@@ -3270,6 +3284,7 @@ function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isTo
   const footerText = questionFooterText({ answerLabel, officialAnswerLabel, answered, expired, hasOfficialAnswer });
   const resultText = questionResultText({ officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points });
   const summaryText = questionSummaryText({ answerLabel, officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points, question });
+  const scoreText = points > 0 ? `+${points}\u0111` : '0\u0111';
 
   useEffect(() => setDraft(answer?.answer || ''), [answer?.answer]);
 
@@ -3319,7 +3334,7 @@ function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isTo
 
       <div className="question-footer">
         <span>{footerText}</span>
-        {hasOfficialAnswer ? <strong className={`question-score ${isCorrect ? 'ok' : 'miss'}`}>+{points}đ</strong> : null}
+        {hasOfficialAnswer ? <strong className={`question-score ${isCorrect ? 'ok' : 'miss'}`}>{scoreText}</strong> : null}
         <button type="button" className="primary-btn small" disabled={locked || !draft || loading} onClick={handleSaveClick}>
           {loading ? 'Đang lưu...' : answered ? 'Đã trả lời' : 'Chốt câu trả lời'}
         </button>
@@ -3357,7 +3372,7 @@ function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isTo
             <span className={`question-status-pill ${state}`}>{questionStatusLabel(state)}</span>
           </div>
           <h3>{question.prompt}</h3>
-          <p>Khóa trả lời: {formatTime(question.closesAt)} · Đúng +{question.points || 2}đ</p>
+          <p>Ngày câu hỏi: {formatDate(question.date)} · Khóa: {formatTime(question.closesAt)} · Đúng +{question.points || 2}đ</p>
         </div>
         {isToggleable ? (
           <button type="button" className="question-collapse-btn" onClick={onToggle}>
@@ -3373,12 +3388,16 @@ function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isTo
 }
 
 function getDailyQuestionState(question, answer) {
-  const hasOfficialAnswer = !!question.correctAnswer;
   const answered = !!answer;
   const expired = Date.now() >= new Date(question.closesAt).getTime();
-  const points = dailyPoints(answer, question);
+  const hasOfficialAnswer = isQuestionScorable(question);
+  const points = hasOfficialAnswer ? dailyPoints(answer, question) : 0;
   const isCorrect = hasOfficialAnswer && answered && points > 0;
-  const state = hasOfficialAnswer ? (isCorrect ? 'correct' : 'wrong') : answered ? 'pending' : expired ? 'locked' : 'open';
+  const state = hasOfficialAnswer
+    ? answered
+      ? isCorrect ? 'correct' : 'wrong'
+      : 'locked'
+    : answered ? 'pending' : expired ? 'locked' : 'open';
   return { hasOfficialAnswer, answered, expired, points, isCorrect, state };
 }
 
@@ -3406,7 +3425,7 @@ function questionStatusLabel(state) {
 
 function questionFooterText({ answerLabel, officialAnswerLabel, answered, expired, hasOfficialAnswer }) {
   if (hasOfficialAnswer && answered) return `Bạn trả lời: ${answerLabel} · Đáp án: ${officialAnswerLabel}`;
-  if (hasOfficialAnswer) return `Đáp án: ${officialAnswerLabel}`;
+  if (hasOfficialAnswer) return `Bạn chưa trả lời · Đáp án: ${officialAnswerLabel}`;
   if (answered) return 'Chờ kết quả';
   if (expired) return 'Đã khóa, bạn chưa trả lời';
   return 'Chọn 1 câu trả lời';
@@ -3418,7 +3437,7 @@ function questionResultText({ officialAnswerLabel, answered, expired, hasOfficia
       ? `Bạn đúng, nhận +${points}đ.`
       : `Bạn chưa đúng. Đáp án là ${officialAnswerLabel}.`;
   }
-  if (hasOfficialAnswer) return `Câu hỏi đã chốt đáp án: ${officialAnswerLabel}.`;
+  if (hasOfficialAnswer) return `Bạn chưa trả lời. Đáp án là ${officialAnswerLabel}.`;
   if (answered) return '';
   if (expired) return 'Câu hỏi đã khóa và bạn chưa trả lời.';
   return '';
@@ -3432,7 +3451,7 @@ function questionSummaryText({ answerLabel, officialAnswerLabel, answered, expir
   }
   if (answered) return `Bạn chọn ${answerLabel || 'đáp án đã lưu'} · Chờ kết quả`;
   if (expired) return `Đã khóa lúc ${formatTime(question.closesAt)} · Chưa trả lời`;
-  return `Khóa lúc ${formatTime(question.closesAt)} · Đúng +${question.points || 2}đ`;
+  return `Ngày câu hỏi: ${formatDate(question.date)} · Khóa: ${formatTime(question.closesAt)} · Đúng +${question.points || 2}đ`;
 }
 
 function LongTermBetCard({ bet, locked, onSave }) {
@@ -4002,6 +4021,7 @@ function buildScoreHistory({
   matches = [],
   questions = [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS],
   currentStanding = null,
+  now = new Date(),
 }) {
   const matchesByNo = new Map(matches.map((match) => [Number(match.matchNo), match]));
   const questionsByKey = new Map(questions.map((question) => [question.key, question]));
@@ -4060,6 +4080,7 @@ function buildScoreHistory({
   const dailyItems = answers
     .map((answer) => {
       const question = questionsByKey.get(answer.questionKey);
+      if (!isQuestionScorable(question, now)) return null;
       const points = dailyPoints(answer, question);
       if (!question || points <= 0) return null;
 
@@ -4113,6 +4134,7 @@ function buildPointNotifications({
   answers = [],
   matches = [],
   questions = [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS],
+  now = new Date(),
 }) {
   const matchesByNo = new Map(matches.map((match) => [Number(match.matchNo), match]));
   const questionsByKey = new Map(questions.map((question) => [question.key, question]));
@@ -4143,7 +4165,7 @@ function buildPointNotifications({
   const answerItems = answers
     .map((answer) => {
       const question = questionsByKey.get(answer.questionKey);
-      if (!question?.correctAnswer) return null;
+      if (!isQuestionScorable(question, now)) return null;
       const points = dailyPoints(answer, question);
 
       return {
@@ -4670,6 +4692,7 @@ function buildStandings({
   longTermBets = [],
   appConfig = null,
   manualAdjustments = [],
+  now = new Date(),
 }) {
   const memberMap = new Map(members.map((member) => [member.user_id, member]));
   const userIds = new Set([
@@ -4694,6 +4717,7 @@ function buildStandings({
     longTermBets: longTermBets.map((bet) => ({ ...bet, participantId: bet.createdBy })),
     appConfig,
     manualAdjustments: manualAdjustments.map((adjustment) => ({ ...adjustment, participantId: adjustment.targetUserId })),
+    now,
   });
 }
 
@@ -4706,6 +4730,7 @@ function computeStandingsForUsers({
   longTermBets = [],
   appConfig = null,
   manualAdjustments = [],
+  now = new Date(),
 }) {
   return computeStandings({
     participants,
@@ -4716,6 +4741,7 @@ function computeStandingsForUsers({
     longTermBets,
     appConfig,
     manualAdjustments,
+    now,
   });
 }
 

@@ -86,6 +86,35 @@ test('daily points compare answers case-insensitively', () => {
   assert.equal(dailyPoints({ answer: 'khong' }, { correctAnswer: 'Co', points: 2 }), 0);
 });
 
+test('daily answer points are applied only after the question lock time', () => {
+  const participants = [{ id: 'p1', displayName: 'Lan' }];
+  const dailyAnswers = [{ participantId: 'p1', questionKey: 'q-test', answer: 'Co' }];
+  const questions = [{
+    key: 'q-test',
+    correctAnswer: 'Co',
+    closesAt: '2026-06-12T17:00:00.000Z',
+    points: 2,
+  }];
+
+  const beforeLock = computeStandings({
+    participants,
+    dailyAnswers,
+    questions,
+    matches: [],
+    now: new Date('2026-06-12T16:59:00.000Z'),
+  });
+  assert.equal(beforeLock[0].dailyPts, 0);
+
+  const afterLock = computeStandings({
+    participants,
+    dailyAnswers,
+    questions,
+    matches: [],
+    now: new Date('2026-06-12T17:00:00.000Z'),
+  });
+  assert.equal(afterLock[0].dailyPts, 2);
+});
+
 test('long-term picks score only after matching answers are configured', () => {
   assert.deepEqual(longTermPoints({
     champion: 'France',

@@ -126,6 +126,15 @@ export function dailyPoints(answer, question) {
   return Number(question.points || 2);
 }
 
+export function isQuestionScorable(question, now = new Date()) {
+  if (!question?.correctAnswer) return false;
+  if (!question.closesAt) return true;
+  const closeMs = new Date(question.closesAt).getTime();
+  if (!Number.isFinite(closeMs)) return true;
+  const nowMs = now instanceof Date ? now.getTime() : new Date(now).getTime();
+  return Number.isFinite(nowMs) && nowMs >= closeMs;
+}
+
 export function longTermPoints(bet, config) {
   if (!bet || !config) return { total: 0, champion: 0, topScorer: 0, youngPlayer: 0, goldenBall: 0 };
   const champion = matchesAnswer(bet.champion, config.championActual) ? SCORE_RULES.champion : 0;
@@ -164,6 +173,7 @@ export function computeStandings({
   appConfig = null,
   manualAdjustments = [],
   includeLongTerm = true,
+  now = new Date(),
 } = {}) {
   const matchesByNo = new Map(matches.map((match) => [Number(match.matchNo), match]));
   const questionsByKey = new Map(questions.map((question) => [question.key, question]));
@@ -198,6 +208,7 @@ export function computeStandings({
     const streakPts = streakBonus(predictionMap, matches);
     const dailyPts = participantAnswers.reduce((sum, answer) => {
       const question = questionsByKey.get(answer.questionKey);
+      if (!isQuestionScorable(question, now)) return sum;
       return sum + dailyPoints(answer, question);
     }, 0);
     const longTerm = includeLongTerm
