@@ -78,6 +78,7 @@ export async function saveTournamentConfig({ workspaceId, userId, config }) {
     top_scorer_actual: clean(config.topScorerActual),
     young_player_actual: clean(config.youngPlayerActual),
     golden_ball_actual: clean(config.goldenBallActual),
+    daily_question_answers: sanitizeDailyQuestionAnswers(config.dailyQuestionAnswers),
     predictions_hidden_until_kickoff: config.predictionsHiddenUntilKickoff !== false,
     reminders_enabled: config.remindersEnabled !== false,
   };
@@ -207,9 +208,21 @@ function toAppConfig(row) {
     youngPlayerActual: row.young_player_actual || '',
     goldenBallActual: row.golden_ball_actual || '',
     shockTeamActual: row.shock_team_actual || '',
+    dailyQuestionAnswers: row.daily_question_answers && typeof row.daily_question_answers === 'object'
+      ? row.daily_question_answers
+      : {},
     predictionsHiddenUntilKickoff: row.predictions_hidden_until_kickoff !== false,
     remindersEnabled: row.reminders_enabled !== false,
   };
+}
+
+function sanitizeDailyQuestionAnswers(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([key, answer]) => [String(key || '').trim(), clean(answer)])
+      .filter(([key, answer]) => key && answer)
+  );
 }
 
 function toLongTermBet(row) {

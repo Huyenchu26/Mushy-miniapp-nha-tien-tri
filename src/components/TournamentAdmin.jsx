@@ -13,7 +13,7 @@ import {
   syncTournamentSchedule,
 } from '../lib/app/tournament-service.js';
 
-export default function TournamentAdmin({ open, onClose, ctx, workspaceId, matches, members = [], standings, config, canManage = false, onChanged }) {
+export default function TournamentAdmin({ open, onClose, ctx, workspaceId, matches, dailyQuestions = [], members = [], standings, config, canManage = false, onChanged }) {
   const dialog = useDialog();
   const upcoming = useMemo(() => nearestReminderMatch(matches), [matches]);
   const todayKey = getLocalDateKey();
@@ -44,6 +44,8 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
   const [topScorerActual, setTopScorerActual] = useState('');
   const [youngPlayerActual, setYoungPlayerActual] = useState('');
   const [goldenBallActual, setGoldenBallActual] = useState('');
+  const [dailyQuestionKey, setDailyQuestionKey] = useState('');
+  const [dailyQuestionAnswer, setDailyQuestionAnswer] = useState('');
   const [adjustUserId, setAdjustUserId] = useState('');
   const [adjustMode, setAdjustMode] = useState('add');
   const [adjustAmount, setAdjustAmount] = useState('');
@@ -63,6 +65,22 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
     setYoungPlayerActual(config?.youngPlayerActual || '');
     setGoldenBallActual(config?.goldenBallActual || '');
   }, [config]);
+
+  const defaultDailyQuestion = dailyQuestions.find((question) => question.date === todayKey) || dailyQuestions[0] || null;
+
+  useEffect(() => {
+    if (!dailyQuestionKey && defaultDailyQuestion?.key) setDailyQuestionKey(defaultDailyQuestion.key);
+  }, [dailyQuestionKey, defaultDailyQuestion?.key]);
+
+  const selectedDailyQuestion = dailyQuestions.find((question) => question.key === dailyQuestionKey) || defaultDailyQuestion;
+
+  useEffect(() => {
+    if (!selectedDailyQuestion) {
+      setDailyQuestionAnswer('');
+      return;
+    }
+    setDailyQuestionAnswer(config?.dailyQuestionAnswers?.[selectedDailyQuestion.key] || selectedDailyQuestion.correctAnswer || '');
+  }, [config?.dailyQuestionAnswers, selectedDailyQuestion?.key, selectedDailyQuestion?.correctAnswer]);
 
   useEffect(() => {
     if (!hypeMatchNo && hotMatchFallback?.matchNo) setHypeMatchNo(String(hotMatchFallback.matchNo));
@@ -88,6 +106,17 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
     subLabel: player.nationality || player.team || '',
   })), []);
   const memberOptions = useMemo(() => buildMemberOptions({ members, standings, ctx }), [members, standings, ctx]);
+  const dailyQuestionOptions = useMemo(() => dailyQuestions.map((question) => ({
+    value: question.key,
+    label: `${formatAdminDate(question.date)} · ${question.prompt}`,
+  })), [dailyQuestions]);
+  const selectedDailyAnswerOptions = useMemo(
+    () => (selectedDailyQuestion?.options || []).map((option) => ({
+      value: option.value,
+      label: option.label || option.value,
+    })),
+    [selectedDailyQuestion]
+  );
 
   useEffect(() => {
     if (!adjustUserId && memberOptions[0]?.value) setAdjustUserId(memberOptions[0].value);
@@ -143,11 +172,39 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
         topScorerActual,
         youngPlayerActual,
         goldenBallActual,
+        dailyQuestionAnswers: config?.dailyQuestionAnswers || {},
         predictionsHiddenUntilKickoff: true,
         remindersEnabled: true,
       } });
       track('tournament_answers_saved');
     }, 'Đã lưu đáp án dài hạn và cấu hình giải.'));
+  }
+
+  function handleDailyQuestionAnswer() {
+    if (!selectedDailyQuestion) return dialog.error('Chưa chọn câu hỏi', 'Chọn một câu hỏi hằng ngày trước khi chốt đáp án.');
+    const answer = normalizePushText(dailyQuestionAnswer, 120);
+    if (!answer) return dialog.error('Thiếu đáp án', 'Nhập hoặc chọn đáp án đúng cho câu hỏi này.');
+
+    return dialog.confirm(
+      `Chốt đáp án ${formatAdminDate(selectedDailyQuestion.date)}?`,
+      `${selectedDailyQuestion.prompt}\n\nĐáp án: ${dailyAnswerLabel(answer, selectedDailyQuestion.options)}`,
+      { danger: true, confirmLabel: 'Chốt đáp án', cancelLabel: 'Huỷ' }
+    ).then((ok) => ok && run('daily-answer', async () => {
+      await saveTournamentConfig({ workspaceId, userId: ctx.userId, config: {
+        openingKickoffAt: config?.openingKickoffAt || matches[0]?.kickoffAt,
+        championActual: config?.championActual || championActual,
+        topScorerActual: config?.topScorerActual || topScorerActual,
+        youngPlayerActual: config?.youngPlayerActual || youngPlayerActual,
+        goldenBallActual: config?.goldenBallActual || goldenBallActual,
+        dailyQuestionAnswers: {
+          ...(config?.dailyQuestionAnswers || {}),
+          [selectedDailyQuestion.key]: answer,
+        },
+        predictionsHiddenUntilKickoff: config?.predictionsHiddenUntilKickoff !== false,
+        remindersEnabled: config?.remindersEnabled !== false,
+      } });
+      track('daily_question_answer_saved', { question_key: selectedDailyQuestion.key });
+    }, `Đã chốt đáp án câu hỏi ngày ${formatAdminDate(selectedDailyQuestion.date)}.`));
   }
 
   function handleManualAdjustment() {
@@ -267,6 +324,25 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
           </article>
 
           <article className="admin-card">
+            <h3>Đáp án câu hỏi hằng ngày</h3>
+            <p>Chốt câu hỏi chung của ngày. Câu hỏi vui random theo từng người chơi vẫn tự có đáp án.</p>
+            <Select value={selectedDailyQuestion?.key || ''} onChange={setDailyQuestionKey} options={dailyQuestionOptions} placeholder="Chọn câu hỏi" />
+            {selectedDailyQuestion ? (
+              <>
+                {selectedDailyAnswerOptions.length ? (
+                  <Select value={dailyQuestionAnswer} onChange={setDailyQuestionAnswer} options={selectedDailyAnswerOptions} placeholder="Chọn đáp án đúng" />
+                ) : (
+                  <input value={dailyQuestionAnswer} onChange={(event) => setDailyQuestionAnswer(event.target.value)} placeholder="Nhập đáp án đúng" maxLength={120} />
+                )}
+                <small>{selectedDailyQuestion.correctAnswer ? `Đã chốt: ${dailyAnswerLabel(selectedDailyQuestion.correctAnswer, selectedDailyQuestion.options)}` : 'Chưa chốt đáp án'}</small>
+              </>
+            ) : null}
+            <button type="button" className="primary-btn" disabled={!!busy || !selectedDailyQuestion} onClick={handleDailyQuestionAnswer}>
+              {busy === 'daily-answer' ? 'Đang chốt...' : 'Chốt đáp án'}
+            </button>
+          </article>
+
+          <article className="admin-card">
             <h3>Tương tác</h3>
             <p>Nhắc riêng người chưa dự trận gần nhất hoặc gửi recap workspace.</p>
             <div className="admin-hype-box">
@@ -353,6 +429,20 @@ function formatAdminTime(value) {
     hour12: false,
     timeZone: 'Asia/Ho_Chi_Minh',
   }).format(date);
+}
+
+function formatAdminDate(value) {
+  const date = new Date(`${value}T12:00:00Z`);
+  if (!Number.isFinite(date.getTime())) return String(value || '');
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    timeZone: 'Asia/Ho_Chi_Minh',
+  }).format(date);
+}
+
+function dailyAnswerLabel(value, options = []) {
+  return options.find((option) => option.value === value)?.label || value;
 }
 
 function normalizePushText(value, maxLength) {

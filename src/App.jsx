@@ -38,6 +38,8 @@ const APP_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 const PREDICTION_LOCK_BEFORE_MS = 15 * 60 * 1000;
 const DOUBLE_DOWN_OPEN_BEFORE_MS = 24 * 60 * 60 * 1000;
 const ROOM_POLL_FALLBACK_MS = 30000;
+const TOURNAMENT_POLL_FALLBACK_MS = 60000;
+const TOURNAMENT_REALTIME_DEBOUNCE_MS = 400;
 const CHAT_REPEAT_WINDOW_MS = 45000;
 const CHAT_REPEAT_LIMIT = 2;
 const MATCH_INSIGHT_WARMUP_DELAY_MS = 1500;
@@ -189,6 +191,7 @@ export default function App() {
   const activeTabScrollRef = useRef(DEFAULT_TAB);
   const chatSendTimesRef = useRef([]);
   const chatRepeatRef = useRef([]);
+  const tournamentRefreshTimerRef = useRef(null);
   const matchInsightRequestsRef = useRef(new Map());
   const matchInsightWarmupKeyRef = useRef('');
   const deepLinkHandledRef = useRef('');
@@ -202,6 +205,10 @@ export default function App() {
     [ctx?.userId, todayKey]
   );
   const tournamentMatches = useMemo(() => mergeTournamentMatches(MATCHES, officialMatches), [officialMatches]);
+  const dailyQuestions = useMemo(
+    () => applyDailyQuestionAnswers(DAILY_QUESTIONS, appConfig?.dailyQuestionAnswers),
+    [appConfig?.dailyQuestionAnswers]
+  );
   const canManageTournament = isMushyAdmin(ctx);
 
   useEffect(() => {
@@ -301,6 +308,39 @@ export default function App() {
     loadGameData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx?.userId, scope?.workspaceId]);
+
+  useEffect(() => {
+    if (!ctx?.userId || !scope?.workspaceId) return undefined;
+    if (localSimulation && isMockContext(ctx)) return undefined;
+
+    const scheduleRefresh = () => {
+      if (tournamentRefreshTimerRef.current) {
+        window.clearTimeout(tournamentRefreshTimerRef.current);
+      }
+      tournamentRefreshTimerRef.current = window.setTimeout(() => {
+        tournamentRefreshTimerRef.current = null;
+        refreshTournamentState({ silent: true });
+      }, TOURNAMENT_REALTIME_DEBOUNCE_MS);
+    };
+
+    const unsubscribers = [
+      subscribeToTable('matches', scope.workspaceId, scheduleRefresh),
+      subscribeToTable('long_term_bets', scope.workspaceId, scheduleRefresh),
+    ];
+    const interval = window.setInterval(() => {
+      refreshTournamentState({ silent: true });
+    }, TOURNAMENT_POLL_FALLBACK_MS);
+
+    return () => {
+      if (tournamentRefreshTimerRef.current) {
+        window.clearTimeout(tournamentRefreshTimerRef.current);
+        tournamentRefreshTimerRef.current = null;
+      }
+      unsubscribers.forEach((unsubscribe) => unsubscribe?.());
+      window.clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx?.userId, scope?.workspaceId, localSimulation]);
 
   useEffect(() => {
     if (!aiInsightsEnabled || !ctx?.token || !scope?.workspaceId) return undefined;
@@ -453,11 +493,12 @@ export default function App() {
       predictions,
       answers,
       matches: matchesWithOfficialScores,
+      questions: [...dailyQuestions, ...ALL_SCORING_QUESTIONS],
       longTermBets: allLongTermBets,
       appConfig,
       manualAdjustments,
     }),
-    [members, predictions, answers, matchesWithOfficialScores, allLongTermBets, appConfig, manualAdjustments]
+    [members, predictions, answers, matchesWithOfficialScores, dailyQuestions, allLongTermBets, appConfig, manualAdjustments]
   );
   const standingsByMode = useMemo(() => {
     const result = { total: standings };
@@ -466,7 +507,7 @@ export default function App() {
         matches: matchesWithOfficialScores,
         predictions,
         answers,
-        questions: [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS],
+        questions: [...dailyQuestions, ...ALL_SCORING_QUESTIONS],
         mode,
       });
       result[mode] = buildStandings({
@@ -480,7 +521,7 @@ export default function App() {
       });
     }
     return result;
-  }, [standings, members, predictions, answers, matchesWithOfficialScores]);
+  }, [standings, members, predictions, answers, matchesWithOfficialScores, dailyQuestions]);
   const currentStanding = standings.find((row) => row.participantId === ctx?.userId);
   const currentUserPredictions = useMemo(
     () => predictions.filter((prediction) => prediction.createdBy === ctx?.userId),
@@ -505,17 +546,19 @@ export default function App() {
       predictions: currentUserPredictions,
       answers: currentUserAnswers,
       matches: matchesWithOfficialScores,
+      questions: [...dailyQuestions, ...ALL_SCORING_QUESTIONS],
       currentStanding
     }),
-    [currentUserPredictions, currentUserAnswers, matchesWithOfficialScores, currentStanding]
+    [currentUserPredictions, currentUserAnswers, matchesWithOfficialScores, dailyQuestions, currentStanding]
   );
   const pointNotifications = useMemo(
     () => buildPointNotifications({
       predictions: currentUserPredictions,
       answers: currentUserAnswers,
       matches: matchesWithOfficialScores,
+      questions: [...dailyQuestions, ...ALL_SCORING_QUESTIONS],
     }),
-    [currentUserPredictions, currentUserAnswers, matchesWithOfficialScores]
+    [currentUserPredictions, currentUserAnswers, matchesWithOfficialScores, dailyQuestions]
   );
   const filteredMatches = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -570,10 +613,7 @@ export default function App() {
         await syncTournamentSchedule({ workspaceId: scope.workspaceId, userId: ctx.userId, matches: MATCHES });
         nextTournamentState = await fetchTournamentState(scope.workspaceId);
       }
-      setAllLongTermBets(nextTournamentState.longTermBets);
-      setManualAdjustments(nextTournamentState.manualAdjustments || []);
-      setOfficialMatches(nextTournamentState.matches);
-      setAppConfig(nextTournamentState.config);
+      applyTournamentState(nextTournamentState);
       const ensuredMembers = ensureCurrentMember(memberRows, ctx);
       setMembers(localSimulation ? mergeMockMembers(ensuredMembers, ctx) : ensuredMembers);
     } catch (err) {
@@ -733,6 +773,31 @@ export default function App() {
 
     matchInsightRequestsRef.current.set(key, request);
     return request;
+  }
+
+  function applyTournamentState(nextTournamentState) {
+    setAllLongTermBets(nextTournamentState.longTermBets || []);
+    setManualAdjustments(nextTournamentState.manualAdjustments || []);
+    setOfficialMatches(nextTournamentState.matches || []);
+    setAppConfig(nextTournamentState.config);
+
+    const ownLongTermBet = (nextTournamentState.longTermBets || [])
+      .find((row) => row.createdBy === ctx?.userId);
+    if (ownLongTermBet) setLongTermBet(ownLongTermBet);
+  }
+
+  async function refreshTournamentState({ silent = false } = {}) {
+    if (!scope?.workspaceId || (localSimulation && isMockContext(ctx))) return;
+    try {
+      const nextTournamentState = await fetchTournamentState(scope.workspaceId);
+      applyTournamentState(nextTournamentState);
+    } catch (err) {
+      if (!silent) {
+        setError(err.message || 'Khong tai duoc du lieu giai dau.');
+      } else {
+        console.warn('Tournament realtime refresh failed', err);
+      }
+    }
   }
 
   async function handleSaveAnswer(question, answer) {
@@ -1071,6 +1136,7 @@ export default function App() {
                 predictionMap={predictionMap}
                 answerMap={answerMap}
                 dailyDoubleDownMap={dailyDoubleDownMap}
+                dailyQuestions={dailyQuestions}
                 triviaQuestion={activeTriviaQuestion}
                 groupFilter={groupFilter}
                 query={query}
@@ -1095,7 +1161,7 @@ export default function App() {
             )}
             {activeTab === 'daily' && (
               <DailyScreen
-                questions={DAILY_QUESTIONS}
+                questions={dailyQuestions}
                 triviaQuestion={activeTriviaQuestion}
                 userId={ctx?.userId}
                 answerMap={answerMap}
@@ -1172,6 +1238,7 @@ export default function App() {
         ctx={ctx}
         workspaceId={scope?.workspaceId}
         matches={matchesWithOfficialScores}
+        dailyQuestions={dailyQuestions}
         members={members}
         standings={standings}
         config={appConfig}
@@ -1421,6 +1488,7 @@ function MatchesScreen({
   predictionMap,
   answerMap,
   dailyDoubleDownMap,
+  dailyQuestions,
   triviaQuestion,
   groupFilter,
   query,
@@ -1523,6 +1591,7 @@ function MatchesScreen({
         predictionMap={predictionMap}
         answerMap={answerMap}
         dailyDoubleDownMap={dailyDoubleDownMap}
+        dailyQuestions={dailyQuestions}
         triviaQuestion={triviaQuestion}
         onGroupFilter={onGroupFilter}
         onQuery={onQuery}
@@ -1693,6 +1762,7 @@ function TodayChecklist({
   predictionMap = new Map(),
   answerMap = new Map(),
   dailyDoubleDownMap = new Map(),
+  dailyQuestions = DAILY_QUESTIONS,
   triviaQuestion = null,
   onGroupFilter,
   onQuery,
@@ -1715,7 +1785,7 @@ function TodayChecklist({
   const nextScheduleMatch = matches
     .filter((match) => !hasUnknownTeam(match) && !isPredictionLocked(match))
     .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime())[0] || null;
-  const todayQuestion = DAILY_QUESTIONS.find((question) => question.date === today);
+  const todayQuestion = dailyQuestions.find((question) => question.date === today);
   const dailyAnswered = todayQuestion ? answerMap.has(todayQuestion.key) : false;
   const dailyLocked = todayQuestion ? Date.now() >= new Date(todayQuestion.closesAt).getTime() || !!todayQuestion.correctAnswer : false;
   const triviaAnswered = triviaQuestion ? answerMap.has(triviaQuestion.key) : false;
@@ -3849,11 +3919,15 @@ function getScoringQuestionByKey(questionKey) {
   return ALL_SCORING_QUESTIONS.find((question) => question.key === questionKey) || null;
 }
 
-function buildScoreHistory({ predictions = [], answers = [], matches = [], currentStanding = null }) {
+function buildScoreHistory({
+  predictions = [],
+  answers = [],
+  matches = [],
+  questions = [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS],
+  currentStanding = null,
+}) {
   const matchesByNo = new Map(matches.map((match) => [Number(match.matchNo), match]));
-  const questionsByKey = new Map(
-    [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS].map((question) => [question.key, question])
-  );
+  const questionsByKey = new Map(questions.map((question) => [question.key, question]));
 
   const matchItems = predictions
     .map((prediction) => {
@@ -3957,11 +4031,14 @@ function buildScoreHistory({ predictions = [], answers = [], matches = [], curre
   return items;
 }
 
-function buildPointNotifications({ predictions = [], answers = [], matches = [] }) {
+function buildPointNotifications({
+  predictions = [],
+  answers = [],
+  matches = [],
+  questions = [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS],
+}) {
   const matchesByNo = new Map(matches.map((match) => [Number(match.matchNo), match]));
-  const questionsByKey = new Map(
-    [...DAILY_QUESTIONS, ...ALL_SCORING_QUESTIONS].map((question) => [question.key, question])
-  );
+  const questionsByKey = new Map(questions.map((question) => [question.key, question]));
 
   const matchItems = predictions
     .map((prediction) => {
@@ -4574,6 +4651,14 @@ function mergeTournamentMatches(staticMatches, persistedMatches) {
       stageLabel: match.stageLabel,
       matchDay: dateKeyInAppTimeZone(persisted.kickoffAt || match.kickoffAt),
     };
+  });
+}
+
+function applyDailyQuestionAnswers(questions, answers = {}) {
+  if (!answers || typeof answers !== 'object') return questions;
+  return questions.map((question) => {
+    const answer = answers[question.key];
+    return answer ? { ...question, correctAnswer: answer } : question;
   });
 }
 
