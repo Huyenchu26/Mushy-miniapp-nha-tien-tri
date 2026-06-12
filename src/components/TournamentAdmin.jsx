@@ -69,10 +69,13 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
   const defaultDailyQuestion = dailyQuestions.find((question) => question.date === todayKey) || dailyQuestions[0] || null;
 
   useEffect(() => {
-    if (!dailyQuestionKey && defaultDailyQuestion?.key) setDailyQuestionKey(defaultDailyQuestion.key);
-  }, [dailyQuestionKey, defaultDailyQuestion?.key]);
+    const keyStillExists = dailyQuestions.some((question) => question.key === dailyQuestionKey);
+    if ((!dailyQuestionKey || !keyStillExists) && defaultDailyQuestion?.key) {
+      setDailyQuestionKey(defaultDailyQuestion.key);
+    }
+  }, [dailyQuestionKey, dailyQuestions, defaultDailyQuestion?.key]);
 
-  const selectedDailyQuestion = dailyQuestions.find((question) => question.key === dailyQuestionKey) || defaultDailyQuestion;
+  const selectedDailyQuestion = dailyQuestions.find((question) => question.key === dailyQuestionKey) || null;
 
   useEffect(() => {
     if (!selectedDailyQuestion) {

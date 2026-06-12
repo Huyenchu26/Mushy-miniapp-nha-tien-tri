@@ -341,7 +341,7 @@ export default function App() {
     const unsubscribers = [
       subscribeToTable('matches', scope.workspaceId, () => scheduleRefresh()),
       subscribeToTable('long_term_bets', scope.workspaceId, () => scheduleRefresh()),
-      subscribeToTable('app_config', scope.workspaceId, () => scheduleRefresh({ includeAnswers: true })),
+      subscribeToTable('app_config', scope.workspaceId, () => scheduleRefresh()),
       subscribeToTable('group_daily_answers', scope.workspaceId, () => scheduleRefresh({ includeAnswers: true })),
     ];
     const interval = window.setInterval(() => {
