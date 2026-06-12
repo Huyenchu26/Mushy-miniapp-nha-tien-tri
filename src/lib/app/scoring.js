@@ -128,7 +128,9 @@ export function dailyPoints(answer, question) {
 
 export function dailyAnswerResult(answer, question, now = new Date()) {
   const answered = !!answer;
-  const scorable = isQuestionScorable(question, now);
+  const scorable = question?.kind === 'trivia'
+    ? !!question.correctAnswer
+    : isQuestionScorable(question, now);
   const rawPoints = dailyPoints(answer, question);
   const correct = scorable && rawPoints > 0;
   const points = scorable ? rawPoints : 0;

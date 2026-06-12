@@ -134,6 +134,21 @@ test('dailyAnswerResult separates raw answer correctness from scoring window', (
   );
 });
 
+test('trivia answers score immediately because the answer is built in', () => {
+  const answer = { answer: 'Pele' };
+  const question = {
+    kind: 'trivia',
+    correctAnswer: 'Pele',
+    closesAt: '2026-06-12T17:00:00.000Z',
+    points: 2,
+  };
+
+  assert.deepEqual(
+    dailyAnswerResult(answer, question, new Date('2026-06-12T10:00:00.000Z')),
+    { answered: true, scorable: true, correct: true, points: 2, scoreText: '+2đ', status: 'scored' }
+  );
+});
+
 test('long-term picks score only after matching answers are configured', () => {
   assert.deepEqual(longTermPoints({
     champion: 'France',
