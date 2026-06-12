@@ -3078,6 +3078,7 @@ function DailyScreen({ questions, triviaQuestion, userId, answerMap, answers, lo
   const tomorrow = addDaysToDateKey(today, 1);
   const [expandedQuestionKey, setExpandedQuestionKey] = useState(null);
   const [showAllHistory, setShowAllHistory] = useState(false);
+  const [questionTab, setQuestionTab] = useState('today');
   const { todayQuestions, upcomingQuestions, historyQuestions } = useMemo(() => {
     const sorted = [...questions].sort((a, b) => `${a.date || ''}-${a.key}`.localeCompare(`${b.date || ''}-${b.key}`));
     return {
@@ -3086,13 +3087,6 @@ function DailyScreen({ questions, triviaQuestion, userId, answerMap, answers, lo
       historyQuestions: sorted.filter((question) => question.date < today).reverse(),
     };
   }, [questions, today, tomorrow]);
-  const availableQuestions = useMemo(
-    () => questions.filter((question) => question.date <= today),
-    [questions, today]
-  );
-  const answeredCount = availableQuestions.filter((question) => answerMap.has(question.key)).length;
-  const pendingCount = availableQuestions.filter((question) => getDailyQuestionState(question, answerMap.get(question.key)).state === 'pending').length;
-  const openTodayCount = todayQuestions.filter((question) => getDailyQuestionState(question, answerMap.get(question.key)).state === 'open').length;
   const visibleHistoryQuestions = showAllHistory ? historyQuestions : historyQuestions.slice(0, 6);
   const streak = triviaStreak(answers, getLocalDateKey(), userId);
 
@@ -3135,54 +3129,68 @@ function DailyScreen({ questions, triviaQuestion, userId, answerMap, answers, lo
         />
       ) : null}
       <div className="daily-question-board">
-        <div className="daily-question-overview" aria-label="Tổng quan câu hỏi dự đoán">
-          <div className="daily-question-stat primary">
-            <span>Hôm nay</span>
-            <strong>{openTodayCount ? `${openTodayCount} câu mở` : todayQuestions.length ? 'Đã gọn' : 'Không có'}</strong>
-          </div>
-          <div className="daily-question-stat">
-            <span>Đã trả lời</span>
-            <strong>{answeredCount}/{availableQuestions.length || 0}</strong>
-          </div>
-          <div className="daily-question-stat">
-            <span>Chờ kết quả</span>
-            <strong>{pendingCount}</strong>
-          </div>
+        <div className="daily-question-tabs" role="tablist" aria-label="Nhóm câu hỏi dự đoán">
+          {[
+            ['today', 'Thử thách', todayQuestions.length + upcomingQuestions.length],
+            ['long-term', 'Dài hạn', longTermBet ? 1 : 0],
+            ['history', 'Lịch sử', historyQuestions.length],
+          ].map(([tab, label, count]) => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              aria-selected={questionTab === tab}
+              className={questionTab === tab ? 'active' : ''}
+              onClick={() => setQuestionTab(tab)}
+            >
+              <span>{label}</span>
+              <b>{count}</b>
+            </button>
+          ))}
         </div>
 
-        <DailyQuestionGroup
-          title="Thử thách hôm nay"
-          subtitle=""
-          count={todayQuestions.length}
-          emptyText="Hôm nay chưa có câu hỏi dự đoán."
-        >
-          {todayQuestions.map((question) => renderQuestionCard(question, 'today'))}
-        </DailyQuestionGroup>
+        {questionTab === 'today' ? (
+          <>
+            <DailyQuestionGroup
+              title="Thử thách hôm nay"
+              subtitle=""
+              count={todayQuestions.length}
+              emptyText="Hôm nay chưa có câu hỏi dự đoán."
+            >
+              {todayQuestions.map((question) => renderQuestionCard(question, 'today'))}
+            </DailyQuestionGroup>
 
-        <DailyQuestionGroup
-          title="Sắp mở"
-          subtitle="Xem trước ngày mai, tap để mở nếu muốn chuẩn bị đáp án."
-          count={upcomingQuestions.length}
-          emptyText="Chưa có câu hỏi cho ngày mai."
-        >
-          {upcomingQuestions.map((question) => renderQuestionCard(question, 'upcoming'))}
-        </DailyQuestionGroup>
+            <DailyQuestionGroup
+              title="Sắp mở"
+              subtitle="Xem trước ngày mai, tap để mở nếu muốn chuẩn bị đáp án."
+              count={upcomingQuestions.length}
+              emptyText="Chưa có câu hỏi cho ngày mai."
+            >
+              {upcomingQuestions.map((question) => renderQuestionCard(question, 'upcoming'))}
+            </DailyQuestionGroup>
+          </>
+        ) : null}
 
-        <DailyQuestionGroup
-          title="Lịch sử câu hỏi"
-          subtitle="Các ngày cũ được thu gọn thành timeline, tap từng dòng để xem chi tiết."
-          count={historyQuestions.length}
-          emptyText="Chưa có lịch sử câu hỏi."
-        >
-          {visibleHistoryQuestions.map((question) => renderQuestionCard(question, 'history'))}
-          {historyQuestions.length > 6 ? (
-            <button type="button" className="history-toggle-btn" onClick={() => setShowAllHistory((value) => !value)}>
-              {showAllHistory ? 'Thu gọn lịch sử' : `Xem thêm ${historyQuestions.length - 6} câu cũ`}
-            </button>
-          ) : null}
-        </DailyQuestionGroup>
+        {questionTab === 'long-term' ? (
+          <LongTermBetCard bet={longTermBet} locked={longTermLocked} onSave={onSaveLongTerm} />
+        ) : null}
+
+        {questionTab === 'history' ? (
+          <DailyQuestionGroup
+            title="Lịch sử câu hỏi"
+            subtitle="Các ngày cũ được thu gọn thành timeline, tap từng dòng để xem chi tiết."
+            count={historyQuestions.length}
+            emptyText="Chưa có lịch sử câu hỏi."
+          >
+            {visibleHistoryQuestions.map((question) => renderQuestionCard(question, 'history'))}
+            {historyQuestions.length > 6 ? (
+              <button type="button" className="history-toggle-btn" onClick={() => setShowAllHistory((value) => !value)}>
+                {showAllHistory ? 'Thu gọn lịch sử' : `Xem thêm ${historyQuestions.length - 6} câu cũ`}
+              </button>
+            ) : null}
+          </DailyQuestionGroup>
+        ) : null}
       </div>
-      <LongTermBetCard bet={longTermBet} locked={longTermLocked} onSave={onSaveLongTerm} />
     </section>
   );
 }
@@ -3210,6 +3218,7 @@ function TriviaCard({ question, answer, streak, onSave }) {
   const [loading, setLoading] = useState(false);
   const answered = Boolean(answer);
   const isCorrect = answered && dailyPoints(answer, question) > 0;
+  const awardedPoints = answered ? dailyPoints(answer, question) : question.points;
   const expired = Date.now() >= new Date(question.closesAt).getTime();
 
   useEffect(() => setDraft(answer?.answer || ''), [answer?.answer]);
@@ -3228,7 +3237,9 @@ function TriviaCard({ question, answer, streak, onSave }) {
     <article className={`trivia-card ${answered ? (isCorrect ? 'is-correct' : 'is-wrong') : ''}`}>
       <div className="trivia-card__topline">
         <span className="trivia-card__label">Hỏi vui hôm nay</span>
-        <span className="trivia-card__points">+{question.points}đ</span>
+        <span className={`trivia-card__points ${answered ? (isCorrect ? 'is-earned' : 'is-missed') : ''}`}>
+          +{awardedPoints}đ
+        </span>
       </div>
       <div className="trivia-card__meta">
         <span>{question.category}</span>
@@ -3285,6 +3296,12 @@ function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isTo
   const resultText = questionResultText({ officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points });
   const summaryText = questionSummaryText({ answerLabel, officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points, question });
   const scoreText = points > 0 ? `+${points}\u0111` : '0\u0111';
+  const resultRows = hasOfficialAnswer ? [
+    { label: 'Đáp án đúng', value: officialAnswerLabel || 'Đang cập nhật' },
+    { label: 'Bạn chọn', value: answered ? (answerLabel || 'Đáp án đã lưu') : 'Chưa trả lời' },
+    { label: 'Kết quả', value: answered ? (isCorrect ? 'Đúng' : 'Sai') : 'Không được tính điểm' },
+    { label: 'Điểm cộng', value: scoreText },
+  ] : [];
 
   useEffect(() => setDraft(answer?.answer || ''), [answer?.answer]);
 
@@ -3326,18 +3343,31 @@ function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isTo
     <>
       {answerControls}
 
-      {resultText ? (
+      {resultText && !hasOfficialAnswer ? (
         <div className={`question-result ${state}`} role="status">
           {resultText}
+        </div>
+      ) : null}
+
+      {hasOfficialAnswer ? (
+        <div className="question-result-details" aria-label="Chi tiết kết quả câu hỏi">
+          {resultRows.map((row) => (
+            <div key={row.label}>
+              <span>{row.label}</span>
+              <strong>{row.value}</strong>
+            </div>
+          ))}
         </div>
       ) : null}
 
       <div className="question-footer">
         <span>{footerText}</span>
         {hasOfficialAnswer ? <strong className={`question-score ${isCorrect ? 'ok' : 'miss'}`}>{scoreText}</strong> : null}
-        <button type="button" className="primary-btn small" disabled={locked || !draft || loading} onClick={handleSaveClick}>
-          {loading ? 'Đang lưu...' : answered ? 'Đã trả lời' : 'Chốt câu trả lời'}
-        </button>
+        {!hasOfficialAnswer ? (
+          <button type="button" className="primary-btn small" disabled={locked || !draft || loading} onClick={handleSaveClick}>
+            {loading ? 'Đang lưu...' : answered ? 'Đã trả lời' : 'Chốt câu trả lời'}
+          </button>
+        ) : null}
       </div>
     </>
   );
@@ -4082,14 +4112,21 @@ function buildScoreHistory({
       const question = questionsByKey.get(answer.questionKey);
       if (!isQuestionScorable(question, now)) return null;
       const points = dailyPoints(answer, question);
-      if (!question || points <= 0) return null;
+      const hasOfficialAnswer = !!question.correctAnswer;
+      const optionItems = normalizeQuestionOptions(question.options);
+      const answerLabel = questionAnswerLabel(answer.answer, optionItems);
+      const officialAnswerLabel = questionAnswerLabel(question.correctAnswer, optionItems);
 
       return {
         key: `daily-${answer.questionKey}`,
         sortKey: question.date,
+        kind: 'daily',
+        status: hasOfficialAnswer ? (points > 0 ? 'scored' : 'zero') : 'saved',
         type: 'Câu hỏi',
         label: question.prompt,
-        detail: `Bạn trả lời: ${answer.answer}`,
+        detail: hasOfficialAnswer
+          ? `Bạn trả lời: ${answerLabel} · Đáp án: ${officialAnswerLabel} · ${points > 0 ? 'Đúng' : 'Sai'}`
+          : `Bạn trả lời: ${answerLabel} · Chờ công bố đáp án`,
         points,
       };
     })
