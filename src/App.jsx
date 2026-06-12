@@ -3196,6 +3196,7 @@ function TriviaCard({ question, answer, streak, onSave }) {
   const [loading, setLoading] = useState(false);
   const answered = Boolean(answer);
   const isCorrect = answered && dailyPoints(answer, question) > 0;
+  const awardedPoints = answered ? dailyPoints(answer, question) : question.points;
   const expired = Date.now() >= new Date(question.closesAt).getTime();
 
   useEffect(() => setDraft(answer?.answer || ''), [answer?.answer]);
@@ -3214,7 +3215,9 @@ function TriviaCard({ question, answer, streak, onSave }) {
     <article className={`trivia-card ${answered ? (isCorrect ? 'is-correct' : 'is-wrong') : ''}`}>
       <div className="trivia-card__topline">
         <span className="trivia-card__label">Hỏi vui hôm nay</span>
-        <span className="trivia-card__points">+{question.points}đ</span>
+        <span className={`trivia-card__points ${answered ? (isCorrect ? 'is-earned' : 'is-missed') : ''}`}>
+          +{awardedPoints}đ
+        </span>
       </div>
       <div className="trivia-card__meta">
         <span>{question.category}</span>

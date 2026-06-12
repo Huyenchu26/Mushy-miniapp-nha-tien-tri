@@ -875,6 +875,15 @@ button.today-checklist-item:hover {
   font-weight: 800;
 }
 
+.trivia-card__points.is-earned {
+  background: var(--wc-green);
+}
+
+.trivia-card__points.is-missed {
+  background: rgba(15, 15, 18, 0.08);
+  color: var(--wc-muted);
+}
+
 .trivia-card__meta {
   flex-wrap: wrap;
   gap: 6px;
