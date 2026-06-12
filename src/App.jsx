@@ -2502,6 +2502,7 @@ function MatchCard({ match, prediction, dailyDoubleMatchNo, onSave }) {
   );
 }
 
+<<<<<<< Updated upstream
 function DailyScreen({ questions, triviaQuestion, answerMap, answers, longTermBet, longTermLocked, onSave, onSaveLongTerm }) {
   const visibleQuestions = useMemo(() => {
     const today = getLocalDateKey();
@@ -2509,6 +2510,56 @@ function DailyScreen({ questions, triviaQuestion, answerMap, answers, longTermBe
     return questions.filter((question) => question.date === today || question.date === tomorrow);
   }, [questions]);
   const streak = triviaStreak(answers, getLocalDateKey());
+=======
+function DailyScreen({ questions, triviaQuestion, userId, answerMap, answers, longTermBet, longTermLocked, onSave, onSaveLongTerm }) {
+  const today = getLocalDateKey();
+  const tomorrow = addDaysToDateKey(today, 1);
+  const [expandedQuestionKey, setExpandedQuestionKey] = useState(null);
+  const [showAllHistory, setShowAllHistory] = useState(false);
+  const { todayQuestions, upcomingQuestions, historyQuestions } = useMemo(() => {
+    const sorted = [...questions].sort((a, b) => {
+      const left = `${getQuestionAnswerDay(a)}-${a.date || ''}-${a.key}`;
+      const right = `${getQuestionAnswerDay(b)}-${b.date || ''}-${b.key}`;
+      return left.localeCompare(right);
+    });
+    return {
+      todayQuestions: sorted.filter((question) => getQuestionAnswerDay(question) === today),
+      upcomingQuestions: sorted.filter((question) => getQuestionAnswerDay(question) === tomorrow),
+      historyQuestions: sorted.filter((question) => getQuestionAnswerDay(question) < today).reverse(),
+    };
+  }, [questions, today, tomorrow]);
+  const availableQuestions = useMemo(
+    () => questions.filter((question) => getQuestionAnswerDay(question) <= today),
+    [questions, today]
+  );
+  const answeredCount = availableQuestions.filter((question) => answerMap.has(question.key)).length;
+  const pendingCount = availableQuestions.filter((question) => getDailyQuestionState(question, answerMap.get(question.key)).state === 'pending').length;
+  const openTodayCount = todayQuestions.filter((question) => getDailyQuestionState(question, answerMap.get(question.key)).state === 'open').length;
+  const visibleHistoryQuestions = showAllHistory ? historyQuestions : historyQuestions.slice(0, 6);
+  const streak = triviaStreak(answers, getLocalDateKey(), userId);
+
+  function toggleQuestion(questionKey) {
+    setExpandedQuestionKey((current) => (current === questionKey ? null : questionKey));
+  }
+
+  function renderQuestionCard(question, origin = 'history') {
+    const answer = answerMap.get(question.key);
+    const { state } = getDailyQuestionState(question, answer);
+    const forceExpanded = origin === 'today' && state === 'open';
+    const expanded = forceExpanded || expandedQuestionKey === question.key;
+    return (
+      <QuestionCard
+        key={question.key}
+        question={question}
+        answer={answer}
+        onSave={onSave}
+        displayMode={expanded ? 'expanded' : 'compact'}
+        isToggleable={!forceExpanded}
+        onToggle={() => toggleQuestion(question.key)}
+      />
+    );
+  }
+>>>>>>> Stashed changes
 
   return (
     <section className="screen">
