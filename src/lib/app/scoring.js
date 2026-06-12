@@ -152,7 +152,7 @@ export function filterCompetitionWindow({ matches = MATCHES, predictions = [], a
     : normalizeStage(match.stage) === currentStage(matches, now));
   const matchNos = new Set(selectedMatches.map((match) => Number(match.matchNo)));
   const selectedQuestions = mode === 'week'
-    ? questions.filter((question) => isSameIsoWeek(new Date(question.date || question.closesAt), now))
+    ? questions.filter((question) => isSameIsoWeek(parseQuestionWindowDate(question.date || question.closesAt), now))
     : [];
   const questionKeys = new Set(selectedQuestions.map((question) => question.key));
   return {
@@ -264,6 +264,16 @@ function groupManualPoints(adjustments = []) {
     map.set(participantId, (map.get(participantId) || 0) + Number(adjustment.deltaPoints || 0));
   }
   return map;
+}
+
+function parseQuestionWindowDate(value) {
+  const raw = String(value || '').trim();
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    const [, year, month, day] = match;
+    return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 12, 0, 0));
+  }
+  return new Date(value);
 }
 
 function normalizeStage(stage) {

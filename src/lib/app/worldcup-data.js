@@ -313,22 +313,15 @@ function knockoutMatch(matchNo, stage, stageLabel, kickoffAt) {
 }
 
 function question(date, prompt, options, closesAt) {
-  const displayDate = closesAt ? questionMatchDay(closesAt) : date;
   return {
     key: `q-${date}`,
-    date: displayDate,
+    date,
     prompt,
     options,
-    closesAt: dailyQuestionLockAt(displayDate),
+    closesAt: closesAt || dailyQuestionLockAt(date),
     correctAnswer: null,
     points: 2,
   };
-}
-
-function questionMatchDay(closesAt) {
-  const closeMs = new Date(closesAt).getTime();
-  if (!Number.isFinite(closeMs)) return dateKeyInVietnamTimeZone(closesAt);
-  return dateKeyInVietnamTimeZone(new Date(closeMs + 30 * 60 * 1000).toISOString());
 }
 
 function dailyQuestionLockAt(date) {

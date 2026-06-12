@@ -5187,7 +5187,7 @@ function formatDate(value) {
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
-  }).format(new Date(value));
+  }).format(parseDisplayDate(value));
 }
 
 function formatShortDate(value) {
@@ -5195,7 +5195,17 @@ function formatShortDate(value) {
     timeZone: APP_TIME_ZONE,
     day: '2-digit',
     month: '2-digit',
-  }).format(new Date(value));
+  }).format(parseDisplayDate(value));
+}
+
+function parseDisplayDate(value) {
+  const raw = String(value || '').trim();
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    const [, year, month, day] = match;
+    return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 12, 0, 0));
+  }
+  return new Date(value);
 }
 
 function getDayChipLabel(dateKey, index, todayKey = getLocalDateKey()) {

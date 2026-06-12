@@ -142,6 +142,23 @@ test('weekly and stage windows filter matches and predictions for real leaderboa
   assert.deepEqual(stage.matches.map((match) => match.matchNo), [73]);
 });
 
+test('weekly filter keeps date-only daily questions on the intended local day', () => {
+  const weekly = filterCompetitionWindow({
+    matches: [],
+    predictions: [],
+    answers: [{ questionKey: 'q-2026-06-11', answer: 'Co' }],
+    questions: [
+      { key: 'q-2026-06-11', date: '2026-06-11', closesAt: '2026-06-11T18:30:00Z' },
+      { key: 'q-2026-06-18', date: '2026-06-18', closesAt: '2026-06-18T18:30:00Z' },
+    ],
+    mode: 'week',
+    now: new Date('2026-06-11T12:00:00Z'),
+  });
+
+  assert.deepEqual(weekly.questions.map((question) => question.key), ['q-2026-06-11']);
+  assert.deepEqual(weekly.answers.map((answer) => answer.questionKey), ['q-2026-06-11']);
+});
+
 test('computeStandings ranks by total, exact count, then predicted count', () => {
   const matches = [
     { matchNo: 1, status: 'finished', homeScore: 2, awayScore: 1 },
