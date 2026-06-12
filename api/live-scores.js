@@ -1,5 +1,8 @@
 import { verifyRequest } from './_verify.js';
 
+const PRIMARY_SOURCE = 'worldcup26.ir';
+const ESPN_SOURCE = 'espn';
+const MERGED_SOURCE = 'worldcup26.ir+espn';
 const PRIMARY_URL = 'https://worldcup26.ir/get/games';
 const ESPN_SCOREBOARD_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard';
 const FETCH_TIMEOUT_MS = 6500;
@@ -32,20 +35,21 @@ export default async function handler(req, res) {
   const fetchedAt = new Date().toISOString();
   const primary = await fetchFromWorldCup26(fetchedAt);
   if (primary.ok) {
-    if (isTournamentWindow(fetchedAt) && (!hasUsefulLiveScores(primary.value.matches) || missingGoalDetails(primary.value.matches))) {
+    if (isTournamentWindow(fetchedAt)) {
       const fallback = await fetchFromEspn(fetchedAt);
-      if (fallback.ok && hasUsefulLiveScores(fallback.value.matches)) {
-        if (hasUsefulLiveScores(primary.value.matches)) {
+      if (fallback.ok) {
+        const merged = mergeLiveScoreSources(primary.value.matches, fallback.value.matches);
+        if (merged.usedFallback) {
           return sendLiveScores(res, {
             ...primary.value,
-            goalDetailSource: fallback.value.source,
-            matches: mergeGoalDetails(primary.value.matches, fallback.value.matches),
+            source: MERGED_SOURCE,
+            sourceUrl: `${PRIMARY_URL} + ${fallback.value.sourceUrl}`,
+            fallbackReason: merged.reason,
+            fallbackMatchCount: merged.fallbackMatchCount,
+            goalDetailSource: merged.goalDetailCount > 0 ? fallback.value.source : '',
+            matches: merged.matches,
           });
         }
-        return sendLiveScores(res, {
-          ...fallback.value,
-          fallbackReason: 'worldcup26 returned no active scores',
-        });
       }
     }
     return sendLiveScores(res, primary.value);
@@ -81,7 +85,7 @@ async function fetchFromWorldCup26(fetchedAt) {
     return {
       ok: true,
       value: {
-        source: 'worldcup26.ir',
+        source: PRIMARY_SOURCE,
         sourceUrl: PRIMARY_URL,
         fetchedAt,
         matches: games.map(normalizeWorldCup26Game).filter(Boolean),
@@ -94,16 +98,35 @@ async function fetchFromWorldCup26(fetchedAt) {
 
 async function fetchFromEspn(fetchedAt) {
   try {
-    const payload = await fetchJson(ESPN_SCOREBOARD_URL);
-    const events = Array.isArray(payload?.events) ? payload.events : [];
-    if (!events.length) throw new Error('espn returned no events');
+    const urls = buildEspnScoreboardUrls(fetchedAt);
+    const responses = await Promise.allSettled(urls.map((url) => fetchJson(url)));
+    const eventsById = new Map();
+    const errors = [];
+
+    responses.forEach((result, index) => {
+      if (result.status !== 'fulfilled') {
+        errors.push(result.reason?.message || `${urls[index]} fetch failed`);
+        return;
+      }
+
+      const events = Array.isArray(result.value?.events) ? result.value.events : [];
+      for (const event of events) {
+        const id = String(event?.id || event?.uid || `${event?.shortName || ''}-${event?.date || ''}`);
+        if (id && !eventsById.has(id)) eventsById.set(id, event);
+      }
+    });
+
+    const events = [...eventsById.values()];
+    if (!events.length) {
+      throw new Error(errors.length ? `espn returned no events (${errors.join('; ')})` : 'espn returned no events');
+    }
     const matches = await Promise.all(events.map((event) => normalizeEspnEventWithSummary(event)));
 
     return {
       ok: true,
       value: {
-        source: 'espn',
-        sourceUrl: ESPN_SCOREBOARD_URL,
+        source: ESPN_SOURCE,
+        sourceUrl: urls.join(', '),
         fetchedAt,
         matches: matches.filter(Boolean),
       },
@@ -113,25 +136,49 @@ async function fetchFromEspn(fetchedAt) {
   }
 }
 
+function buildEspnScoreboardUrls(fetchedAt) {
+  const base = new Date(fetchedAt);
+  const dayMs = 24 * 60 * 60 * 1000;
+  return [-1, 0, 1].map((offset) => {
+    const date = new Date(base.getTime() + offset * dayMs);
+    const dateKey = [
+      date.getUTCFullYear(),
+      String(date.getUTCMonth() + 1).padStart(2, '0'),
+      String(date.getUTCDate()).padStart(2, '0'),
+    ].join('');
+    return `${ESPN_SCOREBOARD_URL}?dates=${dateKey}`;
+  });
+}
+
 async function normalizeEspnEventWithSummary(event) {
   const base = normalizeEspnEvent(event);
   if (!base) return null;
+  const inlineGoals = normalizeEspnGoalDetails(event?.competitions?.[0]?.details, event);
+  if (inlineGoals.length > 0) {
+    return withGoalDetails(base, inlineGoals);
+  }
   if (!shouldFetchEspnSummary(base)) return base;
 
   try {
     const summary = await fetchJson(`https://site.web.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=${encodeURIComponent(event.id)}`);
     const details = summary?.header?.competitions?.[0]?.details || [];
     const goals = normalizeEspnGoalDetails(details, event);
-    return {
-      ...base,
-      goals,
-      goalScorers: goals,
-      homeScorers: goals.filter((goal) => goal.side === 'home'),
-      awayScorers: goals.filter((goal) => goal.side === 'away'),
-    };
+    return withGoalDetails(base, goals);
   } catch {
     return base;
   }
+}
+
+function withGoalDetails(match, goals) {
+  return {
+    ...match,
+    goals,
+    goalScorers: goals,
+    homeScorers: goals.filter((goal) => goal.side === 'home'),
+    awayScorers: goals.filter((goal) => goal.side === 'away'),
+    homeGoalScorers: goals.filter((goal) => goal.side === 'home'),
+    awayGoalScorers: goals.filter((goal) => goal.side === 'away'),
+  };
 }
 
 function shouldFetchEspnSummary(match) {
@@ -186,6 +233,7 @@ function normalizeWorldCup26Game(game) {
     statusDetail: statusText || null,
     minute: normalizeMinute(game.time_elapsed),
     rawClock: normalizeRawClock(game.time_elapsed),
+    source: PRIMARY_SOURCE,
   };
 }
 
@@ -218,14 +266,6 @@ function normalizeWorldCup26Status(game) {
   return 'in_progress';
 }
 
-function missingGoalDetails(matches) {
-  return (matches || []).some((match) => {
-    const scoreTotal = Number(match?.homeScore || 0) + Number(match?.awayScore || 0);
-    if (scoreTotal <= 0) return false;
-    return !hasGoalDetails(match);
-  });
-}
-
 function hasGoalDetails(match) {
   return [
     match?.goals,
@@ -237,17 +277,32 @@ function hasGoalDetails(match) {
   ].some((value) => Array.isArray(value) && value.length > 0);
 }
 
-function mergeGoalDetails(primaryMatches, fallbackMatches) {
+function mergeLiveScoreSources(primaryMatches, fallbackMatches) {
   const fallbackByPair = new Map();
+  let fallbackMatchCount = 0;
+  let goalDetailCount = 0;
   for (const match of fallbackMatches || []) {
     fallbackByPair.set(matchPairKey(match.homeTeam, match.awayTeam), match);
   }
-  return (primaryMatches || []).map((match) => {
-    if (hasGoalDetails(match)) return match;
-    const fallback = fallbackByPair.get(matchPairKey(match.homeTeam, match.awayTeam));
-    if (!fallback || !hasGoalDetails(fallback)) return match;
+
+  const matches = (primaryMatches || []).map((match) => {
+    const fallback = findFallbackMatch(match, fallbackByPair);
+    if (!fallback) return match;
+
+    if (shouldUseFallbackMatch(match, fallback)) {
+      fallbackMatchCount += 1;
+      return {
+        ...fallback,
+        fallbackFrom: match.source || PRIMARY_SOURCE,
+        primaryStatus: match.status,
+      };
+    }
+
+    if (hasGoalDetails(match) || !hasGoalDetails(fallback)) return match;
+    goalDetailCount += 1;
     return {
       ...match,
+      goalDetailSource: fallback.source || ESPN_SOURCE,
       goals: fallback.goals || fallback.goalScorers || [],
       goalScorers: fallback.goalScorers || fallback.goals || [],
       homeScorers: fallback.homeScorers || fallback.homeGoalScorers || [],
@@ -256,6 +311,77 @@ function mergeGoalDetails(primaryMatches, fallbackMatches) {
       awayGoalScorers: fallback.awayGoalScorers || fallback.awayScorers || [],
     };
   });
+
+  for (const match of fallbackMatches || []) {
+    const alreadyInPrimary = hasPrimaryPair(primaryMatches, match);
+    if (alreadyInPrimary || !hasUsefulLiveScore(match)) continue;
+    fallbackMatchCount += 1;
+    matches.push(match);
+  }
+
+  return {
+    matches,
+    fallbackMatchCount,
+    goalDetailCount,
+    usedFallback: fallbackMatchCount > 0 || goalDetailCount > 0,
+    reason: fallbackMatchCount > 0
+      ? `espn filled ${fallbackMatchCount} stale or missing match${fallbackMatchCount > 1 ? 'es' : ''}`
+      : `espn filled goal details for ${goalDetailCount} match${goalDetailCount > 1 ? 'es' : ''}`,
+  };
+}
+
+function hasPrimaryPair(primaryMatches, match) {
+  const directKey = matchPairKey(match.homeTeam, match.awayTeam);
+  const reverseKey = matchPairKey(match.awayTeam, match.homeTeam);
+  return (primaryMatches || []).some((primary) => {
+    const primaryKey = matchPairKey(primary.homeTeam, primary.awayTeam);
+    return primaryKey === directKey || primaryKey === reverseKey;
+  });
+}
+
+function findFallbackMatch(primary, fallbackByPair) {
+  const direct = fallbackByPair.get(matchPairKey(primary.homeTeam, primary.awayTeam));
+  if (direct) return direct;
+
+  const reverse = fallbackByPair.get(matchPairKey(primary.awayTeam, primary.homeTeam));
+  if (!reverse) return null;
+  return {
+    ...reverse,
+    homeTeam: primary.homeTeam,
+    awayTeam: primary.awayTeam,
+    homeScore: reverse.awayScore,
+    awayScore: reverse.homeScore,
+    reversed: true,
+  };
+}
+
+function shouldUseFallbackMatch(primary, fallback) {
+  if (!fallback || !hasUsefulLiveScore(fallback)) return false;
+
+  const primaryRank = liveStatusRank(primary);
+  const fallbackRank = liveStatusRank(fallback);
+  const primaryScoreTotal = scoreTotal(primary);
+  const fallbackScoreTotal = scoreTotal(fallback);
+
+  if (primaryRank === 0 && fallbackRank > 0) return true;
+  if (fallbackRank > primaryRank && (fallbackScoreTotal > 0 || fallbackRank >= 3)) return true;
+  if (primaryRank <= 1 && primaryScoreTotal === 0 && fallbackScoreTotal > 0) return true;
+  return false;
+}
+
+function liveStatusRank(match) {
+  if (match?.status === 'finished') return 3;
+  if (match?.status === 'extra_time' || match?.status === 'penalties') return 2;
+  if (match?.status === 'in_progress') return 1;
+  return 0;
+}
+
+function scoreTotal(match) {
+  return Number(match?.homeScore || 0) + Number(match?.awayScore || 0);
+}
+
+function hasUsefulLiveScore(match) {
+  return match?.status !== 'scheduled' || scoreTotal(match) > 0;
 }
 
 function normalizeEspnEvent(event) {
@@ -288,6 +414,7 @@ function normalizeEspnEvent(event) {
     period: status?.period || null,
     minute: normalizeMinute(status?.displayClock),
     rawClock: status?.displayClock || status?.type?.shortDetail || null,
+    source: ESPN_SOURCE,
   };
 }
 
@@ -316,7 +443,9 @@ function normalizeEspnGoalDetails(details, event) {
             : canonicalTeamName(teamName) === canonicalTeamName(awayTeam)
               ? 'away'
               : '';
-      const scorer = detail?.participants?.find((item) => item?.athlete)?.athlete || {};
+      const participantAthlete = detail?.participants?.find((item) => item?.athlete)?.athlete;
+      const involvedAthlete = Array.isArray(detail?.athletesInvolved) ? detail.athletesInvolved[0] : null;
+      const scorer = participantAthlete || involvedAthlete || {};
       const name = scorer.displayName || scorer.shortName || '';
       const minute = detail?.clock?.displayValue || detail?.clock?.value || '';
       return {

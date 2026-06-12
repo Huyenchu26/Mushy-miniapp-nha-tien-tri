@@ -34,6 +34,7 @@ import './App.css';
 
 const DEFAULT_TAB = 'matches';
 const LIVE_SCORE_POLL_MS = 3 * 60 * 1000;
+const LIVE_SCORE_ACTIVE_POLL_MS = 30 * 1000;
 const APP_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 const PREDICTION_LOCK_BEFORE_MS = 15 * 60 * 1000;
 const DOUBLE_DOWN_OPEN_BEFORE_MS = 24 * 60 * 60 * 1000;
@@ -4566,8 +4567,8 @@ function normalizeLiveScorePayload(payload) {
     ...payload,
     matches: (payload.matches || []).map((match) => ({
       ...match,
-      source: payload.source,
-      fetchedAt: payload.fetchedAt,
+      source: match.source || payload.source,
+      fetchedAt: match.fetchedAt || payload.fetchedAt,
     })),
   };
 }
@@ -4585,12 +4586,15 @@ function getLiveScoreSyncPlan(matches = [], nowMs = Date.now()) {
     .filter(Boolean)
     .sort((a, b) => a.kickoffMs - b.kickoffMs);
   const nextMatch = scheduledMatches.find((item) => nowMs <= item.kickoffMs) || scheduledMatches[scheduledMatches.length - 1] || null;
+  const activeMatch = scheduledMatches.find((item) => nowMs >= item.kickoffMs && nowMs <= item.kickoffMs + LIVE_MATCH_FALLBACK_MS);
+  const nextMatchSoon = nextMatch?.kickoffMs && nextMatch.kickoffMs - nowMs <= PREDICTION_LOCK_BEFORE_MS;
+  const waitMs = activeMatch || nextMatchSoon ? LIVE_SCORE_ACTIVE_POLL_MS : LIVE_SCORE_POLL_MS;
 
   return {
     shouldFetch: true,
-    waitMs: LIVE_SCORE_POLL_MS,
+    waitMs,
     nextMatchAt: nextMatch?.matchAt || '',
-    nextFetchAt: new Date(nowMs + LIVE_SCORE_POLL_MS).toISOString(),
+    nextFetchAt: new Date(nowMs + waitMs).toISOString(),
   };
 }
 
@@ -5240,6 +5244,7 @@ function liveLabel(liveScore) {
 function sourceLabel(source) {
   if (source === 'local-mock') return 'DEV mock';
   if (source === 'worldcup26.ir') return 'WorldCup26';
+  if (source === 'worldcup26.ir+espn') return 'WorldCup26 + ESPN';
   if (source === 'espn') return 'ESPN';
   return source || 'live';
 }
