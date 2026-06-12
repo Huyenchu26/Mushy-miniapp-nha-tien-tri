@@ -2993,10 +2993,10 @@ button.today-checklist-item:hover {
   font-size: 28px;
 }
 
-.rank-1 {
+/* .rank-1 {
   border-color: var(--wc-primary);
   box-shadow: var(--wc-shadow);
-}
+} */
 
 .leaderboard-table {
   overflow: hidden;
