@@ -3917,8 +3917,9 @@ function initials(name) {
 }
 
 function leaderSubtitle(row) {
-  const manual = row.manualPts ? ` · ${row.manualPts > 0 ? '+' : ''}${row.manualPts} admin` : '';
-  return `${row.matchPts} trận · ${row.upsetPts} cửa dưới · ${row.streakPts} streak · ${row.dailyPts} vui · ${row.longTermPts || 0} dài hạn${manual}`;
+  const compact = `tr\u1eadn: ${row.matchPts} \u0111i\u1ec3m \u00b7 vui: ${row.dailyPts} \u0111i\u1ec3m \u00b7 streak: ${row.streakPts} \u0111i\u1ec3m`;
+  if (!row.manualPts) return compact;
+  return `${compact} \u00b7 admin: ${row.manualPts > 0 ? '+' : ''}${row.manualPts} \u0111i\u1ec3m`;
 }
 
 function findTriviaAnswerForDate(answers = [], dateKey) {

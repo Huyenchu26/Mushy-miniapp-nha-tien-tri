@@ -2891,6 +2891,7 @@ button.today-checklist-item:hover {
 .lb-person {
   display: grid;
   min-width: 0;
+  align-content: center;
 }
 
 .lb-person strong {
@@ -2902,11 +2903,16 @@ button.today-checklist-item:hover {
 }
 
 .lb-person small {
+  display: -webkit-box;
   overflow: hidden;
   color: var(--wc-muted);
   font-size: 11px;
+  line-height: 1.25;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .lb-row b {
@@ -3234,13 +3240,14 @@ button.today-checklist-item:hover {
   }
 
   .lb-row {
-    grid-template-columns: 28px 36px minmax(0, 1fr) auto;
-    gap: 9px;
-    padding: 10px;
+    grid-template-columns: 26px 34px minmax(0, 1fr) max-content;
+    gap: 8px;
+    padding: 10px 9px;
   }
 
   .lb-row b {
     font-size: 16px;
+    white-space: nowrap;
   }
 
   .search-pill {
