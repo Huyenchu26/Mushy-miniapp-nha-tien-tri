@@ -1528,6 +1528,7 @@ function MatchesScreen({
     };
   }), [grouped, predictionMap]);
   const [selectedDate, setSelectedDate] = useState('');
+  const dayChipRefs = useRef(new Map());
   const effectiveSelectedDate = dayPages.some((page) => page.date === selectedDate)
     ? selectedDate
     : pickDefaultMatchDay(dayPages, todayKey);
@@ -1579,7 +1580,34 @@ function MatchesScreen({
 
   function handleDayChange(nextIndex) {
     const nextPage = dayPages[nextIndex];
-    if (nextPage) setSelectedDate(nextPage.date);
+    if (!nextPage) return;
+    setSelectedDate(nextPage.date);
+    window.requestAnimationFrame(() => scrollDayChipIntoView(nextPage.date));
+  }
+
+  function scrollDayChipIntoView(date) {
+    const chip = dayChipRefs.current.get(date);
+    const row = chip?.closest('.day-chip-row');
+    if (!row || !chip) return;
+
+    const rowRect = row.getBoundingClientRect();
+    const chipRect = chip.getBoundingClientRect();
+    const gutter = 8;
+
+    if (chipRect.left < rowRect.left + gutter) {
+      row.scrollBy({
+        left: chipRect.left - rowRect.left - gutter,
+        behavior: 'smooth',
+      });
+      return;
+    }
+
+    if (chipRect.right > rowRect.right - gutter) {
+      row.scrollBy({
+        left: chipRect.right - rowRect.right + gutter,
+        behavior: 'smooth',
+      });
+    }
   }
 
   function handleDayPrimaryAction() {
@@ -1712,6 +1740,13 @@ function MatchesScreen({
               return (
                 <button
                   key={page.date}
+                  ref={(node) => {
+                    if (node) {
+                      dayChipRefs.current.set(page.date, node);
+                    } else {
+                      dayChipRefs.current.delete(page.date);
+                    }
+                  }}
                   type="button"
                   role="tab"
                   aria-selected={active}
