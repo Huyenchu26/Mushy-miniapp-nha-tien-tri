@@ -70,6 +70,10 @@ export async function saveOfficialMatch({ workspaceId, userId, match, result }) 
 }
 
 export async function saveTournamentConfig({ workspaceId, userId, config }) {
+  const dailyQuestionAnswers = await mergeLatestDailyQuestionAnswers(
+    workspaceId,
+    config.dailyQuestionAnswers
+  );
   const payload = {
     workspace_id: workspaceId,
     created_by: userId,
@@ -78,7 +82,7 @@ export async function saveTournamentConfig({ workspaceId, userId, config }) {
     top_scorer_actual: clean(config.topScorerActual),
     young_player_actual: clean(config.youngPlayerActual),
     golden_ball_actual: clean(config.goldenBallActual),
-    daily_question_answers: sanitizeDailyQuestionAnswers(config.dailyQuestionAnswers),
+    daily_question_answers: dailyQuestionAnswers,
     predictions_hidden_until_kickoff: config.predictionsHiddenUntilKickoff !== false,
     reminders_enabled: config.remindersEnabled !== false,
   };
@@ -177,6 +181,19 @@ function tolerateMissing(result) {
   if (!result.error) return result.data || [];
   if (result.error.code === '42P01' || /does not exist/i.test(result.error.message || '')) return [];
   throw result.error;
+}
+
+async function mergeLatestDailyQuestionAnswers(workspaceId, incomingAnswers) {
+  const incoming = sanitizeDailyQuestionAnswers(incomingAnswers);
+  const { data, error } = await db
+    .from('app_config')
+    .select('daily_question_answers')
+    .eq('workspace_id', workspaceId)
+    .maybeSingle();
+  if (error) throw error;
+
+  const latest = sanitizeDailyQuestionAnswers(data?.daily_question_answers);
+  return { ...latest, ...incoming };
 }
 
 function toRuntimeMatch(row) {
