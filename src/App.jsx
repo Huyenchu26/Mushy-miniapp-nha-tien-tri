@@ -10,7 +10,7 @@ import {
   mergeMockMembers,
   mergeMockPredictions,
 } from './lib/app/mock-simulation.js';
-import { computeStandings, dailyPoints, filterCompetitionWindow, isFinished, isQuestionScorable, matchBasePoints, matchScoreBreakdown, normalizeAnswer, outcome } from './lib/app/scoring.js';
+import { computeStandings, dailyAnswerResult, dailyPoints, filterCompetitionWindow, isFinished, matchBasePoints, matchScoreBreakdown, normalizeAnswer, outcome } from './lib/app/scoring.js';
 import { ALL_SCORING_QUESTIONS, getTriviaQuestionForUserDate, triviaStreak } from './lib/app/quiz-data.js';
 import { selectInsightWarmupMatches } from './lib/app/match-insight.js';
 import Select from './components/Select.jsx';
@@ -3285,7 +3285,7 @@ function TriviaCard({ question, answer, streak, onSave }) {
 
 function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isToggleable = false, onToggle }) {
   const optionItems = useMemo(() => normalizeQuestionOptions(question.options), [question.options]);
-  const { hasOfficialAnswer, answered, expired, points, isCorrect, state } = getDailyQuestionState(question, answer);
+  const { hasOfficialAnswer, answered, expired, points, isCorrect, scoreText, state } = getDailyQuestionState(question, answer);
   const locked = expired || hasOfficialAnswer || answered;
   const [draft, setDraft] = useState(answer?.answer || '');
   const [loading, setLoading] = useState(false);
@@ -3295,7 +3295,6 @@ function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isTo
   const footerText = questionFooterText({ answerLabel, officialAnswerLabel, answered, expired, hasOfficialAnswer });
   const resultText = questionResultText({ officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points });
   const summaryText = questionSummaryText({ answerLabel, officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points, question });
-  const scoreText = points > 0 ? `+${points}\u0111` : '0\u0111';
   const resultRows = hasOfficialAnswer ? [
     { label: 'Đáp án đúng', value: officialAnswerLabel || 'Đang cập nhật' },
     { label: 'Bạn chọn', value: answered ? (answerLabel || 'Đáp án đã lưu') : 'Chưa trả lời' },
@@ -3420,15 +3419,16 @@ function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isTo
 function getDailyQuestionState(question, answer) {
   const answered = !!answer;
   const expired = Date.now() >= new Date(question.closesAt).getTime();
-  const hasOfficialAnswer = isQuestionScorable(question);
-  const points = hasOfficialAnswer ? dailyPoints(answer, question) : 0;
-  const isCorrect = hasOfficialAnswer && answered && points > 0;
+  const result = dailyAnswerResult(answer, question);
+  const hasOfficialAnswer = result.scorable;
+  const points = result.points;
+  const isCorrect = result.correct;
   const state = hasOfficialAnswer
     ? answered
       ? isCorrect ? 'correct' : 'wrong'
-      : 'locked'
+    : 'locked'
     : answered ? 'pending' : expired ? 'locked' : 'open';
-  return { hasOfficialAnswer, answered, expired, points, isCorrect, state };
+  return { hasOfficialAnswer, answered, expired, points, isCorrect, scoreText: result.scoreText, state };
 }
 
 function normalizeQuestionOptions(options = []) {
@@ -4110,9 +4110,8 @@ function buildScoreHistory({
   const dailyItems = answers
     .map((answer) => {
       const question = questionsByKey.get(answer.questionKey);
-      if (!isQuestionScorable(question, now)) return null;
-      const points = dailyPoints(answer, question);
-      const hasOfficialAnswer = !!question.correctAnswer;
+      const result = dailyAnswerResult(answer, question, now);
+      if (!result.scorable) return null;
       const optionItems = normalizeQuestionOptions(question.options);
       const answerLabel = questionAnswerLabel(answer.answer, optionItems);
       const officialAnswerLabel = questionAnswerLabel(question.correctAnswer, optionItems);
@@ -4121,13 +4120,11 @@ function buildScoreHistory({
         key: `daily-${answer.questionKey}`,
         sortKey: question.date,
         kind: 'daily',
-        status: hasOfficialAnswer ? (points > 0 ? 'scored' : 'zero') : 'saved',
+        status: result.status,
         type: 'Câu hỏi',
         label: question.prompt,
-        detail: hasOfficialAnswer
-          ? `Bạn trả lời: ${answerLabel} · Đáp án: ${officialAnswerLabel} · ${points > 0 ? 'Đúng' : 'Sai'}`
-          : `Bạn trả lời: ${answerLabel} · Chờ công bố đáp án`,
-        points,
+        detail: `Bạn trả lời: ${answerLabel} · Đáp án: ${officialAnswerLabel} · ${result.correct ? 'Đúng' : 'Sai'}`,
+        points: result.points,
       };
     })
     .filter(Boolean);
@@ -4202,16 +4199,16 @@ function buildPointNotifications({
   const answerItems = answers
     .map((answer) => {
       const question = questionsByKey.get(answer.questionKey);
-      if (!isQuestionScorable(question, now)) return null;
-      const points = dailyPoints(answer, question);
+      const result = dailyAnswerResult(answer, question, now);
+      if (!result.scorable) return null;
 
       return {
         key: `notify-daily-${answer.questionKey}`,
         sortKey: question.date,
-        icon: points > 0 ? '✅' : '🧩',
-        label: points > 0 ? 'Câu hỏi vui ăn điểm' : 'Câu hỏi vui chưa thương bạn',
+        icon: result.correct ? '✅' : '🧩',
+        label: result.correct ? 'Câu hỏi vui ăn điểm' : 'Câu hỏi vui chưa thương bạn',
         detail: `${question.prompt} · Bạn trả lời: ${answer.answer}`,
-        points,
+        points: result.points,
       };
     })
     .filter(Boolean);

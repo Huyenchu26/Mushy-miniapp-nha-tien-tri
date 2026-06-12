@@ -126,6 +126,22 @@ export function dailyPoints(answer, question) {
   return Number(question.points || 2);
 }
 
+export function dailyAnswerResult(answer, question, now = new Date()) {
+  const answered = !!answer;
+  const scorable = isQuestionScorable(question, now);
+  const rawPoints = dailyPoints(answer, question);
+  const correct = scorable && rawPoints > 0;
+  const points = scorable ? rawPoints : 0;
+  return {
+    answered,
+    scorable,
+    correct,
+    points,
+    scoreText: points > 0 ? `+${points}đ` : '0đ',
+    status: scorable ? (correct ? 'scored' : 'zero') : answered ? 'saved' : 'open',
+  };
+}
+
 export function isQuestionScorable(question, now = new Date()) {
   if (!question?.correctAnswer) return false;
   if (!question.closesAt) return true;
@@ -208,8 +224,7 @@ export function computeStandings({
     const streakPts = streakBonus(predictionMap, matches);
     const dailyPts = participantAnswers.reduce((sum, answer) => {
       const question = questionsByKey.get(answer.questionKey);
-      if (!isQuestionScorable(question, now)) return sum;
-      return sum + dailyPoints(answer, question);
+      return sum + dailyAnswerResult(answer, question, now).points;
     }, 0);
     const longTerm = includeLongTerm
       ? longTermPoints(betsByParticipant.get(participant.id), appConfig)

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { computeStandings, dailyPoints, filterCompetitionWindow, longTermPoints, matchBasePoints, matchPoints, matchUpsetBonus, streakBonus } from './scoring.js';
+import { computeStandings, dailyAnswerResult, dailyPoints, filterCompetitionWindow, longTermPoints, matchBasePoints, matchPoints, matchUpsetBonus, streakBonus } from './scoring.js';
 import { validateWorldCupData } from './data-validation.js';
 import { DAILY_QUESTIONS, MATCHES } from './worldcup-data.js';
 import { buildMockLiveScorePayload, createMockMembers, createMockPredictions } from './mock-simulation.js';
@@ -113,6 +113,25 @@ test('daily answer points are applied only after the question lock time', () => 
     now: new Date('2026-06-12T17:00:00.000Z'),
   });
   assert.equal(afterLock[0].dailyPts, 2);
+});
+
+test('dailyAnswerResult separates raw answer correctness from scoring window', () => {
+  const answer = { answer: 'Co' };
+  const question = {
+    correctAnswer: 'Co',
+    closesAt: '2026-06-12T17:00:00.000Z',
+    points: 2,
+  };
+
+  assert.equal(dailyPoints(answer, question), 2);
+  assert.deepEqual(
+    dailyAnswerResult(answer, question, new Date('2026-06-12T16:59:00.000Z')),
+    { answered: true, scorable: false, correct: false, points: 0, scoreText: '0đ', status: 'saved' }
+  );
+  assert.deepEqual(
+    dailyAnswerResult(answer, question, new Date('2026-06-12T17:00:00.000Z')),
+    { answered: true, scorable: true, correct: true, points: 2, scoreText: '+2đ', status: 'scored' }
+  );
 });
 
 test('long-term picks score only after matching answers are configured', () => {
