@@ -3270,6 +3270,12 @@ function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isTo
   const footerText = questionFooterText({ answerLabel, officialAnswerLabel, answered, expired, hasOfficialAnswer });
   const resultText = questionResultText({ officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points });
   const summaryText = questionSummaryText({ answerLabel, officialAnswerLabel, answered, expired, hasOfficialAnswer, isCorrect, points, question });
+  const resultRows = hasOfficialAnswer ? [
+    { label: 'Đáp án đúng', value: officialAnswerLabel || 'Đang cập nhật' },
+    { label: 'Bạn chọn', value: answered ? (answerLabel || 'Đáp án đã lưu') : 'Chưa trả lời' },
+    { label: 'Kết quả', value: answered ? (isCorrect ? 'Đúng' : 'Sai') : 'Không được tính điểm' },
+    { label: 'Điểm cộng', value: answered && isCorrect ? `+${points}đ` : '+0đ' },
+  ] : [];
 
   useEffect(() => setDraft(answer?.answer || ''), [answer?.answer]);
 
@@ -3317,12 +3323,25 @@ function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isTo
         </div>
       ) : null}
 
+      {hasOfficialAnswer ? (
+        <div className="question-result-details" aria-label="Chi tiết kết quả câu hỏi">
+          {resultRows.map((row) => (
+            <div key={row.label}>
+              <span>{row.label}</span>
+              <strong>{row.value}</strong>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       <div className="question-footer">
         <span>{footerText}</span>
         {hasOfficialAnswer ? <strong className={`question-score ${isCorrect ? 'ok' : 'miss'}`}>+{points}đ</strong> : null}
-        <button type="button" className="primary-btn small" disabled={locked || !draft || loading} onClick={handleSaveClick}>
-          {loading ? 'Đang lưu...' : answered ? 'Đã trả lời' : 'Chốt câu trả lời'}
-        </button>
+        {!hasOfficialAnswer ? (
+          <button type="button" className="primary-btn small" disabled={locked || !draft || loading} onClick={handleSaveClick}>
+            {loading ? 'Đang lưu...' : answered ? 'Đã trả lời' : 'Chốt câu trả lời'}
+          </button>
+        ) : null}
       </div>
     </>
   );

@@ -2489,6 +2489,34 @@ button.today-checklist-item:hover {
   color: var(--wc-primary);
 }
 
+.question-result-details {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--wc-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.question-result-details div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.question-result-details span {
+  color: var(--wc-muted);
+  font-weight: 800;
+}
+
+.question-result-details strong {
+  color: var(--wc-ink);
+  font-weight: 950;
+  text-align: right;
+}
+
 .question-score {
   border-radius: 999px;
   padding: 6px 9px;
