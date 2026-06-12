@@ -337,6 +337,7 @@ export default function App() {
     const unsubscribers = [
       subscribeToTable('matches', scope.workspaceId, scheduleRefresh),
       subscribeToTable('long_term_bets', scope.workspaceId, scheduleRefresh),
+      subscribeToTable('app_config', scope.workspaceId, scheduleRefresh),
     ];
     const interval = window.setInterval(() => {
       refreshTournamentState({ silent: true });
