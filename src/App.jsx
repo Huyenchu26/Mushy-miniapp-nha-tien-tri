@@ -4082,15 +4082,23 @@ function buildScoreHistory({
   const dailyItems = answers
     .map((answer) => {
       const question = questionsByKey.get(answer.questionKey);
+      if (!question) return null;
       const points = dailyPoints(answer, question);
-      if (!question || points <= 0) return null;
+      const hasOfficialAnswer = !!question.correctAnswer;
+      const optionItems = normalizeQuestionOptions(question.options);
+      const answerLabel = questionAnswerLabel(answer.answer, optionItems);
+      const officialAnswerLabel = questionAnswerLabel(question.correctAnswer, optionItems);
 
       return {
         key: `daily-${answer.questionKey}`,
         sortKey: question.date,
+        kind: 'daily',
+        status: hasOfficialAnswer ? (points > 0 ? 'scored' : 'zero') : 'saved',
         type: 'Câu hỏi',
         label: question.prompt,
-        detail: `Bạn trả lời: ${answer.answer}`,
+        detail: hasOfficialAnswer
+          ? `Bạn trả lời: ${answerLabel} · Đáp án: ${officialAnswerLabel} · ${points > 0 ? 'Đúng' : 'Sai'}`
+          : `Bạn trả lời: ${answerLabel} · Chờ công bố đáp án`,
         points,
       };
     })
