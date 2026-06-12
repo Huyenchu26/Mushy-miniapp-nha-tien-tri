@@ -142,6 +142,10 @@ input:disabled {
   min-width: 0;
 }
 
+.dialog-scrim {
+  z-index: 10050;
+}
+
 @media (min-width: 700px) {
   .tab-nav {
     padding: 6px;
