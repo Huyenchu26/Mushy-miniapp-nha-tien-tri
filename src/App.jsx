@@ -41,6 +41,7 @@ const DOUBLE_DOWN_OPEN_BEFORE_MS = 24 * 60 * 60 * 1000;
 const ROOM_POLL_FALLBACK_MS = 30000;
 const TOURNAMENT_POLL_FALLBACK_MS = 60000;
 const TOURNAMENT_REALTIME_DEBOUNCE_MS = 400;
+const TOURNAMENT_RESUME_REFRESH_THROTTLE_MS = 1500;
 const MATCH_CLOCK_TICK_MS = 30000;
 const LIVE_MATCH_FALLBACK_MS = 2.5 * 60 * 60 * 1000;
 const CHAT_REPEAT_WINDOW_MS = 45000;
@@ -196,6 +197,7 @@ export default function App() {
   const chatSendTimesRef = useRef([]);
   const chatRepeatRef = useRef([]);
   const tournamentRefreshTimerRef = useRef(null);
+  const tournamentResumeRefreshRef = useRef(0);
   const matchInsightRequestsRef = useRef(new Map());
   const matchInsightWarmupKeyRef = useRef('');
   const deepLinkHandledRef = useRef('');
@@ -347,6 +349,30 @@ export default function App() {
       }
       unsubscribers.forEach((unsubscribe) => unsubscribe?.());
       window.clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx?.userId, scope?.workspaceId, localSimulation]);
+
+  useEffect(() => {
+    if (!ctx?.userId || !scope?.workspaceId) return undefined;
+    if (localSimulation && isMockContext(ctx)) return undefined;
+
+    const refreshOnResume = (event) => {
+      if (event?.type === 'visibilitychange' && document.visibilityState !== 'visible') return;
+      const now = Date.now();
+      if (now - tournamentResumeRefreshRef.current < TOURNAMENT_RESUME_REFRESH_THROTTLE_MS) return;
+      tournamentResumeRefreshRef.current = now;
+      refreshTournamentState({ silent: true });
+    };
+
+    document.addEventListener('visibilitychange', refreshOnResume);
+    window.addEventListener('focus', refreshOnResume);
+    window.addEventListener('pageshow', refreshOnResume);
+
+    return () => {
+      document.removeEventListener('visibilitychange', refreshOnResume);
+      window.removeEventListener('focus', refreshOnResume);
+      window.removeEventListener('pageshow', refreshOnResume);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ctx?.userId, scope?.workspaceId, localSimulation]);
