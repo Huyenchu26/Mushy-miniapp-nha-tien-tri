@@ -40,6 +40,8 @@ const DOUBLE_DOWN_OPEN_BEFORE_MS = 24 * 60 * 60 * 1000;
 const ROOM_POLL_FALLBACK_MS = 30000;
 const TOURNAMENT_POLL_FALLBACK_MS = 60000;
 const TOURNAMENT_REALTIME_DEBOUNCE_MS = 400;
+const MATCH_CLOCK_TICK_MS = 30000;
+const LIVE_MATCH_FALLBACK_MS = 2.5 * 60 * 60 * 1000;
 const CHAT_REPEAT_WINDOW_MS = 45000;
 const CHAT_REPEAT_LIMIT = 2;
 const MATCH_INSIGHT_WARMUP_DELAY_MS = 1500;
@@ -155,6 +157,7 @@ export default function App() {
   const [roomRealtimeState, setRoomRealtimeState] = useState('idle');
   const [spamBlockedUntil, setSpamBlockedUntil] = useState(0);
   const [liveScores, setLiveScores] = useState([]);
+  const [nowMs, setNowMs] = useState(Date.now());
   const [liveSync, setLiveSync] = useState({ source: '', fetchedAt: '', error: '' });
   const [aiInsightsEnabled, setAiInsightsEnabled] = useState(false);
   const [matchInsights, setMatchInsights] = useState({});
@@ -259,6 +262,11 @@ export default function App() {
       document.body.scrollTop = 0;
     });
   }, [activeTab]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNowMs(Date.now()), MATCH_CLOCK_TICK_MS);
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     try {
@@ -484,8 +492,8 @@ export default function App() {
     [tournamentMatches, liveScores]
   );
   const matchesWithLiveScores = useMemo(
-    () => applyLiveScores(matchesWithOfficialScores, liveScores),
-    [matchesWithOfficialScores, liveScores]
+    () => applyLiveScores(matchesWithOfficialScores, liveScores, nowMs),
+    [matchesWithOfficialScores, liveScores, nowMs]
   );
   const standings = useMemo(
     () => buildStandings({
@@ -1991,7 +1999,7 @@ function MatchAiInsightBox({ match, aiInsight, aiInsightsEnabled, onLoadInsight 
 
   const finished = isFinished(match);
   const liveScore = shouldShowLiveScore(match) ? match.liveScore : null;
-  if (finished || liveScore) return null;
+  if (finished || liveScore || hasKickoffStarted(match)) return null;
 
   const handleToggle = (event) => {
     event.stopPropagation();
@@ -2048,6 +2056,7 @@ function MatchCardPrototype({
   const teamsKnown = !hasUnknownTeam(match);
   const locked = isPredictionLocked(match) || !teamsKnown;
   const finished = isFinished(match);
+  const kickoffStarted = hasKickoffStarted(match);
   const liveScore = shouldShowLiveScore(match) ? match.liveScore : null;
   const liveInProgress = isLiveInProgress(liveScore);
   const liveFinished = liveScore?.status === 'finished';
@@ -2171,7 +2180,11 @@ function MatchCardPrototype({
             ) : (
               <>
                 <span>
-                  {prediction ? <>Bạn dự <b>{prediction.homePred}-{prediction.awayPred}</b></> : 'Trận đang có tỉ số live tạm'}
+                  {prediction
+                    ? <>Bạn dự <b>{prediction.homePred}-{prediction.awayPred}</b></>
+                    : liveScore?.clockFallback
+                      ? 'Trận đã bắt đầu'
+                      : 'Trận đang có tỉ số live tạm'}
                 </span>
                 <strong className="pending-score">Chưa chấm điểm đến khi nguồn tỉ số báo FT</strong>
               </>
@@ -2269,7 +2282,7 @@ function MatchCardPrototype({
           <div className="prediction-done pending">
             <span>Bạn đã lưu dự đoán</span>
             <small>Bạn dự <b>{prediction.homePred}-{prediction.awayPred}</b>{prediction.doubleDown ? ' · kèo tủ x2' : ''}</small>
-            <strong>Chờ trận đấu diễn ra</strong>
+            <strong>{kickoffStarted ? 'Chờ chốt kết quả' : 'Chờ trận đấu diễn ra'}</strong>
           </div>
           <MatchAiInsightBox
             match={match}
@@ -4772,13 +4785,29 @@ function applyAutomaticScores(matches, liveScores) {
   });
 }
 
-function applyLiveScores(matches, liveScores) {
+function applyLiveScores(matches, liveScores, nowMs = Date.now()) {
   const liveByPair = buildLiveScorePairMap(liveScores);
   return matches.map((match) => {
     if (isFinished(match)) return { ...match, liveScore: null };
-    const liveScore = findLiveScoreForMatch(match, liveByPair);
+    const liveScore = findLiveScoreForMatch(match, liveByPair) || clockBasedLiveScore(match, nowMs);
     return { ...match, liveScore };
   });
+}
+
+function clockBasedLiveScore(match, nowMs = Date.now()) {
+  if (!match?.kickoffAt || hasUnknownTeam(match)) return null;
+  const kickoffMs = new Date(match.kickoffAt).getTime();
+  if (!Number.isFinite(kickoffMs)) return null;
+  if (nowMs < kickoffMs || nowMs > kickoffMs + LIVE_MATCH_FALLBACK_MS) return null;
+  return {
+    homeTeam: match.homeTeam,
+    awayTeam: match.awayTeam,
+    homeScore: null,
+    awayScore: null,
+    status: 'in_progress',
+    rawClock: '',
+    clockFallback: true,
+  };
 }
 
 function buildLiveScorePairMap(liveScores) {
@@ -4903,6 +4932,16 @@ function getMatchScoreState(match) {
 
   const liveScore = shouldShowLiveScore(match) ? match.liveScore : null;
   if (liveScore) {
+    if (liveScore.clockFallback) {
+      return {
+        kind: 'live',
+        hasScore: false,
+        countsInTable: false,
+        homeScore: null,
+        awayScore: null,
+        label: liveLabel(liveScore),
+      };
+    }
     const kind = liveScore.status === 'finished' ? 'final' : 'live';
     return {
       kind,
@@ -5129,6 +5168,11 @@ function isPredictionLocked(match, nowMs = Date.now()) {
   return nowMs >= getPredictionLockAt(match).getTime();
 }
 
+function hasKickoffStarted(match, nowMs = Date.now()) {
+  const kickoffMs = new Date(match?.kickoffAt).getTime();
+  return Number.isFinite(kickoffMs) && nowMs >= kickoffMs;
+}
+
 function isDoubleDownWindowOpen(match, nowMs = Date.now()) {
   const kickoffMs = new Date(match?.kickoffAt).getTime();
   if (!Number.isFinite(kickoffMs)) return false;
@@ -5188,6 +5232,7 @@ function liveLabel(liveScore) {
   if (liveScore.status === 'finished') return finalStatusLabel(liveScore);
   if (liveScore.status === 'extra_time') return liveScore.rawClock ? `ET ${liveScore.rawClock}` : 'ET';
   if (liveScore.status === 'penalties') return liveScore.rawClock ? `PEN ${liveScore.rawClock}` : 'PEN';
+  if (liveScore.clockFallback) return 'Đang diễn ra';
   if (liveScore.status === 'in_progress') return liveScore.rawClock ? `LIVE ${liveScore.rawClock}` : 'LIVE';
   return 'LIVE';
 }
