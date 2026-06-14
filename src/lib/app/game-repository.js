@@ -7,6 +7,21 @@ export async function fetchPredictions(workspaceId) {
   return (data || []).map(mapPrediction);
 }
 
+export async function fetchPredictionParticipants(workspaceId) {
+  if (!workspaceId) return [];
+  const { data, error } = await db.rpc('list_group_prediction_participants', {
+    p_workspace_id: workspaceId,
+  });
+  if (error) {
+    const message = String(error.message || '').toLowerCase();
+    if (error.code === '42883' || error.code === 'PGRST202' || message.includes('list_group_prediction_participants')) {
+      return null;
+    }
+    throw error;
+  }
+  return (data || []).map(mapPredictionParticipant);
+}
+
 export async function fetchDailyAnswers(workspaceId) {
   const { data, error } = await db.from('group_daily_answers').select('*')
     .eq('workspace_id', workspaceId).order('created_at', { ascending: true });
@@ -45,6 +60,14 @@ export function mapPrediction(row) {
     matchNo: row.match_no, matchDay: row.match_day,
     homePred: row.home_pred, awayPred: row.away_pred, doubleDown: row.double_down,
     createdAt: row.created_at, updatedAt: row.updated_at,
+  };
+}
+
+export function mapPredictionParticipant(row) {
+  return {
+    matchNo: row.match_no,
+    createdBy: row.user_id,
+    predictedAt: row.predicted_at,
   };
 }
 

@@ -26,6 +26,7 @@ import {
   fetchDailyAnswers,
   fetchLongTermBet,
   fetchMatchRoomMessages,
+  fetchPredictionParticipants,
   fetchPredictions,
   insertMatchRoomMessage,
   mapRoomMessage,
@@ -145,6 +146,7 @@ export default function App() {
   const [ctxError, setCtxError] = useState('');
   const [activeTab, setActiveTab] = useState(DEFAULT_TAB);
   const [predictions, setPredictions] = useState([]);
+  const [predictionParticipants, setPredictionParticipants] = useState([]);
   const [answers, setAnswers] = useState([]);
   const [longTermBet, setLongTermBet] = useState(null);
   const [allLongTermBets, setAllLongTermBets] = useState([]);
@@ -624,7 +626,9 @@ export default function App() {
     setLoading(true);
     setError('');
     if (localSimulation && isMockContext(ctx)) {
-      setPredictions(mergeMockPredictions([], ctx, scope.workspaceId));
+      const mockPredictions = mergeMockPredictions([], ctx, scope.workspaceId);
+      setPredictions(mockPredictions);
+      setPredictionParticipants(predictionRowsToParticipantRows(mockPredictions));
       setAnswers([]);
       setLongTermBet(createMockLongTermBet(ctx, scope.workspaceId));
       setAllLongTermBets([createMockLongTermBet(ctx, scope.workspaceId)]);
@@ -644,14 +648,17 @@ export default function App() {
     }
 
     try {
-      const [predictionRows, answerRows, longTermRow, memberRows, tournamentState] = await Promise.all([
+      const [predictionRows, participantRows, answerRows, longTermRow, memberRows, tournamentState] = await Promise.all([
         fetchPredictions(scope.workspaceId),
+        fetchPredictionParticipants(scope.workspaceId),
         fetchDailyAnswers(scope.workspaceId),
         localSimulation ? Promise.resolve(null) : fetchLongTermBet(scope.workspaceId, ctx.userId),
         listMembers(scope.workspaceId),
         fetchTournamentState(scope.workspaceId),
       ]);
-      setPredictions(localSimulation ? mergeMockPredictions(predictionRows, ctx, scope.workspaceId) : predictionRows);
+      const nextPredictions = localSimulation ? mergeMockPredictions(predictionRows, ctx, scope.workspaceId) : predictionRows;
+      setPredictions(nextPredictions);
+      setPredictionParticipants(participantRows || predictionRowsToParticipantRows(nextPredictions));
       setAnswers(answerRows);
       setLongTermBet(longTermRow || (localSimulation ? createMockLongTermBet(ctx, scope.workspaceId) : null));
       let nextTournamentState = tournamentState;
@@ -664,7 +671,9 @@ export default function App() {
       setMembers(localSimulation ? mergeMockMembers(ensuredMembers, ctx) : ensuredMembers);
     } catch (err) {
       if (localSimulation) {
-        setPredictions(mergeMockPredictions([], ctx, scope.workspaceId));
+        const mockPredictions = mergeMockPredictions([], ctx, scope.workspaceId);
+        setPredictions(mockPredictions);
+        setPredictionParticipants(predictionRowsToParticipantRows(mockPredictions));
         setAnswers([]);
         setLongTermBet(createMockLongTermBet(ctx, scope.workspaceId));
         setAllLongTermBets([createMockLongTermBet(ctx, scope.workspaceId)]);
@@ -713,6 +722,7 @@ export default function App() {
 
       if (localSimulation && isMockContext(ctx)) {
         setPredictions((rows) => upsertLocalPrediction(rows, nextPrediction));
+        setPredictionParticipants((rows) => upsertLocalPredictionParticipant(rows, nextPrediction));
         setNotice('DEV mock: saved prediction locally.');
         return true;
       }
@@ -732,6 +742,7 @@ export default function App() {
       if (upsertError) {
         if (localSimulation && isAuthError(upsertError)) {
           setPredictions((rows) => upsertLocalPrediction(rows, nextPrediction));
+          setPredictionParticipants((rows) => upsertLocalPredictionParticipant(rows, nextPrediction));
           setNotice('DEV local: token hết hạn, đã lưu dự đoán tạm trên máy.');
           return true;
         }
@@ -739,7 +750,13 @@ export default function App() {
       }
 
       setPredictions((rows) => upsertLocalPrediction(rows, nextPrediction));
-      setPredictions(await fetchPredictions(scope.workspaceId));
+      setPredictionParticipants((rows) => upsertLocalPredictionParticipant(rows, nextPrediction));
+      const [freshPredictions, freshParticipants] = await Promise.all([
+        fetchPredictions(scope.workspaceId),
+        fetchPredictionParticipants(scope.workspaceId),
+      ]);
+      setPredictions(freshPredictions);
+      setPredictionParticipants(freshParticipants || predictionRowsToParticipantRows(freshPredictions));
       setNotice('Đã lưu dự đoán.');
       track('prediction_saved', { match_no: match.matchNo, double_down: nextPrediction.doubleDown });
       return true;
@@ -1183,6 +1200,8 @@ export default function App() {
                 matches={filteredMatches}
                 allMatches={matchesWithLiveScores}
                 predictions={predictions}
+                predictionParticipants={predictionParticipants}
+                members={members}
                 predictionMap={predictionMap}
                 answerMap={answerMap}
                 dailyDoubleDownMap={dailyDoubleDownMap}
@@ -1535,6 +1554,8 @@ function MatchesScreen({
   matches,
   allMatches,
   predictions,
+  predictionParticipants = [],
+  members,
   predictionMap,
   answerMap,
   dailyDoubleDownMap,
@@ -1582,12 +1603,37 @@ function MatchesScreen({
   );
   const predictionCountByMatch = useMemo(() => {
     const map = new Map();
-    for (const prediction of predictions || []) {
-      const matchNo = Number(prediction.matchNo);
+    for (const participant of predictionParticipants || []) {
+      const matchNo = Number(participant.matchNo);
       map.set(matchNo, (map.get(matchNo) || 0) + 1);
     }
     return map;
-  }, [predictions]);
+  }, [predictionParticipants]);
+  const predictionParticipantsByMatch = useMemo(() => {
+    const memberMap = new Map((members || []).map((member) => [member.user_id, member]));
+    const map = new Map();
+    const sortedParticipants = [...(predictionParticipants || [])].sort((a, b) => {
+      const bTime = new Date(b.predictedAt || 0).getTime();
+      const aTime = new Date(a.predictedAt || 0).getTime();
+      return bTime - aTime;
+    });
+
+    for (const predictionParticipant of sortedParticipants) {
+      const matchNo = Number(predictionParticipant.matchNo);
+      const member = memberMap.get(predictionParticipant.createdBy) || {};
+      const participant = {
+        userId: predictionParticipant.createdBy,
+        name: memberDisplayName(memberMap, predictionParticipant.createdBy),
+        avatarUrl: member.avatar_url || '',
+      };
+      const rows = map.get(matchNo) || [];
+      if (!rows.some((item) => item.userId === participant.userId)) {
+        rows.push(participant);
+        map.set(matchNo, rows);
+      }
+    }
+    return map;
+  }, [members, predictionParticipants]);
   const [showExtraGroups, setShowExtraGroups] = useState(false);
   const extraActive = EXTRA_GROUP_FILTERS.includes(groupFilter);
   const knockoutActive = KNOCKOUT_FILTERS.some((round) => round.id === groupFilter);
@@ -1824,6 +1870,7 @@ function MatchesScreen({
                   match={match}
                   prediction={predictionMap.get(match.matchNo)}
                   predictionCount={predictionCountByMatch.get(Number(match.matchNo)) || 0}
+                  predictionParticipants={predictionParticipantsByMatch.get(Number(match.matchNo)) || []}
                   roastText={roastMap.get(Number(match.matchNo))}
                   dailyDoubleMatchNo={dailyDoubleDownMap.get(match.matchDay)}
                   aiInsightsEnabled={aiInsightsEnabled}
@@ -2121,6 +2168,7 @@ function MatchCardPrototype({
   match,
   prediction,
   predictionCount = 0,
+  predictionParticipants = [],
   roastText,
   dailyDoubleMatchNo,
   aiInsightsEnabled,
@@ -2175,16 +2223,6 @@ function MatchCardPrototype({
       : prediction
         ? 'Cập nhật dự đoán'
         : 'Lưu dự đoán';
-  const socialLine = buildMatchSocialLine({
-    prediction,
-    predictionCount,
-    homeScore,
-    awayScore,
-    doubleDown,
-    draftIsSaved,
-    locked,
-    teamsKnown,
-  });
   const doubleHintText = !teamsKnown
     ? 'Chờ xác định đội.'
     : locked
@@ -2267,6 +2305,10 @@ function MatchCardPrototype({
               </>
             )}
           </div>
+          <MatchPredictionRoster
+            count={predictionCount}
+            participants={predictionParticipants}
+          />
           <div className="match-actions" style={{ marginTop: '8px' }}>
             <button
               type="button"
@@ -2292,6 +2334,10 @@ function MatchCardPrototype({
             onBumpScore={bumpScore}
           />
 
+          <MatchPredictionRoster
+            count={predictionCount}
+            participants={predictionParticipants}
+          />
           <MatchAiInsightBox
             match={match}
             aiInsight={aiInsight}
@@ -2361,6 +2407,10 @@ function MatchCardPrototype({
             <small>Bạn dự <b>{prediction.homePred}-{prediction.awayPred}</b>{prediction.doubleDown ? ' · kèo tủ x2' : ''}</small>
             <strong>{kickoffStarted ? 'Chờ chốt kết quả' : 'Chờ trận đấu diễn ra'}</strong>
           </div>
+          <MatchPredictionRoster
+            count={predictionCount}
+            participants={predictionParticipants}
+          />
           <MatchAiInsightBox
             match={match}
             aiInsight={aiInsight}
@@ -2393,6 +2443,50 @@ function MatchCardPrototype({
         </>
       )}
     </article>
+  );
+}
+
+function MatchPredictionRoster({
+  count = 0,
+  participants = [],
+}) {
+  const total = Math.max(Number(count) || 0, participants.length);
+  const visibleParticipants = participants.slice(0, 3);
+  const extraCount = Math.max(0, total - visibleParticipants.length);
+  const visibleNames = visibleParticipants
+    .map((participant) => compactParticipantName(participant.name))
+    .filter(Boolean);
+  const namesText = visibleNames.length
+    ? `${visibleNames.join(', ')}${extraCount > 0 ? ` +${extraCount}` : ''}`
+    : '';
+  const rosterLabel = total > 0
+    ? `${total} người đã dự đoán${namesText ? `: ${namesText}` : ''}`
+    : 'Chưa có ai dự đoán';
+
+  return (
+    <div
+      className={`match-predictors-row ${total > 0 ? 'has-predictors' : 'empty'}`}
+      role="status"
+      aria-label={rosterLabel}
+    >
+      <span className="predictor-avatar-stack" aria-hidden="true">
+        {visibleParticipants.length ? visibleParticipants.map((participant) => (
+          <span key={participant.userId} className="predictor-avatar" title={participant.name}>
+            {participant.avatarUrl ? (
+              <img src={participant.avatarUrl} alt="" loading="lazy" />
+            ) : (
+              initialsFromName(participant.name).slice(0, 1)
+            )}
+          </span>
+        )) : (
+          <span className="predictor-avatar predictor-avatar--empty">0</span>
+        )}
+      </span>
+      <span className="predictor-copy" title={rosterLabel}>
+        <strong>{total > 0 ? `${total} người đã dự đoán` : 'Chưa có ai dự đoán'}</strong>
+        {namesText ? <small>{namesText}</small> : null}
+      </span>
+    </div>
   );
 }
 
@@ -4471,6 +4565,14 @@ function initialsFromName(name) {
   return letters.toUpperCase();
 }
 
+function compactParticipantName(name) {
+  const text = String(name || '').replace(/\s+/g, ' ').trim();
+  if (!text) return '';
+  if (/^Người chơi\s+/i.test(text)) return text;
+  const parts = text.split(' ').filter(Boolean);
+  return parts[parts.length - 1] || text;
+}
+
 function createMockRoomMessages({ match, members = [], ctx, workspaceId }) {
   const now = Date.now();
   const fallbackMembers = [
@@ -4863,6 +4965,34 @@ function upsertLocalPrediction(rows, draft) {
     doubleDown: draft.doubleDown,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+  };
+  return [
+    ...rows.filter((row) => !(row.createdBy === draft.createdBy && Number(row.matchNo) === Number(draft.matchNo))),
+    next,
+  ].sort((a, b) => Number(a.matchNo) - Number(b.matchNo));
+}
+
+function predictionRowsToParticipantRows(rows = []) {
+  const seen = new Set();
+  return rows
+    .map((row) => ({
+      matchNo: row.matchNo,
+      createdBy: row.createdBy,
+      predictedAt: row.updatedAt || row.createdAt || new Date().toISOString(),
+    }))
+    .filter((row) => {
+      const key = `${Number(row.matchNo)}:${row.createdBy}`;
+      if (!row.createdBy || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+function upsertLocalPredictionParticipant(rows, draft) {
+  const next = {
+    matchNo: draft.matchNo,
+    createdBy: draft.createdBy,
+    predictedAt: new Date().toISOString(),
   };
   return [
     ...rows.filter((row) => !(row.createdBy === draft.createdBy && Number(row.matchNo) === Number(draft.matchNo))),
