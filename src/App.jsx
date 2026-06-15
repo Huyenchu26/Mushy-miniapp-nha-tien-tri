@@ -1681,6 +1681,7 @@ function MatchesScreen({
   }), [grouped, predictionMap]);
   const [selectedDate, setSelectedDate] = useState('');
   const dayChipRefs = useRef(new Map());
+  const didInitialScrollToTodayRef = useRef(false);
   const effectiveSelectedDate = dayPages.some((page) => page.date === selectedDate)
     ? selectedDate
     : pickDefaultMatchDay(dayPages, todayKey);
@@ -1744,6 +1745,22 @@ function MatchesScreen({
     }
   }, [dayPages, effectiveSelectedDate, selectedDate]);
 
+  useEffect(() => {
+    if (didInitialScrollToTodayRef.current || !dayPages.length) return;
+
+    const targetDate = dayPages.some((page) => page.date === todayKey)
+      ? todayKey
+      : effectiveSelectedDate;
+    if (!targetDate) return;
+
+    didInitialScrollToTodayRef.current = true;
+    const frame = window.requestAnimationFrame(() => {
+      scrollDayChipIntoView(targetDate, { behavior: 'auto', inline: 'center' });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [dayPages, effectiveSelectedDate, todayKey]);
+
   function focusMatch(match) {
     if (!match) return;
     setSelectedDate(match.matchDay);
@@ -1762,10 +1779,19 @@ function MatchesScreen({
     window.requestAnimationFrame(() => scrollDayChipIntoView(nextPage.date));
   }
 
-  function scrollDayChipIntoView(date) {
+  function scrollDayChipIntoView(date, options = {}) {
     const chip = dayChipRefs.current.get(date);
     const row = chip?.closest('.day-chip-row');
     if (!row || !chip) return;
+
+    const behavior = options.behavior || 'smooth';
+    if (options.inline === 'center') {
+      row.scrollTo({
+        left: Math.max(0, chip.offsetLeft - ((row.clientWidth - chip.offsetWidth) / 2)),
+        behavior,
+      });
+      return;
+    }
 
     const rowRect = row.getBoundingClientRect();
     const chipRect = chip.getBoundingClientRect();
@@ -1774,7 +1800,7 @@ function MatchesScreen({
     if (chipRect.left < rowRect.left + gutter) {
       row.scrollBy({
         left: chipRect.left - rowRect.left - gutter,
-        behavior: 'smooth',
+        behavior,
       });
       return;
     }
@@ -1782,7 +1808,7 @@ function MatchesScreen({
     if (chipRect.right > rowRect.right - gutter) {
       row.scrollBy({
         left: chipRect.right - rowRect.right + gutter,
-        behavior: 'smooth',
+        behavior,
       });
     }
   }
