@@ -5,8 +5,12 @@ import { mushyApi } from '../lib/mushy-api.js';
 import { track } from '../lib/analytics.js';
 import { TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS, dateKeyInVietnamTimeZone } from '../lib/app/worldcup-data.js';
 import { buildDailyRecap, nearestReminderMatch } from '../lib/app/engagement.js';
+import { fetchPredictions } from '../lib/app/game-repository.js';
+import { matchScoreBreakdown } from '../lib/app/scoring.js';
 import {
+  fetchMatchResultNotificationLogs,
   fetchMissingPredictionUserIds,
+  insertMatchResultNotificationLogs,
   saveManualPointAdjustment,
   saveOfficialMatch,
   saveTournamentConfig,
@@ -163,8 +167,21 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
       { danger: true, confirmLabel: 'Chốt FT', cancelLabel: 'Huỷ' }
     ).then((ok) => ok && run('result', async () => {
       await saveOfficialMatch({ workspaceId, userId: ctx.userId, match: selected, result: { homeTeam, awayTeam, homeScore, awayScore } });
+      const notified = await notifyMatchResultPredictions({
+        workspaceId,
+        userId: ctx.userId,
+        match: {
+          ...selected,
+          homeTeam,
+          awayTeam,
+          homeScore: Number(homeScore),
+          awayScore: Number(awayScore),
+          status: 'finished',
+        },
+      });
       track('official_result_saved', { match_no: selected.matchNo });
-    }, `Đã chốt kết quả trận #${selected.matchNo}.`));
+      return notified;
+    }, (result) => `Đã chốt kết quả trận #${selected.matchNo}.${result?.message ? ` ${result.message}` : ''}`));
   }
 
   function handleSyncFinishedLiveScores() {
@@ -183,22 +200,26 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
       `${preview}${extra}\n\nCác snapshot này sẽ lưu vào bảng matches để chấm điểm ổn định cho tất cả người chơi.`,
       { danger: true, confirmLabel: 'Chốt FT live', cancelLabel: 'Huỷ' }
     ).then((ok) => ok && run('live-results', async () => {
-      await Promise.all(liveFinishedCandidates.map((match) => saveOfficialMatch({
-        workspaceId,
-        userId: ctx.userId,
-        match,
-        result: {
-          homeTeam: match.homeTeam,
-          awayTeam: match.awayTeam,
-          homeScore: match.homeScore,
-          awayScore: match.awayScore,
-          resultSource: match.resultSource || 'live_score',
-          finishType: match.finishType || null,
-          statusDetail: match.statusDetail || '',
-        },
-      })));
+      const results = await Promise.all(liveFinishedCandidates.map(async (match) => {
+        await saveOfficialMatch({
+          workspaceId,
+          userId: ctx.userId,
+          match,
+          result: {
+            homeTeam: match.homeTeam,
+            awayTeam: match.awayTeam,
+            homeScore: match.homeScore,
+            awayScore: match.awayScore,
+            resultSource: match.resultSource || 'live_score',
+            finishType: match.finishType || null,
+            statusDetail: match.statusDetail || '',
+          },
+        });
+        return notifyMatchResultPredictions({ workspaceId, userId: ctx.userId, match });
+      }));
       track('live_finished_scores_persisted', { match_count: liveFinishedCandidates.length });
-    }, `Đã chốt ${liveFinishedCandidates.length} kết quả FT từ live score.`));
+      return mergeNotificationSummaries(results);
+    }, (result) => `Đã chốt ${liveFinishedCandidates.length} kết quả FT từ live score.${result?.message ? ` ${result.message}` : ''}`));
   }
 
   function handleConfig() {
@@ -433,6 +454,105 @@ function isLiveFinishedSnapshotCandidate(match) {
   if (match.confirmedAt) return false;
   if (!match.resultFetchedAt) return false;
   return Number.isInteger(Number(match.homeScore)) && Number.isInteger(Number(match.awayScore));
+}
+
+async function notifyMatchResultPredictions({ workspaceId, userId, match }) {
+  try {
+    if (!workspaceId || !userId || !match?.matchNo) return { sent: 0, skipped: 0 };
+
+    const existingLogs = await fetchMatchResultNotificationLogs({
+      workspaceId,
+      matchNo: match.matchNo,
+    });
+    if (existingLogs === null) {
+      return {
+        sent: 0,
+        skipped: 0,
+        message: 'Chưa gửi push kết quả: cần submit migration 014_match_result_notifications.sql.',
+      };
+    }
+
+    const alreadySent = new Set(existingLogs.map((row) => row.target_user_id));
+    const predictions = (await fetchPredictions(workspaceId))
+      .filter((prediction) => Number(prediction.matchNo) === Number(match.matchNo))
+      .filter((prediction) => prediction.createdBy && !alreadySent.has(prediction.createdBy));
+
+    if (!predictions.length) {
+      return {
+        sent: 0,
+        skipped: existingLogs.length,
+        message: existingLogs.length ? 'Push kết quả đã được gửi trước đó.' : 'Chưa có dự đoán nào để gửi push.',
+      };
+    }
+
+    const attempts = await Promise.allSettled(predictions.map(async (prediction) => {
+      const breakdown = matchScoreBreakdown(prediction, match);
+      const resultStatus = breakdown.total > 0 ? 'correct' : 'wrong';
+      await mushyApi.push({
+        title: resultStatus === 'correct' ? 'Bạn đoán trúng rồi!' : 'Kết quả đã chốt',
+        body: buildMatchResultPushBody({ prediction, match, points: breakdown.total, resultStatus }),
+        userIds: [prediction.createdBy],
+        data: {
+          appSlug: 'nha-tien-tri',
+          kind: 'match_result_scored',
+          screen: 'match',
+          matchNo: String(match.matchNo),
+          recordId: `match-${match.matchNo}`,
+        },
+      });
+      return {
+        matchNo: match.matchNo,
+        targetUserId: prediction.createdBy,
+        resultStatus,
+        points: breakdown.total,
+        kind: 'match_result_scored',
+      };
+    }));
+
+    const sentRows = attempts
+      .filter((result) => result.status === 'fulfilled')
+      .map((result) => result.value);
+    await insertMatchResultNotificationLogs({ workspaceId, userId, rows: sentRows });
+
+    const failed = attempts.length - sentRows.length;
+    return {
+      sent: sentRows.length,
+      failed,
+      skipped: existingLogs.length,
+      message: `Đã gửi push kết quả cho ${sentRows.length} người${failed ? `, ${failed} lỗi` : ''}.`,
+    };
+  } catch (error) {
+    console.warn('Match result notification failed', error);
+    return {
+      sent: 0,
+      failed: 1,
+      skipped: 0,
+      message: `Chốt FT xong, nhưng push kết quả lỗi: ${error.message || 'không rõ lý do'}.`,
+    };
+  }
+}
+
+function buildMatchResultPushBody({ prediction, match, points, resultStatus }) {
+  const actual = `${match.homeTeam} ${Number(match.homeScore)}-${Number(match.awayScore)} ${match.awayTeam}`;
+  const guessed = `${Number(prediction.homePred)}-${Number(prediction.awayPred)}`;
+  const scoreText = points > 0 ? `+${points}đ` : '+0đ';
+  const prefix = resultStatus === 'correct'
+    ? `Bạn đoán ${guessed} và nhận ${scoreText}.`
+    : `Bạn đoán ${guessed}, lần này chưa có điểm.`;
+  return normalizePushText(`#${match.matchNo}: ${prefix} Kết quả: ${actual}.`, 220);
+}
+
+function mergeNotificationSummaries(results = []) {
+  const summaries = results.filter(Boolean);
+  const sent = summaries.reduce((total, item) => total + Number(item.sent || 0), 0);
+  const failed = summaries.reduce((total, item) => total + Number(item.failed || 0), 0);
+  const migrationMessage = summaries.find((item) => item.message?.includes('migration'))?.message;
+  if (migrationMessage) return { sent, failed, message: migrationMessage };
+  if (sent || failed) {
+    return { sent, failed, message: `Đã gửi push kết quả cho ${sent} lượt${failed ? `, ${failed} lỗi` : ''}.` };
+  }
+  const fallback = summaries.find((item) => item.message)?.message;
+  return { sent, failed, message: fallback || '' };
 }
 
 function buildMemberOptions({ members = [], standings = [], ctx }) {

@@ -69,6 +69,37 @@ export async function saveOfficialMatch({ workspaceId, userId, match, result }) 
   await writeAudit({ workspaceId, userId, action: 'official_result_saved', entityType: 'match', entityKey: String(match.matchNo), afterData: payload });
 }
 
+export async function fetchMatchResultNotificationLogs({ workspaceId, matchNo, kind = 'match_result_scored' }) {
+  const { data, error } = await db
+    .from('match_result_notification_log')
+    .select('target_user_id, notification_kind')
+    .eq('workspace_id', workspaceId)
+    .eq('match_no', Number(matchNo))
+    .eq('notification_kind', kind);
+  if (isMissingNotificationLogTable(error)) return null;
+  if (error) throw error;
+  return data || [];
+}
+
+export async function insertMatchResultNotificationLogs({ workspaceId, userId, rows }) {
+  if (!rows?.length) return 0;
+  const payload = rows.map((row) => ({
+    workspace_id: workspaceId,
+    created_by: userId,
+    match_no: Number(row.matchNo),
+    target_user_id: row.targetUserId,
+    result_status: row.resultStatus,
+    points: Number(row.points || 0),
+    notification_kind: row.kind || 'match_result_scored',
+  }));
+  const { error } = await db
+    .from('match_result_notification_log')
+    .upsert(payload, { onConflict: 'workspace_id,match_no,target_user_id,notification_kind', ignoreDuplicates: true });
+  if (isMissingNotificationLogTable(error)) return 0;
+  if (error) throw error;
+  return payload.length;
+}
+
 export async function saveTournamentConfig({ workspaceId, userId, config }) {
   const dailyQuestionAnswers = await mergeLatestDailyQuestionAnswers(
     workspaceId,
@@ -181,6 +212,10 @@ function tolerateMissing(result) {
   if (!result.error) return result.data || [];
   if (result.error.code === '42P01' || /does not exist/i.test(result.error.message || '')) return [];
   throw result.error;
+}
+
+function isMissingNotificationLogTable(error) {
+  return error?.code === '42P01' || /match_result_notification_log|does not exist/i.test(error?.message || '');
 }
 
 async function mergeLatestDailyQuestionAnswers(workspaceId, incomingAnswers) {
