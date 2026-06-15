@@ -13,7 +13,7 @@ import {
   syncTournamentSchedule,
 } from '../lib/app/tournament-service.js';
 
-export default function TournamentAdmin({ open, onClose, ctx, workspaceId, matches, dailyQuestions = [], members = [], standings, config, canManage = false, onChanged }) {
+export default function TournamentAdmin({ open, onClose, ctx, workspaceId, matches, liveScores = [], dailyQuestions = [], members = [], standings, config, canManage = false, onChanged }) {
   const dialog = useDialog();
   const upcoming = useMemo(() => nearestReminderMatch(matches), [matches]);
   const todayKey = getLocalDateKey();
@@ -34,6 +34,10 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
   const [hypeTitle, setHypeTitle] = useState('Kèo hot hôm nay');
   const [hypeBody, setHypeBody] = useState('');
   const selected = matches.find((match) => String(match.matchNo) === String(matchNo));
+  const liveFinishedCandidates = useMemo(
+    () => matches.filter(isLiveFinishedSnapshotCandidate),
+    [matches]
+  );
   const hotMatchFallback = todayMatches[0] || upcoming || hypeMatches[0] || null;
   const hotMatch = hypeMatches.find((match) => String(match.matchNo) === String(hypeMatchNo)) || hotMatchFallback;
   const [homeScore, setHomeScore] = useState('');
@@ -161,6 +165,40 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
       await saveOfficialMatch({ workspaceId, userId: ctx.userId, match: selected, result: { homeTeam, awayTeam, homeScore, awayScore } });
       track('official_result_saved', { match_no: selected.matchNo });
     }, `Đã chốt kết quả trận #${selected.matchNo}.`));
+  }
+
+  function handleSyncFinishedLiveScores() {
+    if (!liveFinishedCandidates.length) {
+      return dialog.info('Chưa có FT live mới', 'Live score chưa có trận finished nào cần chốt snapshot.');
+    }
+
+    const preview = liveFinishedCandidates
+      .slice(0, 5)
+      .map((match) => `#${match.matchNo} ${match.homeTeam} ${match.homeScore}-${match.awayScore} ${match.awayTeam}`)
+      .join('\n');
+    const extra = liveFinishedCandidates.length > 5 ? `\n...và ${liveFinishedCandidates.length - 5} trận khác` : '';
+
+    return dialog.confirm(
+      `Chốt ${liveFinishedCandidates.length} kết quả FT từ live score?`,
+      `${preview}${extra}\n\nCác snapshot này sẽ lưu vào bảng matches để chấm điểm ổn định cho tất cả người chơi.`,
+      { danger: true, confirmLabel: 'Chốt FT live', cancelLabel: 'Huỷ' }
+    ).then((ok) => ok && run('live-results', async () => {
+      await Promise.all(liveFinishedCandidates.map((match) => saveOfficialMatch({
+        workspaceId,
+        userId: ctx.userId,
+        match,
+        result: {
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          homeScore: match.homeScore,
+          awayScore: match.awayScore,
+          resultSource: match.resultSource || 'live_score',
+          finishType: match.finishType || null,
+          statusDetail: match.statusDetail || '',
+        },
+      })));
+      track('live_finished_scores_persisted', { match_count: liveFinishedCandidates.length });
+    }, `Đã chốt ${liveFinishedCandidates.length} kết quả FT từ live score.`));
   }
 
   function handleConfig() {
@@ -311,10 +349,14 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
 
           <article className="admin-card admin-result-card">
             <h3>Chốt kết quả chính thức</h3>
+            <p>{liveFinishedCandidates.length ? `${liveFinishedCandidates.length} trận FT từ live score đang chờ lưu snapshot.` : `${liveScores.length || 0} live score đã đồng bộ, chưa có FT mới cần lưu.`}</p>
             <Select value={matchNo} onChange={setMatchNo} options={options} placeholder="Chọn trận" />
             <div className="admin-team-fields"><input value={homeTeam} onChange={(e) => setHomeTeam(e.target.value)} aria-label="Đội nhà" /><input value={awayTeam} onChange={(e) => setAwayTeam(e.target.value)} aria-label="Đội khách" /></div>
             <div className="admin-score-fields"><input type="number" min="0" value={homeScore} onChange={(e) => setHomeScore(e.target.value)} aria-label="Tỷ số đội nhà" /><span>:</span><input type="number" min="0" value={awayScore} onChange={(e) => setAwayScore(e.target.value)} aria-label="Tỷ số đội khách" /></div>
             <button type="button" className="primary-btn" disabled={!!busy} onClick={handleResult}>{busy === 'result' ? 'Đang chốt...' : 'Chốt snapshot FT'}</button>
+            <button type="button" className="secondary-btn" disabled={!!busy || !liveFinishedCandidates.length} onClick={handleSyncFinishedLiveScores}>
+              {busy === 'live-results' ? 'Đang chốt live...' : `Chốt FT live (${liveFinishedCandidates.length})`}
+            </button>
           </article>
 
           <article className="admin-card">
@@ -384,6 +426,13 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
       </section>
     </div>
   );
+}
+
+function isLiveFinishedSnapshotCandidate(match) {
+  if (!match || match.status !== 'finished') return false;
+  if (match.confirmedAt) return false;
+  if (!match.resultFetchedAt) return false;
+  return Number.isInteger(Number(match.homeScore)) && Number.isInteger(Number(match.awayScore));
 }
 
 function buildMemberOptions({ members = [], standings = [], ctx }) {

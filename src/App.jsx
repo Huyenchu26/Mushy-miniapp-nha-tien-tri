@@ -15,11 +15,12 @@ import { ALL_SCORING_QUESTIONS, getTriviaQuestionForUserDate, triviaStreak } fro
 import { selectInsightWarmupMatches } from './lib/app/match-insight.js';
 import Select from './components/Select.jsx';
 import TournamentAdmin from './components/TournamentAdmin.jsx';
-import { getContext } from './lib/context.js';
+import { bridge } from './lib/bridge.js';
+import { getContext, isInShell } from './lib/context.js';
 import { listMembers } from './lib/members.js';
 import { mushyApi } from './lib/mushy-api.js';
 import { subscribeToTable } from './lib/realtime.js';
-import { db } from './lib/supabase.js';
+import { db, resetSupabaseClients } from './lib/supabase.js';
 import { track, trackScreen } from './lib/analytics.js';
 import { fetchTournamentState, syncTournamentSchedule } from './lib/app/tournament-service.js';
 import {
@@ -43,6 +44,7 @@ const ROOM_POLL_FALLBACK_MS = 30000;
 const TOURNAMENT_POLL_FALLBACK_MS = 60000;
 const TOURNAMENT_REALTIME_DEBOUNCE_MS = 400;
 const TOURNAMENT_RESUME_REFRESH_THROTTLE_MS = 1500;
+const TOKEN_REFRESH_RESUME_THROTTLE_MS = 30 * 1000;
 const MATCH_CLOCK_TICK_MS = 30000;
 const LIVE_MATCH_FALLBACK_MS = 2.5 * 60 * 60 * 1000;
 const CHAT_REPEAT_WINDOW_MS = 45000;
@@ -201,6 +203,9 @@ export default function App() {
   const tournamentRefreshTimerRef = useRef(null);
   const tournamentRefreshNeedsAnswersRef = useRef(false);
   const tournamentResumeRefreshRef = useRef(0);
+  const tokenRefreshAttemptRef = useRef(0);
+  const tokenRefreshInFlightRef = useRef(null);
+  const ctxTokenRef = useRef('');
   const matchInsightRequestsRef = useRef(new Map());
   const matchInsightWarmupKeyRef = useRef('');
   const deepLinkHandledRef = useRef('');
@@ -219,6 +224,10 @@ export default function App() {
     [appConfig?.dailyQuestionAnswers]
   );
   const canManageTournament = isMushyAdmin(ctx);
+
+  useEffect(() => {
+    ctxTokenRef.current = ctx?.token || '';
+  }, [ctx?.token]);
 
   useEffect(() => {
     if (!canManageTournament || typeof window === 'undefined') return undefined;
@@ -360,17 +369,18 @@ export default function App() {
       window.clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ctx?.userId, scope?.workspaceId, localSimulation]);
+  }, [ctx?.userId, ctx?.token, scope?.workspaceId, localSimulation]);
 
   useEffect(() => {
     if (!ctx?.userId || !scope?.workspaceId) return undefined;
     if (localSimulation && isMockContext(ctx)) return undefined;
 
-    const refreshOnResume = (event) => {
+    const refreshOnResume = async (event) => {
       if (event?.type === 'visibilitychange' && document.visibilityState !== 'visible') return;
       const now = Date.now();
       if (now - tournamentResumeRefreshRef.current < TOURNAMENT_RESUME_REFRESH_THROTTLE_MS) return;
       tournamentResumeRefreshRef.current = now;
+      await refreshAppToken({ reason: 'resume' });
       refreshTournamentState({ silent: true, includeAnswers: true });
     };
 
@@ -384,7 +394,26 @@ export default function App() {
       window.removeEventListener('pageshow', refreshOnResume);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ctx?.userId, scope?.workspaceId, localSimulation]);
+  }, [ctx?.userId, ctx?.token, scope?.workspaceId, localSimulation]);
+
+  useEffect(() => {
+    if (!ctx?.userId || !scope?.workspaceId) return undefined;
+    if (localSimulation && isMockContext(ctx)) return undefined;
+
+    const syncContextToken = () => {
+      applyRefreshedToken(readContextSafely());
+    };
+
+    window.addEventListener('mushy:context', syncContextToken);
+    window.addEventListener('mushy:token', syncContextToken);
+    window.addEventListener('APP_CONTEXT_UPDATED', syncContextToken);
+    return () => {
+      window.removeEventListener('mushy:context', syncContextToken);
+      window.removeEventListener('mushy:token', syncContextToken);
+      window.removeEventListener('APP_CONTEXT_UPDATED', syncContextToken);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx?.userId, ctx?.token, scope?.workspaceId, localSimulation]);
 
   useEffect(() => {
     if (!aiInsightsEnabled || !ctx?.token || !scope?.workspaceId) return undefined;
@@ -440,7 +469,7 @@ export default function App() {
       window.clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomMatch?.matchNo, scope?.workspaceId, ctx?.userId, localSimulation]);
+  }, [roomMatch?.matchNo, scope?.workspaceId, ctx?.userId, ctx?.token, localSimulation]);
 
   useEffect(() => {
     if (!ctx?.token || !scope?.workspaceId) return undefined;
@@ -482,7 +511,7 @@ export default function App() {
           error: err.message || 'Không đồng bộ được tỉ số live.',
         }));
       }
-      return localSimulation ? MOCK_SCORE_STEP_MS : LIVE_SCORE_POLL_MS;
+      return localSimulation ? MOCK_SCORE_STEP_MS : syncPlan.waitMs;
     }
 
     async function scheduleSync() {
@@ -686,6 +715,66 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function readContextSafely() {
+    try {
+      return getContext();
+    } catch {
+      return null;
+    }
+  }
+
+  function applyRefreshedToken(payload) {
+    const freshContext = readContextSafely();
+    const nextToken = extractTokenFromRefreshPayload(payload) || extractTokenFromRefreshPayload(freshContext);
+    if (!nextToken || nextToken === ctxTokenRef.current) return false;
+
+    if (typeof window !== 'undefined' && window.__APP_CONTEXT__) {
+      window.__APP_CONTEXT__ = {
+        ...window.__APP_CONTEXT__,
+        ...(freshContext || {}),
+        token: nextToken,
+      };
+    }
+
+    ctxTokenRef.current = nextToken;
+    resetSupabaseClients();
+    setCtx((current) => current ? {
+      ...current,
+      ...(freshContext || {}),
+      token: nextToken,
+    } : freshContext ? {
+      ...freshContext,
+      token: nextToken,
+    } : current);
+    return true;
+  }
+
+  async function refreshAppToken({ reason = 'manual' } = {}) {
+    if (!isInShell()) {
+      applyRefreshedToken(readContextSafely());
+      return false;
+    }
+
+    const now = Date.now();
+    if (reason === 'resume' && now - tokenRefreshAttemptRef.current < TOKEN_REFRESH_RESUME_THROTTLE_MS) {
+      return false;
+    }
+    tokenRefreshAttemptRef.current = now;
+
+    if (!tokenRefreshInFlightRef.current) {
+      tokenRefreshInFlightRef.current = bridge.refreshToken()
+        .then((payload) => applyRefreshedToken(payload))
+        .catch((err) => {
+          console.warn('Token refresh failed', err);
+          return applyRefreshedToken(readContextSafely());
+        })
+        .finally(() => {
+          tokenRefreshInFlightRef.current = null;
+        });
+    }
+    return tokenRefreshInFlightRef.current;
   }
 
   async function handleSavePrediction(match, draft) {
@@ -1307,6 +1396,7 @@ export default function App() {
         ctx={ctx}
         workspaceId={scope?.workspaceId}
         matches={matchesWithOfficialScores}
+        liveScores={liveScores}
         dailyQuestions={dailyQuestions}
         members={members}
         standings={standings}
@@ -4794,6 +4884,12 @@ function normalizeLiveScorePayload(payload) {
   };
 }
 
+function extractTokenFromRefreshPayload(payload) {
+  if (!payload) return '';
+  if (typeof payload === 'string') return payload;
+  return payload.token || payload.accessToken || payload.access_token || payload.session?.access_token || '';
+}
+
 function getLiveScoreSyncPlan(matches = [], nowMs = Date.now()) {
   const scheduledMatches = matches
     .map((match) => {
@@ -5019,6 +5115,7 @@ function upsertLocalAnswer(rows, draft) {
 function applyAutomaticScores(matches, liveScores) {
   const liveByPair = buildLiveScorePairMap(liveScores);
   return matches.map((match) => {
+    if (isFinished(match) && match.homeScore !== null && match.awayScore !== null) return match;
     const liveScore = findLiveScoreForMatch(match, liveByPair);
     if (!liveScore || liveScore.status !== 'finished') return match;
     return {

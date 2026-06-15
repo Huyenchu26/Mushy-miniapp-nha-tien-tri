@@ -232,7 +232,7 @@ test('manual point adjustments are included in standings totals', () => {
 });
 
 test('local mock simulation covers six matches and recalculates standings', () => {
-  const payload = buildMockLiveScorePayload({ nowMs: Date.parse('2026-06-05T00:00:00Z'), step: 3 });
+  const payload = buildMockLiveScorePayload({ nowMs: Date.parse('2026-06-15T12:00:00Z'), step: 3 });
   assert.equal(payload.matches.length, 6);
   assert.equal(payload.matches.filter((match) => match.status === 'finished').length, 6);
 

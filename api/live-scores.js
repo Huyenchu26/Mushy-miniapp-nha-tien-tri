@@ -6,6 +6,10 @@ const MERGED_SOURCE = 'worldcup26.ir+espn';
 const PRIMARY_URL = 'https://worldcup26.ir/get/games';
 const ESPN_SCOREBOARD_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard';
 const FETCH_TIMEOUT_MS = 6500;
+const TOURNAMENT_START_DATE = '2026-06-11T00:00:00Z';
+const TOURNAMENT_END_DATE = '2026-07-20T23:59:59Z';
+const ESPN_RECENT_LOOKBACK_DAYS = 2;
+const ESPN_RECENT_LOOKAHEAD_DAYS = 1;
 
 const TEAM_ALIASES = new Map([
   ['south korea', 'Korea Republic'],
@@ -72,7 +76,11 @@ export default async function handler(req, res) {
 }
 
 function sendLiveScores(res, payload) {
-  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+  if (isTournamentWindow(payload?.fetchedAt || new Date().toISOString())) {
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+  } else {
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+  }
   return res.status(200).json(payload);
 }
 
@@ -98,21 +106,25 @@ async function fetchFromWorldCup26(fetchedAt) {
 
 async function fetchFromEspn(fetchedAt) {
   try {
-    const urls = buildEspnScoreboardUrls(fetchedAt);
-    const responses = await Promise.allSettled(urls.map((url) => fetchJson(url)));
+    const requests = buildEspnScoreboardRequests(fetchedAt);
+    const responses = await Promise.allSettled(requests.map((request) => fetchJson(request.url)));
     const eventsById = new Map();
     const errors = [];
 
     responses.forEach((result, index) => {
+      const request = requests[index];
       if (result.status !== 'fulfilled') {
-        errors.push(result.reason?.message || `${urls[index]} fetch failed`);
+        errors.push(result.reason?.message || `${request.url} fetch failed`);
         return;
       }
 
       const events = Array.isArray(result.value?.events) ? result.value.events : [];
       for (const event of events) {
         const id = String(event?.id || event?.uid || `${event?.shortName || ''}-${event?.date || ''}`);
-        if (id && !eventsById.has(id)) eventsById.set(id, event);
+        if (id && !eventsById.has(id)) eventsById.set(id, {
+          ...event,
+          _mushyIncludeDetails: request.includeDetails,
+        });
       }
     });
 
@@ -126,7 +138,7 @@ async function fetchFromEspn(fetchedAt) {
       ok: true,
       value: {
         source: ESPN_SOURCE,
-        sourceUrl: urls.join(', '),
+        sourceUrl: requests.map((request) => request.url).join(', '),
         fetchedAt,
         matches: matches.filter(Boolean),
       },
@@ -136,18 +148,36 @@ async function fetchFromEspn(fetchedAt) {
   }
 }
 
-function buildEspnScoreboardUrls(fetchedAt) {
+function buildEspnScoreboardRequests(fetchedAt) {
   const base = new Date(fetchedAt);
   const dayMs = 24 * 60 * 60 * 1000;
-  return [-1, 0, 1].map((offset) => {
-    const date = new Date(base.getTime() + offset * dayMs);
-    const dateKey = [
-      date.getUTCFullYear(),
-      String(date.getUTCMonth() + 1).padStart(2, '0'),
-      String(date.getUTCDate()).padStart(2, '0'),
-    ].join('');
-    return `${ESPN_SCOREBOARD_URL}?dates=${dateKey}`;
-  });
+  const dates = new Map();
+
+  for (let offset = -ESPN_RECENT_LOOKBACK_DAYS; offset <= ESPN_RECENT_LOOKAHEAD_DAYS; offset += 1) {
+    dates.set(formatEspnDateKey(new Date(base.getTime() + offset * dayMs)), true);
+  }
+
+  if (isTournamentWindow(fetchedAt)) {
+    const startMs = Date.parse(TOURNAMENT_START_DATE);
+    const endMs = Math.min(base.getTime() + ESPN_RECENT_LOOKAHEAD_DAYS * dayMs, Date.parse(TOURNAMENT_END_DATE));
+    for (let time = startMs; time <= endMs; time += dayMs) {
+      const dateKey = formatEspnDateKey(new Date(time));
+      dates.set(dateKey, dates.get(dateKey) === true);
+    }
+  }
+
+  return [...dates.entries()].map(([dateKey, includeDetails]) => ({
+    url: `${ESPN_SCOREBOARD_URL}?dates=${dateKey}`,
+    includeDetails,
+  }));
+}
+
+function formatEspnDateKey(date) {
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, '0'),
+    String(date.getUTCDate()).padStart(2, '0'),
+  ].join('');
 }
 
 async function normalizeEspnEventWithSummary(event) {
@@ -157,7 +187,7 @@ async function normalizeEspnEventWithSummary(event) {
   if (inlineGoals.length > 0) {
     return withGoalDetails(base, inlineGoals);
   }
-  if (!shouldFetchEspnSummary(base)) return base;
+  if (!event?._mushyIncludeDetails || !shouldFetchEspnSummary(base)) return base;
 
   try {
     const summary = await fetchJson(`https://site.web.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=${encodeURIComponent(event.id)}`);
@@ -239,7 +269,7 @@ function normalizeWorldCup26Game(game) {
 
 function isTournamentWindow(value) {
   const time = new Date(value).getTime();
-  return time >= Date.parse('2026-06-11T00:00:00Z') && time <= Date.parse('2026-07-20T23:59:59Z');
+  return time >= Date.parse(TOURNAMENT_START_DATE) && time <= Date.parse(TOURNAMENT_END_DATE);
 }
 
 function hasUsefulLiveScores(matches) {
