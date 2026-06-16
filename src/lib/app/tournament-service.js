@@ -1,5 +1,5 @@
 import { db } from '../supabase.js';
-import { dateKeyInVietnamTimeZone } from './worldcup-data.js';
+import { DAILY_QUESTIONS, dateKeyInVietnamTimeZone } from './worldcup-data.js';
 
 export async function fetchTournamentState(workspaceId) {
   const [matchesResult, configResult, longTermResult, adjustmentResult, legacyDailyQuestionResult] = await Promise.all([
@@ -13,7 +13,8 @@ export async function fetchTournamentState(workspaceId) {
   const legacyDailyQuestionAnswers = tolerateOptional(legacyDailyQuestionResult).reduce((answers, row) => {
     const dateKey = String(row.q_date || '').slice(0, 10);
     const answer = clean(row.correct_answer);
-    if (dateKey && answer) answers[`q-${dateKey}`] = answer;
+    const questionKey = legacyDailyQuestionKey(dateKey);
+    if (questionKey && answer) answers[questionKey] = answer;
     return answers;
   }, {});
   if (!config && Object.keys(legacyDailyQuestionAnswers).length) {
@@ -397,6 +398,11 @@ function sanitizeDailyQuestionAnswers(value) {
       .map(([key, answer]) => [String(key || '').trim(), clean(answer)])
       .filter(([key, answer]) => key && answer)
   );
+}
+
+function legacyDailyQuestionKey(dateKey) {
+  if (!dateKey) return '';
+  return DAILY_QUESTIONS.find((question) => question.date === dateKey)?.key || `q-${dateKey}`;
 }
 
 function toLongTermBet(row) {

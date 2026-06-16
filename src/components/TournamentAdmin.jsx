@@ -120,7 +120,7 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
   const memberOptions = useMemo(() => buildMemberOptions({ members, standings, ctx }), [members, standings, ctx]);
   const dailyQuestionOptions = useMemo(() => dailyQuestions.map((question) => ({
     value: question.key,
-    label: `${formatAdminDate(question.date)} · ${question.prompt}`,
+    label: `${formatAdminDate(getDailyQuestionDisplayDate(question))} · ${question.prompt}`,
   })), [dailyQuestions]);
   const selectedDailyAnswerOptions = useMemo(
     () => (selectedDailyQuestion?.options || []).map((option) => ({
@@ -129,6 +129,8 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
     })),
     [selectedDailyQuestion]
   );
+  const normalizedDailyQuestionAnswer = normalizePushText(dailyQuestionAnswer, 120);
+  const canSaveDailyQuestionAnswer = !!selectedDailyQuestion && !!normalizedDailyQuestionAnswer && !busy;
 
   useEffect(() => {
     if (!adjustUserId && memberOptions[0]?.value) setAdjustUserId(memberOptions[0].value);
@@ -245,11 +247,11 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
 
   function handleDailyQuestionAnswer() {
     if (!selectedDailyQuestion) return dialog.error('Chưa chọn câu hỏi', 'Chọn một câu hỏi hằng ngày trước khi chốt đáp án.');
-    const answer = normalizePushText(dailyQuestionAnswer, 120);
+    const answer = normalizedDailyQuestionAnswer;
     if (!answer) return dialog.error('Thiếu đáp án', 'Nhập hoặc chọn đáp án đúng cho câu hỏi này.');
 
     return dialog.confirm(
-      `Chốt đáp án ${formatAdminDate(selectedDailyQuestion.date)}?`,
+      `Chốt đáp án ${formatAdminDate(getDailyQuestionDisplayDate(selectedDailyQuestion))}?`,
       `${selectedDailyQuestion.prompt}\n\nĐáp án: ${dailyAnswerLabel(answer, selectedDailyQuestion.options)}`,
       { danger: true, confirmLabel: 'Chốt đáp án', cancelLabel: 'Huỷ' }
     ).then((ok) => ok && run('daily-answer', async () => {
@@ -262,7 +264,7 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
         matches,
       });
       track('daily_question_answer_saved', { question_key: selectedDailyQuestion.key });
-    }, `Đã chốt đáp án ngày ${formatAdminDate(selectedDailyQuestion.date)} và đồng bộ điểm vui cho BXH.`));
+    }, `Đã chốt đáp án ngày ${formatAdminDate(getDailyQuestionDisplayDate(selectedDailyQuestion))} và đồng bộ điểm vui cho BXH.`));
   }
 
   function handleManualAdjustment() {
@@ -396,10 +398,16 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
                 ) : (
                   <input value={dailyQuestionAnswer} onChange={(event) => setDailyQuestionAnswer(event.target.value)} placeholder="Nhập đáp án đúng" maxLength={120} />
                 )}
-                <small>{selectedDailyQuestion.correctAnswer ? `Đã chốt: ${dailyAnswerLabel(selectedDailyQuestion.correctAnswer, selectedDailyQuestion.options)}` : 'Chưa chốt đáp án'}</small>
+                <small className={!normalizedDailyQuestionAnswer ? 'admin-card-warning' : ''}>
+                  {selectedDailyQuestion.correctAnswer
+                    ? `Đã chốt: ${dailyAnswerLabel(selectedDailyQuestion.correctAnswer, selectedDailyQuestion.options)}`
+                    : normalizedDailyQuestionAnswer
+                      ? 'Chưa chốt đáp án'
+                      : 'Nhập hoặc chọn đáp án trước khi chốt'}
+                </small>
               </>
             ) : null}
-            <button type="button" className="primary-btn" disabled={!!busy || !selectedDailyQuestion} onClick={handleDailyQuestionAnswer}>
+            <button type="button" className="primary-btn" disabled={!canSaveDailyQuestionAnswer} onClick={handleDailyQuestionAnswer}>
               {busy === 'daily-answer' ? 'Đang chốt...' : 'Chốt đáp án'}
             </button>
           </article>
@@ -607,6 +615,10 @@ function formatAdminDate(value) {
     month: '2-digit',
     timeZone: 'Asia/Ho_Chi_Minh',
   }).format(date);
+}
+
+function getDailyQuestionDisplayDate(question) {
+  return question?.targetDate || question?.date || question?.closesAt || '';
 }
 
 function dailyAnswerLabel(value, options = []) {
