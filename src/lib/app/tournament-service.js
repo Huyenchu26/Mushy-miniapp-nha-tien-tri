@@ -275,22 +275,22 @@ function writeAudit({ workspaceId, userId, action, entityType, entityKey, afterD
 
 function tolerateMissing(result) {
   if (!result.error) return result.data || [];
-  if (result.error.code === '42P01' || /does not exist/i.test(result.error.message || '')) return [];
+  if (isMissingTable(result.error)) return [];
   throw result.error;
 }
 
 function tolerateOptional(result) {
   if (!result.error) return result.data || [];
-  if (result.error.code === '42P01' || result.error.code === '42501' || /does not exist|permission denied|violates row-level security/i.test(result.error.message || '')) return [];
+  if (isMissingTable(result.error) || result.error.code === '42501' || /permission denied|violates row-level security/i.test(result.error.message || '')) return [];
   throw result.error;
 }
 
 function isMissingNotificationLogTable(error) {
-  return error?.code === '42P01' || /match_result_notification_log|does not exist/i.test(error?.message || '');
+  return isMissingTable(error) || /match_result_notification_log/i.test(error?.message || '');
 }
 
 function isMissingAuditLogTable(error) {
-  return error?.code === '42P01' || /admin_audit_log|does not exist/i.test(error?.message || '');
+  return isMissingTable(error) || /admin_audit_log/i.test(error?.message || '');
 }
 
 function isPermissionDenied(error) {
@@ -299,11 +299,19 @@ function isPermissionDenied(error) {
 
 function isDailyQuestionConfigUnavailable(error) {
   const message = String(error?.message || '').toLowerCase();
-  return error?.code === '42P01'
+  return isMissingTable(error)
     || error?.code === '42703'
     || error?.code === 'PGRST204'
     || (message.includes('app_config') && message.includes('does not exist'))
     || (message.includes('daily_question_answers') && (message.includes('column') || message.includes('schema cache')));
+}
+
+function isMissingTable(error) {
+  const message = String(error?.message || '').toLowerCase();
+  return error?.code === '42P01'
+    || error?.code === 'PGRST205'
+    || message.includes('does not exist')
+    || (message.includes('could not find the table') && message.includes('schema cache'));
 }
 
 async function saveLegacyDailyQuestionAnswer({ workspaceId, userId, question, answer }) {
