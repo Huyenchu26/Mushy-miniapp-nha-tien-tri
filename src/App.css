@@ -2908,6 +2908,20 @@ button.today-checklist-item:hover {
   background: rgba(255, 56, 92, 0.08);
 }
 
+.leaderboard-ellipsis {
+  display: grid;
+  place-items: center;
+  min-height: 30px;
+  color: var(--wc-muted);
+  font-size: 18px;
+  font-weight: 950;
+  letter-spacing: 0;
+}
+
+.leaderboard-show-all {
+  margin-top: 12px;
+}
+
 .lb-rank {
   display: grid;
   place-items: center;

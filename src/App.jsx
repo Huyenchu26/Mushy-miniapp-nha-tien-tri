@@ -4081,10 +4081,59 @@ function LeaderboardScreen({
   onShowMyPredictions,
 }) {
   const [rankMode, setRankMode] = useState('total');
+  const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
   const rows = standingsByMode?.[rankMode] || standings;
   const selectedStanding = rows.find((row) => row.participantId === currentParticipantId) || currentStanding;
   const modeCopy = getLeaderboardModeCopy(rankMode, matches);
   const pendingCount = useMemo(() => scoreHistory.filter((item) => item.status === 'saved').length, [scoreHistory]);
+  const compactLeaderboard = useMemo(
+    () => buildCompactLeaderboardRows(rows, currentParticipantId),
+    [rows, currentParticipantId]
+  );
+
+  if (showFullLeaderboard) {
+    return (
+      <section className="screen my-predictions-screen">
+        <div className="my-predictions-header-card">
+          <div className="my-predictions-header-top">
+            <button type="button" className="room-back" onClick={() => setShowFullLeaderboard(false)} aria-label="Quay lại" style={{ margin: 0 }}>
+              <ArrowLeft size={20} />
+            </button>
+            <div className="my-predictions-title-group">
+              <p className="section-label" style={{ padding: 0 }}>BXH</p>
+              <h2 style={{ margin: 0 }}>Bảng xếp hạng</h2>
+            </div>
+          </div>
+
+          <div style={{ borderTop: '1px solid var(--wc-line)', paddingTop: '16px', marginTop: '16px' }}>
+            <div className="leader-modes" role="tablist" aria-label="Chế độ bảng xếp hạng">
+              {[
+                ['total', 'Tổng'],
+                ['week', 'Theo tuần'],
+                ['stage', 'Theo vòng'],
+              ].map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  className={rankMode === mode ? 'active' : ''}
+                  onClick={() => setRankMode(mode)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="leader-mode-copy">{modeCopy}</p>
+
+            <LeaderboardList
+              rows={rows}
+              currentParticipantId={currentParticipantId}
+              emptyText="Chưa có dự đoán nào. Mọi người mở app từ Mushy là chơi được ngay."
+            />
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="screen bxh-screen">
@@ -4107,21 +4156,17 @@ function LeaderboardScreen({
         </div>
         <p className="leader-mode-copy">{modeCopy}</p>
 
-        <div className="leader-list">
-          {rows.length === 0 ? (
-            <p className="empty-state">Chưa có dự đoán nào. Mọi người mở app từ Mushy là chơi được ngay.</p>
-          ) : rows.map((row) => (
-            <article key={row.participantId} className={`lb-row ${row.participantId === currentParticipantId ? 'me' : ''}`}>
-              <span className={`lb-rank ${row.rank <= 3 ? `top-${row.rank}` : ''}`}>{row.rank}</span>
-              <span className="lb-avatar">{initials(row.displayName)}</span>
-              <span className="lb-person">
-                <strong>{row.displayName}</strong>
-                <small>{leaderSubtitle(row)}</small>
-              </span>
-              <b>{row.total}đ</b>
-            </article>
-          ))}
-        </div>
+        <LeaderboardList
+          rows={compactLeaderboard.rows}
+          currentParticipantId={currentParticipantId}
+          showEllipsis={compactLeaderboard.showEllipsis}
+          emptyText="Chưa có dự đoán nào. Mọi người mở app từ Mushy là chơi được ngay."
+        />
+        {rows.length > 5 ? (
+          <button type="button" className="show-more-predictions leaderboard-show-all" onClick={() => setShowFullLeaderboard(true)}>
+            Xem tất cả
+          </button>
+        ) : null}
       </section>
 
       <ScoreHistoryPanel
@@ -4141,6 +4186,63 @@ function LeaderboardScreen({
         </div>
       </section>
     </section>
+  );
+}
+
+function buildCompactLeaderboardRows(rows = [], currentParticipantId) {
+  if (rows.length <= 5) {
+    return { rows, showEllipsis: false };
+  }
+
+  const topRows = rows.slice(0, 5);
+  const currentRow = rows.find((row) => row.participantId === currentParticipantId);
+  const currentInTopRows = !!currentRow && topRows.some((row) => row.participantId === currentParticipantId);
+
+  return {
+    rows: currentRow && !currentInTopRows ? [...topRows, currentRow] : topRows,
+    showEllipsis: true,
+  };
+}
+
+function LeaderboardList({ rows, currentParticipantId, showEllipsis = false, emptyText }) {
+  return (
+    <div className="leader-list">
+      {rows.length === 0 ? (
+        <p className="empty-state">{emptyText}</p>
+      ) : (
+        <>
+          {rows.map((row, index) => (
+            <React.Fragment key={row.participantId}>
+              {showEllipsis && index === 5 ? <LeaderboardEllipsis /> : null}
+              <LeaderboardRow row={row} currentParticipantId={currentParticipantId} />
+            </React.Fragment>
+          ))}
+          {showEllipsis && rows.length <= 5 ? <LeaderboardEllipsis /> : null}
+        </>
+      )}
+    </div>
+  );
+}
+
+function LeaderboardEllipsis() {
+  return (
+    <div className="leaderboard-ellipsis" aria-hidden="true">
+      ...
+    </div>
+  );
+}
+
+function LeaderboardRow({ row, currentParticipantId }) {
+  return (
+    <article className={`lb-row ${row.participantId === currentParticipantId ? 'me' : ''}`}>
+      <span className={`lb-rank ${row.rank <= 3 ? `top-${row.rank}` : ''}`}>{row.rank}</span>
+      <span className="lb-avatar">{initials(row.displayName)}</span>
+      <span className="lb-person">
+        <strong>{row.displayName}</strong>
+        <small>{leaderSubtitle(row)}</small>
+      </span>
+      <b>{row.total}đ</b>
+    </article>
   );
 }
 
