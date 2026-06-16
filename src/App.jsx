@@ -1754,11 +1754,16 @@ function MatchesScreen({
     if (!targetDate) return;
 
     didInitialScrollToTodayRef.current = true;
-    const frame = window.requestAnimationFrame(() => {
-      scrollDayChipIntoView(targetDate, { behavior: 'auto', inline: 'center' });
-    });
+    const frames = [];
+    const scheduleScroll = (attempt = 0) => {
+      frames.push(window.requestAnimationFrame(() => {
+        scrollDayChipIntoView(targetDate, { behavior: 'auto', inline: 'center' });
+        if (attempt < 2) scheduleScroll(attempt + 1);
+      }));
+    };
+    scheduleScroll();
 
-    return () => window.cancelAnimationFrame(frame);
+    return () => frames.forEach((frame) => window.cancelAnimationFrame(frame));
   }, [dayPages, effectiveSelectedDate, todayKey]);
 
   function focusMatch(match) {
@@ -1786,8 +1791,11 @@ function MatchesScreen({
 
     const behavior = options.behavior || 'smooth';
     if (options.inline === 'center') {
+      const rowRect = row.getBoundingClientRect();
+      const chipRect = chip.getBoundingClientRect();
+      const centeredOffset = (chipRect.left - rowRect.left) - ((row.clientWidth - chipRect.width) / 2);
       row.scrollTo({
-        left: Math.max(0, chip.offsetLeft - ((row.clientWidth - chip.offsetWidth) / 2)),
+        left: Math.max(0, row.scrollLeft + centeredOffset),
         behavior,
       });
       return;
