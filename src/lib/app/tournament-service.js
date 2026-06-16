@@ -2,16 +2,32 @@ import { db } from '../supabase.js';
 import { dateKeyInVietnamTimeZone } from './worldcup-data.js';
 
 export async function fetchTournamentState(workspaceId) {
-  const [matchesResult, configResult, longTermResult, adjustmentResult] = await Promise.all([
+  const [matchesResult, configResult, longTermResult, adjustmentResult, legacyDailyQuestionResult] = await Promise.all([
     db.from('matches').select('*').eq('workspace_id', workspaceId).order('match_no'),
     db.from('app_config').select('*').eq('workspace_id', workspaceId).maybeSingle(),
     db.from('long_term_bets').select('*').eq('workspace_id', workspaceId),
     db.from('manual_point_adjustments').select('*').eq('workspace_id', workspaceId).order('created_at', { ascending: true }),
+    db.from('daily_questions').select('q_date, correct_answer').eq('workspace_id', workspaceId).not('correct_answer', 'is', null),
   ]);
+  let config = configResult.error ? null : toAppConfig(configResult.data);
+  const legacyDailyQuestionAnswers = tolerateOptional(legacyDailyQuestionResult).reduce((answers, row) => {
+    const dateKey = String(row.q_date || '').slice(0, 10);
+    const answer = clean(row.correct_answer);
+    if (dateKey && answer) answers[`q-${dateKey}`] = answer;
+    return answers;
+  }, {});
+  if (!config && Object.keys(legacyDailyQuestionAnswers).length) {
+    config = { dailyQuestionAnswers: legacyDailyQuestionAnswers };
+  } else if (config) {
+    config.dailyQuestionAnswers = {
+      ...legacyDailyQuestionAnswers,
+      ...(config.dailyQuestionAnswers || {}),
+    };
+  }
 
   return {
     matches: tolerateMissing(matchesResult).map(toRuntimeMatch),
-    config: configResult.error ? null : toAppConfig(configResult.data),
+    config,
     longTermBets: tolerateMissing(longTermResult).map(toLongTermBet),
     manualAdjustments: tolerateMissing(adjustmentResult).map(toManualPointAdjustment),
   };
@@ -122,6 +138,48 @@ export async function saveTournamentConfig({ workspaceId, userId, config }) {
   await writeAudit({ workspaceId, userId, action: 'tournament_config_saved', entityType: 'config', entityKey: workspaceId, afterData: payload });
 }
 
+export async function saveDailyQuestionAnswer({ workspaceId, userId, question, answer, config = {}, matches = [] }) {
+  const cleanAnswer = clean(answer);
+  if (!cleanAnswer) throw new Error('Daily question answer is required.');
+
+  try {
+    const dailyQuestionAnswers = await mergeLatestDailyQuestionAnswers(workspaceId, {
+      ...(config?.dailyQuestionAnswers || {}),
+      [question.key]: cleanAnswer,
+    });
+    const payload = {
+      workspace_id: workspaceId,
+      created_by: userId,
+      opening_kickoff_at: config?.openingKickoffAt || matches[0]?.kickoffAt || null,
+      daily_question_answers: dailyQuestionAnswers,
+    };
+    const { error } = await db.from('app_config').upsert(payload, { onConflict: 'workspace_id' });
+    if (error) throw error;
+    await writeAudit({
+      workspaceId,
+      userId,
+      action: 'daily_question_answer_saved',
+      entityType: 'daily_question',
+      entityKey: question.key,
+      afterData: payload,
+    });
+    return { storage: 'app_config' };
+  } catch (error) {
+    if (!isDailyQuestionConfigUnavailable(error)) throw error;
+  }
+
+  await saveLegacyDailyQuestionAnswer({ workspaceId, userId, question, answer: cleanAnswer });
+  await writeAudit({
+    workspaceId,
+    userId,
+    action: 'daily_question_answer_saved',
+    entityType: 'daily_question',
+    entityKey: question.key,
+    afterData: { questionKey: question.key, answer: cleanAnswer, storage: 'daily_questions' },
+  });
+  return { storage: 'daily_questions' };
+}
+
 export async function fetchMissingPredictionUserIds(workspaceId, matchNo) {
   const { data, error } = await db.rpc('list_missing_prediction_users', {
     p_workspace_id: workspaceId,
@@ -205,7 +263,14 @@ function writeAudit({ workspaceId, userId, action, entityType, entityKey, afterD
     entity_type: entityType,
     entity_key: entityKey,
     after_data: afterData,
-  }).then(({ error }) => { if (error) throw error; });
+  }).then(({ error }) => {
+    if (!error) return;
+    if (isMissingAuditLogTable(error) || isPermissionDenied(error)) {
+      console.warn('Admin audit log skipped', error.message || error);
+      return;
+    }
+    throw error;
+  });
 }
 
 function tolerateMissing(result) {
@@ -214,8 +279,57 @@ function tolerateMissing(result) {
   throw result.error;
 }
 
+function tolerateOptional(result) {
+  if (!result.error) return result.data || [];
+  if (result.error.code === '42P01' || result.error.code === '42501' || /does not exist|permission denied|violates row-level security/i.test(result.error.message || '')) return [];
+  throw result.error;
+}
+
 function isMissingNotificationLogTable(error) {
   return error?.code === '42P01' || /match_result_notification_log|does not exist/i.test(error?.message || '');
+}
+
+function isMissingAuditLogTable(error) {
+  return error?.code === '42P01' || /admin_audit_log|does not exist/i.test(error?.message || '');
+}
+
+function isPermissionDenied(error) {
+  return error?.code === '42501' || /permission denied|violates row-level security/i.test(error?.message || '');
+}
+
+function isDailyQuestionConfigUnavailable(error) {
+  const message = String(error?.message || '').toLowerCase();
+  return error?.code === '42P01'
+    || error?.code === '42703'
+    || error?.code === 'PGRST204'
+    || (message.includes('app_config') && message.includes('does not exist'))
+    || (message.includes('daily_question_answers') && (message.includes('column') || message.includes('schema cache')));
+}
+
+async function saveLegacyDailyQuestionAnswer({ workspaceId, userId, question, answer }) {
+  const payload = {
+    created_by: userId,
+    prompt: question.prompt,
+    options: question.options || null,
+    correct_answer: answer,
+    points: question.points || 2,
+    closes_at: question.closesAt || null,
+  };
+  const updateResult = await db
+    .from('daily_questions')
+    .update(payload)
+    .eq('workspace_id', workspaceId)
+    .eq('q_date', question.date)
+    .select('id');
+  if (updateResult.error) throw updateResult.error;
+  if (updateResult.data?.length) return;
+
+  const { error } = await db.from('daily_questions').insert({
+    ...payload,
+    workspace_id: workspaceId,
+    q_date: question.date,
+  });
+  if (error) throw error;
 }
 
 async function mergeLatestDailyQuestionAnswers(workspaceId, incomingAnswers) {

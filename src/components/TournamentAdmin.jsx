@@ -11,6 +11,7 @@ import {
   fetchMatchResultNotificationLogs,
   fetchMissingPredictionUserIds,
   insertMatchResultNotificationLogs,
+  saveDailyQuestionAnswer,
   saveManualPointAdjustment,
   saveOfficialMatch,
   saveTournamentConfig,
@@ -252,19 +253,14 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
       `${selectedDailyQuestion.prompt}\n\nĐáp án: ${dailyAnswerLabel(answer, selectedDailyQuestion.options)}`,
       { danger: true, confirmLabel: 'Chốt đáp án', cancelLabel: 'Huỷ' }
     ).then((ok) => ok && run('daily-answer', async () => {
-      await saveTournamentConfig({ workspaceId, userId: ctx.userId, config: {
-        openingKickoffAt: config?.openingKickoffAt || matches[0]?.kickoffAt,
-        championActual: config?.championActual || championActual,
-        topScorerActual: config?.topScorerActual || topScorerActual,
-        youngPlayerActual: config?.youngPlayerActual || youngPlayerActual,
-        goldenBallActual: config?.goldenBallActual || goldenBallActual,
-        dailyQuestionAnswers: {
-          ...(config?.dailyQuestionAnswers || {}),
-          [selectedDailyQuestion.key]: answer,
-        },
-        predictionsHiddenUntilKickoff: config?.predictionsHiddenUntilKickoff !== false,
-        remindersEnabled: config?.remindersEnabled !== false,
-      } });
+      await saveDailyQuestionAnswer({
+        workspaceId,
+        userId: ctx.userId,
+        question: selectedDailyQuestion,
+        answer,
+        config,
+        matches,
+      });
       track('daily_question_answer_saved', { question_key: selectedDailyQuestion.key });
     }, `Đã chốt đáp án ngày ${formatAdminDate(selectedDailyQuestion.date)} và đồng bộ điểm vui cho BXH.`));
   }
