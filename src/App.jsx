@@ -220,8 +220,11 @@ export default function App() {
   );
   const tournamentMatches = useMemo(() => mergeTournamentMatches(MATCHES, officialMatches), [officialMatches]);
   const dailyQuestions = useMemo(
-    () => applyDailyQuestionAnswers(DAILY_QUESTIONS, appConfig?.dailyQuestionAnswers),
-    [appConfig?.dailyQuestionAnswers]
+    () => enrichDailyQuestionOptions(
+      applyDailyQuestionAnswers(DAILY_QUESTIONS, appConfig?.dailyQuestionAnswers),
+      tournamentMatches
+    ),
+    [appConfig?.dailyQuestionAnswers, tournamentMatches]
   );
   const canManageTournament = isMushyAdmin(ctx);
 
@@ -3596,7 +3599,7 @@ function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isTo
           <span className={`question-timeline-dot ${state}`} aria-hidden="true" />
           <span className="question-summary-main">
             <span className="question-card-meta">
-              <span className="date-chip">{formatDate(question.date)}</span>
+              <span className="date-chip">{formatDate(getDailyQuestionDisplayDate(question))}</span>
               <span className={`question-status-pill ${state}`}>{questionStatusLabel(state)}</span>
             </span>
             <strong>{question.prompt}</strong>
@@ -3615,11 +3618,11 @@ function QuestionCard({ question, answer, onSave, displayMode = 'expanded', isTo
       <div className="question-card-headline">
         <div>
           <div className="question-card-meta">
-            <span className="date-chip">{formatDate(question.date)}</span>
+            <span className="date-chip">{formatDate(getDailyQuestionDisplayDate(question))}</span>
             <span className={`question-status-pill ${state}`}>{questionStatusLabel(state)}</span>
           </div>
           <h3>{question.prompt}</h3>
-          <p>Ngày câu hỏi: {formatDate(question.date)} · Khóa: {formatTime(question.closesAt)} · Đúng +{question.points || 2}đ</p>
+          <p>Ngày hỏi: {formatDate(getDailyQuestionDisplayDate(question))} · Khóa: {formatTime(question.closesAt)} · Đúng +{question.points || 2}đ</p>
         </div>
         {isToggleable ? (
           <button type="button" className="question-collapse-btn" onClick={onToggle}>
@@ -3699,7 +3702,11 @@ function questionSummaryText({ answerLabel, officialAnswerLabel, answered, expir
   }
   if (answered) return `Bạn chọn ${answerLabel || 'đáp án đã lưu'} · Chờ kết quả`;
   if (expired) return `Đã khóa lúc ${formatTime(question.closesAt)} · Chưa trả lời`;
-  return `Ngày câu hỏi: ${formatDate(question.date)} · Khóa: ${formatTime(question.closesAt)} · Đúng +${question.points || 2}đ`;
+  return `Ngày hỏi: ${formatDate(getDailyQuestionDisplayDate(question))} · Khóa: ${formatTime(question.closesAt)} · Đúng +${question.points || 2}đ`;
+}
+
+function getDailyQuestionDisplayDate(question) {
+  return question?.targetDate || question?.date || question?.closesAt || '';
 }
 
 function LongTermBetCard({ bet, locked, onSave }) {
@@ -5032,6 +5039,86 @@ function applyDailyQuestionAnswers(questions, answers = {}) {
     const answer = answers[question.key];
     return answer ? { ...question, correctAnswer: answer } : question;
   });
+}
+
+function enrichDailyQuestionOptions(questions, matches = []) {
+  return questions.map((question) => {
+    const targetDate = inferDailyQuestionTargetDate(question, matches);
+    const questionWithTarget = targetDate ? { ...question, targetDate } : question;
+    if (question.options?.length) return questionWithTarget;
+    const options = inferDailyQuestionOptions(questionWithTarget, matches);
+    return options.length ? { ...questionWithTarget, options } : questionWithTarget;
+  });
+}
+
+function inferDailyQuestionOptions(question, matches = []) {
+  const prompt = normalizeAnswer(question?.prompt || '');
+  const targetDate = question.targetDate || question.date;
+  const dayMatches = matches
+    .filter((match) => match.matchDay === targetDate && !hasUnknownTeam(match))
+    .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime());
+  if (!dayMatches.length) return [];
+
+  if (prompt.includes('tran nao')) {
+    return dayMatches.map((match) => ({
+      value: dailyQuestionMatchValue(match),
+      label: `#${match.matchNo} · ${displayTeamName(match.homeTeam)} - ${displayTeamName(match.awayTeam)}`,
+    }));
+  }
+
+  if (prompt.includes('doi nao') || prompt.includes('doi lon')) {
+    const teams = [];
+    const seen = new Set();
+    for (const match of dayMatches) {
+      for (const team of [match.homeTeam, match.awayTeam]) {
+        if (!team || seen.has(team)) continue;
+        seen.add(team);
+        teams.push({
+          value: team,
+          label: displayTeamName(team),
+        });
+      }
+    }
+    return teams.sort((a, b) => String(a.label).localeCompare(String(b.label), 'vi'));
+  }
+
+  return [];
+}
+
+function inferDailyQuestionTargetDate(question, matches = []) {
+  const promptDate = extractVietnamDateFromText(question?.prompt);
+  if (promptDate) return promptDate;
+
+  const prompt = normalizeAnswer(question?.prompt || '');
+  const teamNames = Object.keys(TEAM_META)
+    .filter((team) => team !== 'Unknown' && prompt.includes(normalizeAnswer(team)))
+    .sort((a, b) => normalizeAnswer(b).length - normalizeAnswer(a).length);
+  if (teamNames.length >= 2) {
+    const match = matches.find((item) => (
+      !hasUnknownTeam(item)
+      && teamNames.includes(item.homeTeam)
+      && teamNames.includes(item.awayTeam)
+    ));
+    if (match?.matchDay) return match.matchDay;
+  }
+
+  if (question?.date) return addDaysToDateKey(question.date, 1);
+  return question?.date || '';
+}
+
+function extractVietnamDateFromText(value) {
+  const match = String(value || '').match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/);
+  if (!match) return '';
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const rawYear = match[3] ? Number(match[3]) : 2026;
+  const year = rawYear < 100 ? 2000 + rawYear : rawYear;
+  if (!day || !month || !year) return '';
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function dailyQuestionMatchValue(match) {
+  return `match-${Number(match.matchNo)}`;
 }
 
 function ensureCurrentMember(memberRows, ctx) {

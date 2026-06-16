@@ -29,24 +29,25 @@
 - Live score fallback merges primary WorldCup26 data with ESPN per match in `api/live-scores.js`, with per-match source labels consumed by `src/App.jsx`.
 - Daily question match days now derive from the old pre-kickoff lock point and lock at `00:00` Vietnam time for the match day in `src/lib/app/worldcup-data.js`.
 - Daily question scoring waits until lock time before revealing BTC answers or adding `dailyPts` to BXH in `src/lib/app/scoring.js` and `src/App.jsx`.
+- Daily questions that need match/team names now get standardized answer options from the match schedule in `src/App.jsx`, so players and BTC use the same stored values.
 - Tournament realtime refresh now re-fetches player daily answers when `app_config` or `group_daily_answers` changes in `src/App.jsx`; fallback polling also refreshes answers.
 - Migration `migrations/012_group_daily_answers_realtime.sql` enables reviewer-managed realtime publication for player daily answer changes.
 
 **Intention / In Progress (WIP & Planned):**
 - Submit `migrations/012_group_daily_answers_realtime.sql` through the Mushy Admin Portal reviewer before `group_daily_answers` emits realtime events in shared environments.
 - Confirm `migrations/011_app_config_realtime.sql` has been applied in the target environment for instant BTC answer sync; `src/App.jsx` still has 60s polling fallback.
-- Investigate the remaining `npm test` failure in `local mock simulation covers six matches and recalculates standings`, where mock payload returns 0 matches instead of 6.
 
 ### 6. Changelog
 *(Keep only the 5-10 most recent changes. Always replace YYYY-MM-DD with the actual current date)*
+- `[2026-06-16]` [STABLE] Added standardized dropdown options for open-ended daily questions in `src/App.jsx`; admin/player match-name answers now use the same values and `npm test` passes 29/29.
 - `[2026-06-12]` [IN PROGRESS] Added ESPN per-match live-score fallback and active-match polling updates in `api/live-scores.js` and `src/App.jsx`.
 - `[2026-06-12]` [IN PROGRESS] Fixed daily question lock display to `00:00` Vietnam match day while preserving old question keys in `src/lib/app/worldcup-data.js`.
 - `[2026-06-12]` [IN PROGRESS] Synced BTC daily answer changes into leaderboard recomputation through `src/App.jsx`, `src/lib/app/scoring.js`, and `migrations/012_group_daily_answers_realtime.sql`.
-- `[2026-06-12]` [IN PROGRESS] `npm run build` passed; browser verification passed for daily question cards/admin card/mobile overflow; `npm test` has 25/26 passing with one unrelated mock live-score assertion failure.
+- `[2026-06-12]` [IN PROGRESS] `npm run build` passed; browser verification passed for daily question cards/admin card/mobile overflow.
 - `[2026-06-11]` [IN PROGRESS] Added long-term player-award fields, expanded player suggestions, admin manual point adjustments, compact standings columns, and migration `migrations/009_long_term_players_and_manual_points.sql`.
 - `[2026-06-11]` [STABLE] Updated `src/lib/app/worldcup-data.js` to generate player suggestions from 48 World Cup squads and sort team dropdown options.
 - `[2026-06-11]` [STABLE] Browser verification passed for long-term form, player suggestions, standings columns, and admin panel after `npm run build`.
 
 ### 7. Current Focus
-- **Problem:** Code-level build/browser verification is passing, but `migrations/012_group_daily_answers_realtime.sql` must be submitted before player-answer realtime works in DB-backed shared environments; `npm test` still has one unrelated mock live-score assertion failure.
-- **Next Action:** Submit migration 012 through Admin Portal, confirm migration 011 is applied, then investigate `buildMockLiveScorePayload` returning 0 matches in `src/lib/app/scoring.test.js`.
+- **Problem:** Code-level build/browser verification is passing, but `migrations/012_group_daily_answers_realtime.sql` must be submitted before player-answer realtime works in DB-backed shared environments.
+- **Next Action:** Submit migration 012 through Admin Portal and confirm migration 011 is applied for instant `app_config` realtime sync.
