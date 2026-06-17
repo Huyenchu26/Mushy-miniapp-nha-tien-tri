@@ -1202,6 +1202,28 @@ button.today-checklist-item:hover {
   background: var(--wc-primary);
 }
 
+.prediction-lock-note {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  margin: 0;
+  border: 1px solid rgba(107, 103, 112, 0.18);
+  border-radius: 15px;
+  padding: 0 12px;
+  background: rgba(107, 103, 112, 0.08);
+  color: var(--wc-muted);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.25;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.room-lock-note {
+  width: 100%;
+  white-space: normal;
+}
+
 .match-social-line {
   min-height: 18px;
   margin: 8px 0 0;

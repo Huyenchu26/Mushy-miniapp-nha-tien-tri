@@ -2306,8 +2306,10 @@ function MatchCardPrototype({
   onEditPrediction,
 }) {
   const teamsKnown = !hasUnknownTeam(match);
-  const locked = isPredictionLocked(match) || !teamsKnown;
+  const predictionLocked = isPredictionLocked(match);
+  const locked = predictionLocked || !teamsKnown;
   const finished = isFinished(match);
+  const lockNoticeVisible = predictionLocked && !finished;
   const kickoffStarted = hasKickoffStarted(match);
   const liveScore = shouldShowLiveScore(match) ? match.liveScore : null;
   const liveInProgress = isLiveInProgress(liveScore);
@@ -2545,17 +2547,28 @@ function MatchCardPrototype({
             onLoadInsight={onLoadInsight}
           />
           <div className="match-actions compact-actions saved-actions">
-            <button
-              type="button"
-              className="secondary-btn small"
-              disabled={locked}
-              onClick={(event) => {
-                event.stopPropagation();
-                onEditPrediction?.(match);
-              }}
-            >
-              Sửa dự đoán
-            </button>
+            {lockNoticeVisible ? (
+              <p
+                className="prediction-lock-note"
+                role="status"
+                aria-label="Dự đoán đã bị khóa, không thể chỉnh sửa."
+                title="Dự đoán đã bị khóa, không thể chỉnh sửa."
+              >
+                Đã khóa dự đoán
+              </p>
+            ) : (
+              <button
+                type="button"
+                className="secondary-btn small"
+                disabled={!teamsKnown}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onEditPrediction?.(match);
+                }}
+              >
+                Sửa dự đoán
+              </button>
+            )}
             <button
               type="button"
               className="primary-btn small room-action-btn room-ready"
@@ -2769,6 +2782,8 @@ function PredictionRoomScreen({
   const finished = isFinished(match);
   const liveScore = shouldShowLiveScore(match) ? match.liveScore : null;
   const started = finished || liveScore;
+  const predictionLocked = isPredictionLocked(match);
+  const lockNoticeVisible = predictionLocked && !finished;
 
   return (
     <section className="prediction-room screen" aria-label={`Phòng dự đoán trận ${match.matchNo}`}>
@@ -2793,7 +2808,11 @@ function PredictionRoomScreen({
         onLoadInsight={onLoadInsight}
       />
 
-      {!started && (
+      {lockNoticeVisible ? (
+        <p className="prediction-lock-note room-lock-note" role="status">
+          Dự đoán đã bị khóa, không thể chỉnh sửa.
+        </p>
+      ) : !started ? (
         <div className="room-prematch-controls" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <button
             type="button"
@@ -2804,7 +2823,7 @@ function PredictionRoomScreen({
             {prediction ? '✍️ Sửa dự đoán' : '✍️ Dự đoán tỉ số'}
           </button>
         </div>
-      )}
+      ) : null}
 
       <div className="room-section room-history-compact">
         <div className="room-section-head">
