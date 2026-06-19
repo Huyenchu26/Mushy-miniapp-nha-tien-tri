@@ -32,13 +32,16 @@
 - Daily questions that need match/team names now get standardized answer options from the match schedule in `src/App.jsx`, so players and BTC use the same stored values.
 - Tournament realtime refresh now re-fetches player daily answers when `app_config` or `group_daily_answers` changes in `src/App.jsx`; fallback polling also refreshes answers.
 - Migration `migrations/012_group_daily_answers_realtime.sql` enables reviewer-managed realtime publication for player daily answer changes.
+- Push-notification deeplinks now route users into the right Nha Tien Tri context: match/deadline notis focus the match card, chat mentions open the room, and match-result notis open/highlight the matching row in `src/App.jsx`.
 
 **Intention / In Progress (WIP & Planned):**
 - Submit `migrations/012_group_daily_answers_realtime.sql` through the Mushy Admin Portal reviewer before `group_daily_answers` emits realtime events in shared environments.
 - Confirm `migrations/011_app_config_realtime.sql` has been applied in the target environment for instant BTC answer sync; `src/App.jsx` still has 60s polling fallback.
+- Smoke test a real push tap inside Mushy Shell/dev_mode after deployment to verify the superapp notification router passes `screen`, `target`, `matchNo`, and `recordId` as expected.
 
 ### 6. Changelog
 *(Keep only the 5-10 most recent changes. Always replace YYYY-MM-DD with the actual current date)*
+- `[2026-06-19]` [STABLE] Added notification deeplink routing/highlights in `src/App.jsx` and standardized admin push payloads in `src/components/TournamentAdmin.jsx`; `npm test` and `npm run build` pass.
 - `[2026-06-16]` [STABLE] Added standardized dropdown options for open-ended daily questions in `src/App.jsx`; admin/player match-name answers now use the same values and `npm test` passes 29/29.
 - `[2026-06-12]` [IN PROGRESS] Added ESPN per-match live-score fallback and active-match polling updates in `api/live-scores.js` and `src/App.jsx`.
 - `[2026-06-12]` [IN PROGRESS] Fixed daily question lock display to `00:00` Vietnam match day while preserving old question keys in `src/lib/app/worldcup-data.js`.
@@ -49,5 +52,5 @@
 - `[2026-06-11]` [STABLE] Browser verification passed for long-term form, player suggestions, standings columns, and admin panel after `npm run build`.
 
 ### 7. Current Focus
-- **Problem:** Code-level build/browser verification is passing, but `migrations/012_group_daily_answers_realtime.sql` must be submitted before player-answer realtime works in DB-backed shared environments.
-- **Next Action:** Submit migration 012 through Admin Portal and confirm migration 011 is applied for instant `app_config` realtime sync.
+- **Problem:** Notification deeplink code is build/test verified, but browser visual verification was blocked in this sandbox (`agent-browser` missing; Playwright package present but browser binary missing and system Chrome launch returned `EPERM`). Dev server HTTP health check returned 200. Migration 012 still needs Admin Portal submission before player-answer realtime works in DB-backed shared environments.
+- **Next Action:** Test one real Mushy push tap in dev_mode after deploy, then submit migration 012 through Admin Portal and confirm migration 011 is applied for instant `app_config` realtime sync.

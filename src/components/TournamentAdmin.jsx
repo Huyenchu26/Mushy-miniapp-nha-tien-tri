@@ -307,7 +307,14 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
         title: 'Nhà Tiên Tri nhắc nhẹ',
         body: `Bạn chưa dự ${upcoming.homeTeam} - ${upcoming.awayTeam}. Vào chốt trước giờ bóng lăn.`,
         userIds,
-        data: { appSlug: 'nha-tien-tri', kind: 'deadline_reminder', screen: 'match', matchNo: String(upcoming.matchNo) },
+        data: {
+          appSlug: 'nha-tien-tri',
+          kind: 'deadline_reminder',
+          screen: 'match',
+          target: 'match',
+          matchNo: String(upcoming.matchNo),
+          recordId: `match-${upcoming.matchNo}`,
+        },
       });
       track('deadline_reminder_sent', { match_no: upcoming.matchNo, recipient_count: userIds.length });
     }, `Đã nhắc người chưa dự trận #${upcoming.matchNo}.`));
@@ -323,7 +330,7 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
     ).then((ok) => ok && run('recap', async () => {
       await mushyApi.push({
         title: 'Tổng kết Nhà Tiên Tri', body,
-        data: { appSlug: 'nha-tien-tri', kind: 'daily_recap', screen: 'leaderboard' },
+        data: { appSlug: 'nha-tien-tri', kind: 'daily_recap', screen: 'leaderboard', target: 'leaderboard' },
       });
       track('daily_recap_sent');
     }, 'Đã gửi tổng kết ngày tới workspace.'));
@@ -347,7 +354,9 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
           appSlug: 'nha-tien-tri',
           kind: 'daily_match_hype',
           screen: 'match',
+          target: 'match',
           matchNo: String(hotMatch.matchNo),
+          recordId: `match-${hotMatch.matchNo}`,
         },
       });
       track('daily_match_hype_sent', { match_no: hotMatch.matchNo });
@@ -499,7 +508,8 @@ async function notifyMatchResultPredictions({ workspaceId, userId, match }) {
         data: {
           appSlug: 'nha-tien-tri',
           kind: 'match_result_scored',
-          screen: 'match',
+          screen: 'score_history',
+          target: 'score_history',
           matchNo: String(match.matchNo),
           recordId: `match-${match.matchNo}`,
         },

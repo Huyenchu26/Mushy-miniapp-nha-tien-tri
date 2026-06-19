@@ -4022,6 +4022,38 @@ main,
   box-shadow: 0 14px 30px rgba(245, 54, 87, 0.12);
 }
 
+.deeplink-highlight {
+  border-color: rgba(255, 149, 0, 0.55) !important;
+  box-shadow:
+    0 0 0 3px rgba(255, 149, 0, 0.2),
+    0 14px 30px rgba(245, 54, 87, 0.14) !important;
+  animation: deeplink-pulse 1.7s ease-out 1;
+}
+
+.score-history-row.deeplink-highlight {
+  background: #fff8e6;
+}
+
+@keyframes deeplink-pulse {
+  0% {
+    transform: translateY(-2px);
+  }
+
+  55% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deeplink-highlight {
+    animation: none;
+  }
+}
+
 .match-card--prototype.has-room {
   cursor: pointer;
 }

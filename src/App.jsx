@@ -177,6 +177,8 @@ export default function App() {
   const [showMyPredictions, setShowMyPredictions] = useState(false);
   const [myPredictionsTab, setMyPredictionsTab] = useState('scored'); // 'scored' | 'pending'
   const [deepLinkRevision, setDeepLinkRevision] = useState(0);
+  const [deepLinkedMatchFocus, setDeepLinkedMatchFocus] = useState({ matchNo: 0, signature: '' });
+  const [scoreHistoryFocus, setScoreHistoryFocus] = useState({ matchNo: 0, signature: '' });
 
   const addToast = (message, type = 'success') => {
     if (!message) return;
@@ -1186,27 +1188,60 @@ export default function App() {
     const params = getCurrentDeepLinkParams();
     const deepLink = parseDeepLinkParams(params);
     const { signature, screen, kind, matchNo, target } = deepLink;
-    if (!signature || deepLinkHandledRef.current === signature) return;
+    const handledKey = `${deepLinkRevision}:${signature}`;
+    if (!signature || deepLinkHandledRef.current === handledKey) return;
 
     const shouldOpenRoom = target === 'room' || screen === 'room' || kind === 'chat_mention';
-    if (screen === 'leaderboard') {
-      deepLinkHandledRef.current = signature;
-      setActiveTab('leaderboard');
-    }
+    const shouldOpenScoreHistory =
+      kind === 'match_result_scored' ||
+      target === 'score_history' ||
+      screen === 'score_history' ||
+      screen === 'my_predictions';
     if (shouldOpenRoom && matchNo) {
       const match = matchesWithLiveScores.find((item) => Number(item.matchNo) === matchNo);
       if (!match) return;
-      deepLinkHandledRef.current = signature;
+      deepLinkHandledRef.current = handledKey;
+      setShowMyPredictions(false);
       setActiveTab('matches');
       handleOpenPredictionRoom(match);
       return;
     }
-    if (screen === 'match' && matchNo) {
-      deepLinkHandledRef.current = signature;
-      setActiveTab('matches');
-      window.setTimeout(() => document.getElementById(`match-card-${matchNo}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+    if (shouldOpenScoreHistory) {
+      deepLinkHandledRef.current = handledKey;
+      setRoomMatch(null);
+      setRoomMessages([]);
+      setRoomError('');
+      setRoomRealtimeState('idle');
+      setActiveTab('leaderboard');
+      setShowMyPredictions(true);
+      setMyPredictionsTab(getScoreHistoryDeepLinkTab(scoreHistory, matchNo));
+      setScoreHistoryFocus({ matchNo, signature });
+      return;
     }
-  }, [loading, matchesWithLiveScores, predictionMap, deepLinkRevision]);
+    if (screen === 'leaderboard' || target === 'leaderboard') {
+      deepLinkHandledRef.current = handledKey;
+      setRoomMatch(null);
+      setRoomMessages([]);
+      setRoomError('');
+      setRoomRealtimeState('idle');
+      setShowMyPredictions(false);
+      setActiveTab('leaderboard');
+      return;
+    }
+    if (screen === 'match' && matchNo) {
+      deepLinkHandledRef.current = handledKey;
+      setRoomMatch(null);
+      setRoomMessages([]);
+      setRoomError('');
+      setRoomRealtimeState('idle');
+      setShowMyPredictions(false);
+      setMyPredictionsTab('scored');
+      setActiveTab('matches');
+      setGroupFilter('all');
+      setQuery('');
+      setDeepLinkedMatchFocus({ matchNo, signature });
+    }
+  }, [loading, matchesWithLiveScores, predictionMap, scoreHistory, deepLinkRevision]);
 
   if (ctxError) {
     return <SetupScreen error={ctxError} />;
@@ -1268,6 +1303,8 @@ export default function App() {
             predictedCount={predictionMap.size}
             activeTab={myPredictionsTab}
             onTabChange={setMyPredictionsTab}
+            highlightMatchNo={scoreHistoryFocus.matchNo}
+            highlightKey={scoreHistoryFocus.signature}
           />
         ) : (
           <>
@@ -1312,6 +1349,8 @@ export default function App() {
                 matchInsights={matchInsights}
                 onLoadMatchInsight={handleLoadMatchInsight}
                 onEditPrediction={setEditingPredictionMatch}
+                focusMatchNo={deepLinkedMatchFocus.matchNo}
+                focusKey={deepLinkedMatchFocus.signature}
               />
             )}
             {activeTab === 'matches' && (
@@ -1667,6 +1706,8 @@ function MatchesScreen({
   matchInsights,
   onLoadMatchInsight,
   onEditPrediction,
+  focusMatchNo = 0,
+  focusKey = '',
 }) {
   const grouped = useMemo(() => groupByDate(matches), [matches]);
   const todayKey = getLocalDateKey();
@@ -1729,6 +1770,7 @@ function MatchesScreen({
     return map;
   }, [members, predictionParticipants]);
   const [showExtraGroups, setShowExtraGroups] = useState(false);
+  const focusedMatchRef = useRef('');
   const extraActive = EXTRA_GROUP_FILTERS.includes(groupFilter);
   const knockoutActive = KNOCKOUT_FILTERS.some((round) => round.id === groupFilter);
   const moreLabel = extraActive
@@ -1768,6 +1810,18 @@ function MatchesScreen({
 
     return () => frames.forEach((frame) => window.cancelAnimationFrame(frame));
   }, [dayPages, effectiveSelectedDate, todayKey]);
+
+  useEffect(() => {
+    if (!focusMatchNo || !dayPages.length) return;
+    const focusSignature = `${focusKey || ''}:${focusMatchNo}`;
+    if (focusedMatchRef.current === focusSignature) return;
+    const match = (allMatches || matches).find((item) => Number(item.matchNo) === Number(focusMatchNo))
+      || matches.find((item) => Number(item.matchNo) === Number(focusMatchNo));
+    if (!match) return;
+
+    focusedMatchRef.current = focusSignature;
+    focusMatch(match);
+  }, [focusMatchNo, focusKey, dayPages, allMatches, matches]);
 
   function focusMatch(match) {
     if (!match) return;
@@ -2006,6 +2060,7 @@ function MatchesScreen({
                   onOpenRoom={onOpenRoom}
                   onLoadInsight={onLoadMatchInsight}
                   onEditPrediction={onEditPrediction}
+                  highlighted={Number(match.matchNo) === Number(focusMatchNo)}
                 />
               ))}
             </div>
@@ -2304,6 +2359,7 @@ function MatchCardPrototype({
   onOpenRoom,
   onLoadInsight,
   onEditPrediction,
+  highlighted = false,
 }) {
   const teamsKnown = !hasUnknownTeam(match);
   const predictionLocked = isPredictionLocked(match);
@@ -2391,7 +2447,7 @@ function MatchCardPrototype({
   return (
     <article
       id={`match-card-${match.matchNo}`}
-      className="match-card match-card--prototype"
+      className={`match-card match-card--prototype ${highlighted ? 'deeplink-highlight' : ''}`}
     >
       <div className="match-card-head">
         <span className="mstage">#{match.matchNo} · {matchStageLabel(match)}</span>
@@ -5861,6 +5917,11 @@ function toMatchInsightState(payload) {
   };
 }
 
+function getScoreHistoryDeepLinkTab(items = [], matchNo = 0) {
+  const item = items.find((row) => row?.kind === 'match' && Number(row.matchNo) === Number(matchNo));
+  return item?.status === 'saved' ? 'pending' : 'scored';
+}
+
 function mockMatchInsightSummary(match) {
   const home = displayTeamName(match?.homeTeam);
   const away = displayTeamName(match?.awayTeam);
@@ -6052,7 +6113,7 @@ function PredictionEditModal({ match, prediction, dailyDoubleMatchNo, onClose, o
   );
 }
 
-function MyPredictionsScreen({ items, onBack, onEditPrediction, onOpenRoom, currentStanding, predictedCount, activeTab, onTabChange }) {
+function MyPredictionsScreen({ items, onBack, onEditPrediction, onOpenRoom, currentStanding, predictedCount, activeTab, onTabChange, highlightMatchNo = 0, highlightKey = '' }) {
   const subTab = activeTab || 'scored';
   const setSubTab = onTabChange;
 
@@ -6061,6 +6122,17 @@ function MyPredictionsScreen({ items, onBack, onEditPrediction, onOpenRoom, curr
 
   const total = currentStanding?.total ?? 0;
   const rank = currentStanding?.rank;
+
+  useEffect(() => {
+    if (!highlightMatchNo) return undefined;
+    const timer = window.setTimeout(() => {
+      document.getElementById(`score-history-match-${highlightMatchNo}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [highlightMatchNo, highlightKey, subTab, items]);
 
   return (
     <section className="screen my-predictions-screen">
@@ -6118,7 +6190,11 @@ function MyPredictionsScreen({ items, onBack, onEditPrediction, onOpenRoom, curr
               ) : (
                 <div className="score-history-list" style={{ marginTop: '12px' }}>
                   {pendingItems.map((item) => (
-                    <article key={item.key} className="score-history-row saved">
+                    <article
+                      key={item.key}
+                      id={item.kind === 'match' ? `score-history-match-${item.matchNo}` : undefined}
+                      className={`score-history-row saved ${item.kind === 'match' && Number(item.matchNo) === Number(highlightMatchNo) ? 'deeplink-highlight' : ''}`}
+                    >
                       <span className="score-history-type">{item.type}</span>
                       <span className="score-history-copy">
                         {item.kind === 'match' ? (
@@ -6162,7 +6238,11 @@ function MyPredictionsScreen({ items, onBack, onEditPrediction, onOpenRoom, curr
               ) : (
                 <div className="score-history-list" style={{ marginTop: '12px' }}>
                   {scoredItems.map((item) => (
-                    <article key={item.key} className={`score-history-row ${item.status === 'zero' ? 'zero' : ''}`}>
+                    <article
+                      key={item.key}
+                      id={item.kind === 'match' ? `score-history-match-${item.matchNo}` : undefined}
+                      className={`score-history-row ${item.status === 'zero' ? 'zero' : ''} ${item.kind === 'match' && Number(item.matchNo) === Number(highlightMatchNo) ? 'deeplink-highlight' : ''}`}
+                    >
                       <span className="score-history-type">{item.type}</span>
                       <span className="score-history-copy">
                         {item.kind === 'match' ? (
