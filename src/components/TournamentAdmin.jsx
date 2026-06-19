@@ -6,6 +6,7 @@ import { track } from '../lib/analytics.js';
 import { TEAM_META, TEAM_OPTIONS, TOP_SCORER_OPTIONS, dateKeyInVietnamTimeZone } from '../lib/app/worldcup-data.js';
 import { buildDailyRecap, nearestReminderMatch } from '../lib/app/engagement.js';
 import { fetchPredictions } from '../lib/app/game-repository.js';
+import { buildMiniAppNotificationData } from '../lib/app/notification-deeplink.js';
 import { matchScoreBreakdown } from '../lib/app/scoring.js';
 import {
   fetchMatchResultNotificationLogs,
@@ -307,14 +308,13 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
         title: 'Nhà Tiên Tri nhắc nhẹ',
         body: `Bạn chưa dự ${upcoming.homeTeam} - ${upcoming.awayTeam}. Vào chốt trước giờ bóng lăn.`,
         userIds,
-        data: {
-          appSlug: 'nha-tien-tri',
+        data: buildMiniAppNotificationData({
           kind: 'deadline_reminder',
           screen: 'match',
           target: 'match',
           matchNo: String(upcoming.matchNo),
           recordId: `match-${upcoming.matchNo}`,
-        },
+        }),
       });
       track('deadline_reminder_sent', { match_no: upcoming.matchNo, recipient_count: userIds.length });
     }, `Đã nhắc người chưa dự trận #${upcoming.matchNo}.`));
@@ -330,7 +330,7 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
     ).then((ok) => ok && run('recap', async () => {
       await mushyApi.push({
         title: 'Tổng kết Nhà Tiên Tri', body,
-        data: { appSlug: 'nha-tien-tri', kind: 'daily_recap', screen: 'leaderboard', target: 'leaderboard' },
+        data: buildMiniAppNotificationData({ kind: 'daily_recap', screen: 'leaderboard', target: 'leaderboard' }),
       });
       track('daily_recap_sent');
     }, 'Đã gửi tổng kết ngày tới workspace.'));
@@ -350,14 +350,13 @@ export default function TournamentAdmin({ open, onClose, ctx, workspaceId, match
       await mushyApi.push({
         title,
         body,
-        data: {
-          appSlug: 'nha-tien-tri',
+        data: buildMiniAppNotificationData({
           kind: 'daily_match_hype',
           screen: 'match',
           target: 'match',
           matchNo: String(hotMatch.matchNo),
           recordId: `match-${hotMatch.matchNo}`,
-        },
+        }),
       });
       track('daily_match_hype_sent', { match_no: hotMatch.matchNo });
     }, `Đã gửi kích war trận #${hotMatch.matchNo} tới workspace.`));
@@ -505,14 +504,13 @@ async function notifyMatchResultPredictions({ workspaceId, userId, match }) {
         title: resultStatus === 'correct' ? 'Bạn đoán trúng rồi!' : 'Kết quả đã chốt',
         body: buildMatchResultPushBody({ prediction, match, points: breakdown.total, resultStatus }),
         userIds: [prediction.createdBy],
-        data: {
-          appSlug: 'nha-tien-tri',
+        data: buildMiniAppNotificationData({
           kind: 'match_result_scored',
           screen: 'score_history',
           target: 'score_history',
           matchNo: String(match.matchNo),
           recordId: `match-${match.matchNo}`,
-        },
+        }),
       });
       return {
         matchNo: match.matchNo,

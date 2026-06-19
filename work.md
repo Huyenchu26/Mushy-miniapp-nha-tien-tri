@@ -32,7 +32,7 @@
 - Daily questions that need match/team names now get standardized answer options from the match schedule in `src/App.jsx`, so players and BTC use the same stored values.
 - Tournament realtime refresh now re-fetches player daily answers when `app_config` or `group_daily_answers` changes in `src/App.jsx`; fallback polling also refreshes answers.
 - Migration `migrations/012_group_daily_answers_realtime.sql` enables reviewer-managed realtime publication for player daily answer changes.
-- Push-notification deeplinks now route users into the right Nha Tien Tri context: match/deadline notis focus the match card, chat mentions open the room, and match-result notis open/highlight the matching row in `src/App.jsx`.
+- Push-notification deeplinks now route users into the right Nha Tien Tri context: match/deadline notis focus the match card, chat mentions open the room, and match-result notis open/highlight the matching row in `src/App.jsx`; push data is built through `src/lib/app/notification-deeplink.js` with multiple slug aliases for Shell/router compatibility.
 
 **Intention / In Progress (WIP & Planned):**
 - Submit `migrations/012_group_daily_answers_realtime.sql` through the Mushy Admin Portal reviewer before `group_daily_answers` emits realtime events in shared environments.
@@ -41,6 +41,7 @@
 
 ### 6. Changelog
 *(Keep only the 5-10 most recent changes. Always replace YYYY-MM-DD with the actual current date)*
+- `[2026-06-19]` [STABLE] Added `src/lib/app/notification-deeplink.js` so all Nha Tien Tri remote push payloads include `appSlug`, `miniAppSlug`, `mini_app_slug`, `app_slug`, and route/action aliases; `npm test` and `npm run build` pass.
 - `[2026-06-19]` [STABLE] Added notification deeplink routing/highlights in `src/App.jsx` and standardized admin push payloads in `src/components/TournamentAdmin.jsx`; `npm test` and `npm run build` pass.
 - `[2026-06-16]` [STABLE] Added standardized dropdown options for open-ended daily questions in `src/App.jsx`; admin/player match-name answers now use the same values and `npm test` passes 29/29.
 - `[2026-06-12]` [IN PROGRESS] Added ESPN per-match live-score fallback and active-match polling updates in `api/live-scores.js` and `src/App.jsx`.
@@ -52,5 +53,5 @@
 - `[2026-06-11]` [STABLE] Browser verification passed for long-term form, player suggestions, standings columns, and admin panel after `npm run build`.
 
 ### 7. Current Focus
-- **Problem:** Notification deeplink code is build/test verified, but browser visual verification was blocked in this sandbox (`agent-browser` missing; Playwright package present but browser binary missing and system Chrome launch returned `EPERM`). Dev server HTTP health check returned 200. Migration 012 still needs Admin Portal submission before player-answer realtime works in DB-backed shared environments.
-- **Next Action:** Test one real Mushy push tap in dev_mode after deploy, then submit migration 012 through Admin Portal and confirm migration 011 is applied for instant `app_config` realtime sync.
+- **Problem:** Notification deeplink code is build/test verified and now emits multiple slug aliases, but browser visual verification was blocked in this sandbox (`agent-browser` missing; Playwright package present but browser binary missing and system Chrome launch returned `EPERM`). Dev server HTTP health check returned 200. Migration 012 still needs Admin Portal submission before player-answer realtime works in DB-backed shared environments.
+- **Next Action:** Deploy this payload-alias build, send a brand-new interaction push, and test one real Mushy push tap in dev_mode/prod; then submit migration 012 through Admin Portal and confirm migration 011 is applied for instant `app_config` realtime sync.

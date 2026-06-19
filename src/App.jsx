@@ -32,6 +32,7 @@ import {
   insertMatchRoomMessage,
   mapRoomMessage,
 } from './lib/app/game-repository.js';
+import { buildMiniAppNotificationData } from './lib/app/notification-deeplink.js';
 import './App.css';
 
 const DEFAULT_TAB = 'matches';
@@ -4818,14 +4819,13 @@ function notifyMentionedRoomMembers({ body, members, currentUserId, senderName, 
     title,
     body: shortBody,
     userIds,
-    data: {
-      appSlug: 'nha-tien-tri',
+    data: buildMiniAppNotificationData({
       kind: 'chat_mention',
       screen: 'match',
       recordId: `room:${match.matchNo}`,
       target: 'room',
       matchNo: String(match.matchNo),
-    },
+    }),
   }).catch((err) => {
     console.warn('[room-chat] mention push failed', err);
   });
